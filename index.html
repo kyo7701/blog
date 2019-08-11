@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next muse use-motion" lang>
+<html class="theme-next muse use-motion" lang="zh-Hans">
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -83,7 +83,7 @@
 <meta property="og:title" content="cris&#39;s blog">
 <meta property="og:url" content="https://kyo7701.github.io/blog/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
-<meta property="og:locale" content="default">
+<meta property="og:locale" content="zh-Hans">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="cris&#39;s blog">
 
@@ -101,7 +101,7 @@
     motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
     duoshuo: {
       userId: '0',
-      author: 'Author'
+      author: '博主'
     },
     algolia: {
       applicationID: '',
@@ -133,7 +133,7 @@
 
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
 
   
   
@@ -182,7 +182,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
             
-            Home
+            首页
           </a>
         </li>
       
@@ -192,7 +192,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
             
-            Archives
+            归档
           </a>
         </li>
       
@@ -215,6 +215,130 @@
           <div id="content" class="content">
             
   <section id="posts" class="posts-expand">
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2019/08/11/消息队列/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2019/08/11/消息队列/" itemprop="url">消息队列</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-11T22:13:56+08:00">
+                2019-08-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="什么是消息队列"><a href="#什么是消息队列" class="headerlink" title="什么是消息队列?"></a>什么是消息队列?</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在计算机科学中,消息队列是一种进程间通信或同一进程不同线程间的通信方式，软件的贮列同来处理一系列的输入，通常是来自用户。消息队列提供了异步的通信方式，每一个贮列中的详细记录包含详细说明的数据，包括发生的时间，输入设备的种类以及特定的输入参数，也就是说消息的发送者和接收者不需要同时与消息队列交互。消息会保存在队列中，直到接收者取回它。   ——————摘自wikipedia</span><br></pre></td></tr></table></figure>
+
+<h2 id="为什么要引入消息队列-能解决什么问题"><a href="#为什么要引入消息队列-能解决什么问题" class="headerlink" title="为什么要引入消息队列?能解决什么问题?"></a>为什么要引入消息队列?能解决什么问题?</h2><p>消息队列是很重要的分布式中间件，能够应用于流量削峰填谷、应用间解耦、异步处理、消息通讯场景.</p>
+<h3 id="流量削峰"><a href="#流量削峰" class="headerlink" title="流量削峰"></a>流量削峰</h3><p>很多电商网站都会搞整点秒杀的优惠活动，如果按照传统实现方案，通过传统方式进行秒杀下单，所有的查询创建在秒杀活动开始的时候一瞬间全都打到db server上面去，流量暴增,数据库立马就跪了,服务全跪。<br>显然传统方式是无法应对这种瞬时激增的流量的，那么这时候就要引入流量削峰的方案了，引入消息队列,所有的下单信息发送到消息队列中,并给定一个当前系统能承受的最大请求数量，当超过这个最大数量，多余的流量被丢弃,将被削掉流量的用户引导至错误页面,削峰完成,虽然丢失了一部分流量,但是保证了流量超出系统承受能力的时候，系统不至于崩溃.</p>
+<h3 id="应用间解耦"><a href="#应用间解耦" class="headerlink" title="应用间解耦"></a>应用间解耦</h3><p>案例:系统A提供了一些数据，此时系统B对这些数据比较关注，此时的技术方案是A系统直接将数据通过接口调用发送给系统B,这时问题解决了,A系统成功为B系统提供了数据。<br>存在的问题:1.系统A和系统B都存在宕机的可能性，服务的高可用性没有办法保证,通过接口调用的方式存在失败的可能性<br>2.<br>这时又来了系统C,D,E,这时按照刚才的方案，系统A又需要调用系统C，D，E，这时候系统A的开发人员肯定要疯了,同样的逻辑要写3,4次，这时候如果使用消息队列,系统A的开发人员就解脱了，系统A只需要应用消息队列中的发布订阅模式,将数据简单地丢到消息队列中，对此数据关心的系统直接从消息队列中取出这份数据即可.</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
     
       
 
@@ -258,9 +382,9 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Posted on</span>
+                <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-08-04T23:05:05+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T23:05:05+08:00">
                 2019-08-04
               </time>
             
@@ -378,9 +502,9 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Posted on</span>
+                <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-08-04T21:26:05+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T21:26:05+08:00">
                 2019-08-04
               </time>
             
@@ -504,8 +628,8 @@
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">2</span>
-                  <span class="site-state-item-name">posts</span>
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">日志</span>
                 </a>
               </div>
             
@@ -518,7 +642,7 @@
               <div class="site-state-item site-state-tags">
                 
                   <span class="site-state-item-count">1</span>
-                  <span class="site-state-item-name">tags</span>
+                  <span class="site-state-item-name">标签</span>
                 
               </div>
             
@@ -564,7 +688,7 @@
 </div>
 
 
-  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
 
 
 
@@ -572,7 +696,7 @@
 
 
 
-  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
 
 
 
