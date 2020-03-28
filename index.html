@@ -556,7 +556,7 @@
 </tbody></table>
 <p>inno db引擎只能部分避免幻读，这个部分指的是只能避免当前读的幻读，而对于上表中快照读的情况却不能避免</p>
 <h3 id="版本链"><a href="#版本链" class="headerlink" title="版本链"></a>版本链</h3><p>每次对记录进行改动，都会记录一条undo-log,每条undo-log上面也会有一个roll-ptr属性，形成一个版本链，可以将这些undo-log串联起来，形成一个版本链,如下图(图片引用自参考文章中《MySQL事务隔离级别和MVCC》<br>)</p>
-<p><img src="https://user-gold-cdn.xitu.io/2019/3/27/169bf198524e1b34?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="tupian"></p>
+<p><img src="https://ae01.alicdn.com/kf/U89d96162aca0469287e9e881b3a5347fw.png" alt></p>
 <h2 id="MVCC总结"><a href="#MVCC总结" class="headerlink" title="MVCC总结"></a>MVCC总结</h2><p>所谓的MVCC，就是指RR，RC这两个事务隔离级别的事务在执行快照读操作时访问版本链的过程，使得不同事务的读-读，读-写操作并发执行，从而提升系统性能</p>
 <h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a href="https://segmentfault.com/a/1190000012650596" target="_blank" rel="noopener">MySQL-InnoDB-MVCC多版本并发控制</a></p>
 <p><a href="https://www.cnblogs.com/kismetv/p/10331633.html" target="_blank" rel="noopener">深入学习MySQL事务：ACID特性的实现原理</a></p>
