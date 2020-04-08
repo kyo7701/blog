@@ -88,7 +88,7 @@
 <meta property="og:description" content="什么是事务事务是数据库管理系统执行过程中的一个逻辑单位，由一个有限的数据库操作序列构成。 概述当事务被提交给了DBMS（数据库管理系统），则DBMS需要保证该事务的所有操作成功完成，并且其结果被永久保存在数据库中，如果事务中有的操作没有成功完成，则数据库中的所有操作都需要回滚，回到事务之前的状态，同时该事务对数据库其他事务的执行无影响，所有事务好像都在独立的运行。 事务的ACID特性Atomici">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://ae01.alicdn.com/kf/U89d96162aca0469287e9e881b3a5347fw.png">
-<meta property="og:updated_time" content="2020-03-28T13:11:40.680Z">
+<meta property="og:updated_time" content="2020-04-08T06:07:41.009Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="谈谈数据库事务">
 <meta name="twitter:description" content="什么是事务事务是数据库管理系统执行过程中的一个逻辑单位，由一个有限的数据库操作序列构成。 概述当事务被提交给了DBMS（数据库管理系统），则DBMS需要保证该事务的所有操作成功完成，并且其结果被永久保存在数据库中，如果事务中有的操作没有成功完成，则数据库中的所有操作都需要回滚，回到事务之前的状态，同时该事务对数据库其他事务的执行无影响，所有事务好像都在独立的运行。 事务的ACID特性Atomici">
@@ -372,7 +372,7 @@
 </tr>
 </tbody></table>
 <p>假设事务2未更新前是’oldValue’,事务2更改后修改还没有提交,事务1读到了事务2未提交的’newValue’,这时，事务2进行了回滚，导致事务1拿到的数据变为无效数据，因为事务2对该数据的修改还是未提交的，那么事务1此时读到的数据就是脏数据，对脏数据进行的操作可能是不正确的。</p>
-<h2 id="幻读"><a href="#幻读" class="headerlink" title="幻读"></a>幻读</h2><p>多次读取一定范围内的记录，发现结果不一致(一般指记录增多或记录减少)</p>
+<h2 id="幻读"><a href="#幻读" class="headerlink" title="幻读"></a>幻读</h2><p>多次读取一定范围内的记录，发现结果不一致(一般指记录增多或记录减少,下述操作在mysql8.0.0版本未能出现，mysql innodb 引擎部分解决了幻读问题，可以尝试在其他数据库执行该操作)</p>
 <table>
 <thead>
 <tr>
@@ -394,7 +394,7 @@
 <tr>
 <td>t3</td>
 <td>—</td>
-<td>新增一个年龄为20的person</td>
+<td>新增一个年龄为20的person并commit</td>
 </tr>
 <tr>
 <td>t4</td>
@@ -501,7 +501,7 @@
 </ul>
 <h3 id="read-view-又称快照snapshot"><a href="#read-view-又称快照snapshot" class="headerlink" title="read-view(又称快照snapshot)"></a>read-view(又称快照snapshot)</h3><p>事务的快照主要是用来存储数据库的事务运行情况，通常用来进行可见性判断。</p>
 <ul>
-<li>查看当前所有未提交的活跃事务，存储在数组中记作m_ids<br>RR是在第一次快照读操作前生成readview,之后的查询操作复用readview<br>RC是在每一次快照读操作前都生成一个readView</li>
+<li>查看当前所有未提交的活跃事务，存储在数组中记作m_ids<br>RR是在第一次快照读操作前生成readView,之后的查询操作复用该readView<br>RC是在每一次快照读操作前都生成一个readView</li>
 </ul>
 <h3 id="可见性比较算法"><a href="#可见性比较算法" class="headerlink" title="可见性比较算法"></a>可见性比较算法</h3><ul>
 <li><p>如果 DB_TRX_ID &lt; m_ids中最小事务id，则代表被访问的数据版本在生成快照之前就已经提交，当前事务可以获得该条记录的稳定版本</p>
@@ -562,7 +562,7 @@
 </tr>
 </tbody></table>
 <p>inno db引擎只能部分避免幻读，这个部分指的是只能避免当前读的幻读，而对于上表中快照读的情况却不能避免</p>
-<h3 id="版本链"><a href="#版本链" class="headerlink" title="版本链"></a>版本链</h3><p>每次对记录进行改动，都会记录一条undo-log,每条undo-log上面也会有一个roll-ptr属性，形成一个版本链，可以将这些undo-log串联起来，形成一个版本链,如下图(图片引用自参考文章中《MySQL事务隔离级别和MVCC》<br>)</p>
+<h3 id="版本链"><a href="#版本链" class="headerlink" title="版本链"></a>版本链</h3><p>每次对记录进行改动，都会记录一条undo-log,每条undo-log上面也会有一个roll-ptr属性，指向历史版本的undo-log，可以将这些undo-log串联起来，形成一个版本链,如下图(图片引用自参考文章中《MySQL事务隔离级别和MVCC》<br>)</p>
 <p><img src="https://ae01.alicdn.com/kf/U89d96162aca0469287e9e881b3a5347fw.png" alt></p>
 <h2 id="MVCC总结"><a href="#MVCC总结" class="headerlink" title="MVCC总结"></a>MVCC总结</h2><p>所谓的MVCC，就是指RR，RC这两个事务隔离级别的事务在执行快照读操作时访问版本链的过程，使得不同事务的读-读，读-写操作并发执行，从而提升系统性能</p>
 <h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a href="https://segmentfault.com/a/1190000012650596" target="_blank" rel="noopener">MySQL-InnoDB-MVCC多版本并发控制</a></p>
