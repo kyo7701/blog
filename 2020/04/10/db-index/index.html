@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="其他,">
+  <meta name="keywords" content="Hexo, NexT">
 
 
 
@@ -79,18 +79,17 @@
 
 
 
-<meta name="description" content="hello,github pages~ 由于heroku的app挪作他用了,偶尔用用github pages也不错。">
-<meta name="keywords" content="其他">
+<meta name="description" content="#前言今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。  索引的定义在开始看mysql中">
 <meta property="og:type" content="article">
-<meta property="og:title" content="hello github pages">
-<meta property="og:url" content="https://kyo7701.github.io/blog/2019/08/04/hello-github-pages/index.html">
+<meta property="og:title" content="谈谈数据库中的索引">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/10/db-index/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
-<meta property="og:description" content="hello,github pages~ 由于heroku的app挪作他用了,偶尔用用github pages也不错。">
+<meta property="og:description" content="#前言今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。  索引的定义在开始看mysql中">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-08-04T13:43:08.430Z">
+<meta property="og:updated_time" content="2020-04-10T14:52:19.647Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="hello github pages">
-<meta name="twitter:description" content="hello,github pages~ 由于heroku的app挪作他用了,偶尔用用github pages也不错。">
+<meta name="twitter:title" content="谈谈数据库中的索引">
+<meta name="twitter:description" content="#前言今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。  索引的定义在开始看mysql中">
 
 
 
@@ -120,13 +119,13 @@
 
 
 
-  <link rel="canonical" href="https://kyo7701.github.io/blog/2019/08/04/hello-github-pages/">
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/04/10/db-index/">
 
 
 
 
 
-  <title>hello github pages | cris's blog</title>
+  <title>谈谈数据库中的索引 | cris's blog</title>
   
 
 
@@ -253,7 +252,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2019/08/04/hello-github-pages/">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/10/db-index/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="mr_cris">
@@ -270,7 +269,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">hello github pages</h1>
+          <h1 class="post-title" itemprop="name headline">谈谈数据库中的索引</h1>
         
 
         <div class="post-meta">
@@ -282,8 +281,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T21:26:05+08:00">
-                2019-08-04
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-10T21:01:27+08:00">
+                2020-04-10
               </time>
             
 
@@ -325,7 +324,60 @@
       
 
       
-        <p>hello,github pages~ 由于heroku的app挪作他用了,偶尔用用github pages也不错。</p>
+        <p>#前言<br>今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。</p>
+<hr>
+<h2 id="索引的定义"><a href="#索引的定义" class="headerlink" title="索引的定义"></a>索引的定义</h2><p>在开始看mysql中的索引之前，我们先了解下载DMBS系统中索引的定义是怎样的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">数据库索引，是数据库管理系统的一个排序的数据结构,</span><br><span class="line">以协助快速查询、更新表中数据.     ------ 维基百科</span><br></pre></td></tr></table></figure>
+
+<h2 id="索引的分类"><a href="#索引的分类" class="headerlink" title="索引的分类"></a>索引的分类</h2><p>那么索引有哪些类别呢？这里从几个不同的角度来分析有哪些类别的索引</p>
+<h3 id="物理存储角度"><a href="#物理存储角度" class="headerlink" title="物理存储角度"></a>物理存储角度</h3><ul>
+<li><strong>聚集索引(又称聚簇索引)</strong></li>
+<li><strong>非聚集索引(又称非聚簇索引)</strong></li>
+</ul>
+<p>聚集索引的特点是，数据库中表数据的物理顺序和索引顺序相同，而非聚集索引在数据库中的索引的逻辑顺序和表中数据的物理顺序并不相同。所以说聚集索引和非聚集索引是从物理存储角度来划分的，此外，因为数据表的结构只能有一个，所以一张表的聚集索引只能有一个。</p>
+<h3 id="逻辑角度"><a href="#逻辑角度" class="headerlink" title="逻辑角度:"></a>逻辑角度:</h3><ol>
+<li><strong>主键索引</strong> 一种特殊的唯一索引，不允许有空值</li>
+<li><strong>普通索引或者单列索引</strong> 最基本的索引，没有任何限制</li>
+<li><strong>联合索引或者多列索引</strong> 建立在多个列上的索引，被称为联合索引，遵循最左前缀原则</li>
+<li><strong>唯一索引</strong>   与普通索引类似，不同的是唯一索引要求索引的值必须唯一，但允许有空值</li>
+</ol>
+<p>在这里顺便介绍下 上述的索引的创建和删除，水一下</p>
+<ul>
+<li>普通索引</li>
+</ul>
+<p>创建</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">ADD</span> <span class="keyword">INDEX</span> <span class="string">`index_name`</span>(<span class="string">`column_name`</span>);</span><br></pre></td></tr></table></figure>
+
+<p>删除</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">DROP</span> <span class="keyword">INDEX</span> <span class="string">`index_name`</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>联合索引</li>
+</ul>
+<p>创建</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">ADD</span> <span class="keyword">INDEX</span> <span class="string">`index_name`</span>(<span class="string">`column_name_1`</span>,<span class="string">`column_name_2`</span>);</span><br></pre></td></tr></table></figure>
+
+<p>删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE `table_name` DROP INDEX `index_name`;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>主键索引</li>
+</ul>
+<p>创建</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#可以在建表时指定 </span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">add</span> PRIMARY <span class="keyword">KEY</span>(<span class="keyword">id</span>);</span><br></pre></td></tr></table></figure>
+
+<p>删除(如果主键索引是自增列，那么删除主键将不满足自增列必须是索引列的定义,所以需要额外做一些手脚才能删除)</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">DROP</span> PRIMARY <span class="keyword">KEY</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li></li>
+</ul>
+<h3 id="数据结构角度"><a href="#数据结构角度" class="headerlink" title="数据结构角度"></a>数据结构角度</h3><ol>
+<li>B-Tree索引，在mysql中B-Tree索引实际上是由B+树结构实现的，更适合于范围查询</li>
+<li>hash 索引 等值比较    效率非常高,通常用于精确内容查找(etc: in(),=, &lt;=&gt;,这里的“&lt;=&gt;”等价于=),但是mysql的InnoDB存储引擎并不支持hash索引</li>
+<li>full-text索引(全文索引)</li>
+</ol>
+<h2 id="索引的优点"><a href="#索引的优点" class="headerlink" title="索引的优点"></a>索引的优点</h2><h2 id="索引的缺点"><a href="#索引的缺点" class="headerlink" title="索引的缺点"></a>索引的缺点</h2><h2 id="索引为什么能加速数据查询？"><a href="#索引为什么能加速数据查询？" class="headerlink" title="索引为什么能加速数据查询？"></a>索引为什么能加速数据查询？</h2><h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://segmentfault.com/q/1010000003832312" target="_blank" rel="noopener">MySQL有哪些索引类型 ?</a></p>
 
       
     </div>
@@ -341,12 +393,6 @@
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/blog/tags/其他/" rel="tag"># 其他</a>
-          
-        </div>
-      
 
       
       
@@ -356,15 +402,15 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/blog/2019/12/03/db-transaction/" rel="next" title="谈谈数据库事务">
+                <i class="fa fa-chevron-left"></i> 谈谈数据库事务
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/blog/2019/08/04/test-comment/" rel="prev" title="test comment">
-                test comment <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -421,8 +467,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -484,6 +539,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#索引的定义"><span class="nav-number">1.</span> <span class="nav-text">索引的定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引的分类"><span class="nav-number">2.</span> <span class="nav-text">索引的分类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#物理存储角度"><span class="nav-number">2.1.</span> <span class="nav-text">物理存储角度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#逻辑角度"><span class="nav-number">2.2.</span> <span class="nav-text">逻辑角度:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据结构角度"><span class="nav-number">2.3.</span> <span class="nav-text">数据结构角度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引的优点"><span class="nav-number">3.</span> <span class="nav-text">索引的优点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引的缺点"><span class="nav-number">4.</span> <span class="nav-text">索引的缺点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引为什么能加速数据查询？"><span class="nav-number">5.</span> <span class="nav-text">索引为什么能加速数据查询？</span></a></li></ol><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number"></span> <span class="nav-text">参考文章</span></a></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -691,7 +762,7 @@
         repo: 'blog-comment',
         owner: 'kyo7701',
         admin: ['kyo7701'],
-        id:'gitalk_20190804212605',
+        id:'gitalk_20200410210127',
         labels: 'gitalk'.split(',').filter(l => l),
         perPage: 10,
         pagerDirection: 'last',
