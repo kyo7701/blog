@@ -320,9 +320,9 @@
       
         
           
-            <p>#前言<br>今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。</p>
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。</p>
 <hr>
-<h2 id="索引的定义"><a href="#索引的定义" class="headerlink" title="索引的定义"></a>索引的定义</h2><p>在开始看mysql中的索引之前，我们先了解下载DMBS系统中索引的定义是怎样的。</p>
+<h2 id="索引的定义"><a href="#索引的定义" class="headerlink" title="索引的定义"></a>索引的定义</h2><p>在开始看mysql中的索引之前，我们先了解下在DMBS系统中索引的定义是怎样的。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">数据库索引，是数据库管理系统的一个排序的数据结构,</span><br><span class="line">以协助快速查询、更新表中数据.     ------ 维基百科</span><br></pre></td></tr></table></figure>
 
 <h2 id="索引的分类"><a href="#索引的分类" class="headerlink" title="索引的分类"></a>索引的分类</h2><p>那么索引有哪些类别呢？这里从几个不同的角度来分析有哪些类别的索引</p>
@@ -366,14 +366,33 @@
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">DROP</span> PRIMARY <span class="keyword">KEY</span>;</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li></li>
+<li>唯一索引</li>
 </ul>
+<p>创建</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE `table_name` ADD UNIQUE INDEX `index_name`(`column_name`);</span><br></pre></td></tr></table></figure>
+
+<p>删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE `table_name` DROP INDEX `index_name`;</span><br></pre></td></tr></table></figure>
+
 <h3 id="数据结构角度"><a href="#数据结构角度" class="headerlink" title="数据结构角度"></a>数据结构角度</h3><ol>
 <li>B-Tree索引，在mysql中B-Tree索引实际上是由B+树结构实现的，更适合于范围查询</li>
 <li>hash 索引 等值比较    效率非常高,通常用于精确内容查找(etc: in(),=, &lt;=&gt;,这里的“&lt;=&gt;”等价于=),但是mysql的InnoDB存储引擎并不支持hash索引</li>
 <li>full-text索引(全文索引)</li>
 </ol>
-<h2 id="索引的优点"><a href="#索引的优点" class="headerlink" title="索引的优点"></a>索引的优点</h2><h2 id="索引的缺点"><a href="#索引的缺点" class="headerlink" title="索引的缺点"></a>索引的缺点</h2><h2 id="索引为什么能加速数据查询？"><a href="#索引为什么能加速数据查询？" class="headerlink" title="索引为什么能加速数据查询？"></a>索引为什么能加速数据查询？</h2><h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://segmentfault.com/q/1010000003832312" target="_blank" rel="noopener">MySQL有哪些索引类型 ?</a></p>
+<h2 id="索引的优点"><a href="#索引的优点" class="headerlink" title="索引的优点"></a>索引的优点</h2><ul>
+<li>索引大大减少了服务器需要扫描的数据量</li>
+<li>索引可以帮助服务器避免排序和临时表</li>
+<li>索引可以将随机I/O变为顺序I/O</li>
+</ul>
+<p>摘自《高性能mysql》第5.2节</p>
+<h2 id="索引的缺点"><a href="#索引的缺点" class="headerlink" title="索引的缺点"></a>索引的缺点</h2><ul>
+<li>创建索引和维护索引需要花费时间，并且随着数据量的增加所耗费的时间也会增加</li>
+<li>虽然索引大大提高了查询速度，但是同时会降低更新表(insert,update,delete)的速度,mysql不仅要保存数据，还要保存索引文件</li>
+<li>建立索引会建立占用磁盘空间的索引文件，一般情况下这种问题不大，但是如果一张大表上建立多种组合索引，索引文件会膨胀的很快。</li>
+<li>如果某个列数据上包含许多重复的内容，那么在这列上建立索引就没有太大的效果(索引列区分程度不高，计算公式select distinct(col) from table/select count(*) from table)</li>
+<li>非常小的表，大部分情况下简单的全表扫描更高效</li>
+</ul>
+<h2 id="索引为什么能加速数据查询？"><a href="#索引为什么能加速数据查询？" class="headerlink" title="索引为什么能加速数据查询？"></a>索引为什么能加速数据查询？</h2><h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://segmentfault.com/q/1010000003832312" target="_blank" rel="noopener">MySQL有哪些索引类型 ?</a></p>
 
           
         
