@@ -249,6 +249,190 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/13/mq-Rabbit-MQ/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/04/13/mq-Rabbit-MQ/" itemprop="url">消息队列之Rabbit-MQ</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-13T12:31:03+08:00">
+                2020-04-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。</p>
+<h1 id="什么是消息队列-为什么要用消息队列"><a href="#什么是消息队列-为什么要用消息队列" class="headerlink" title="什么是消息队列,为什么要用消息队列"></a>什么是消息队列,为什么要用消息队列</h1><p>这里的内容在上一篇(<a href="https://kyo7701.github.io/blog/2019/08/11/message_queue/">谈谈消息队列</a>)内容中已经讲过了，这里就不再赘述了</p>
+<h1 id="消息队列之Rabbit-MQ"><a href="#消息队列之Rabbit-MQ" class="headerlink" title="消息队列之Rabbit-MQ"></a>消息队列之Rabbit-MQ</h1><p>
+RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现
+</p>
+
+<p>AMQP(Adavanced message queue),高级消息队列协议，它是应用层协议的一个开放标准，为面向消息的中间件设计，基于此协议的客户端与消息中间件可以传递消息，并且不受产品、开发语言等条件的限制。</p>
+<p>这里引用了RabbitMQ官网的图片，AMQP的消息模型<br><img src="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png" alt><br>消息代理(messaging broker)从publisher(消息生产者)接收消息，并且将消息路由给消费者，由于AMQP是个网络协议，生产者、消息代理和消费者可以位于不同的机器上</p>
+<h1 id="Rabbit-MQ中的基本概念"><a href="#Rabbit-MQ中的基本概念" class="headerlink" title="Rabbit-MQ中的基本概念"></a>Rabbit-MQ中的基本概念</h1><ul>
+<li>Exchange 从生产者接收消息，并且根据exchange的类型将消息推送到对应的队列中</li>
+<li>Binding queue和exchange的绑定，通过这个绑定rabbitmq可以知道如何正确地将消息路由到指定的queue上了</li>
+<li>Routing key 生产者将消息发送给exchange的时候，rabbitmq 需要指定一个routing key来确定这个消息的路由规则，这个路由规则将决定消息如何路由到queue中</li>
+<li>Users </li>
+<li>Vhost,virtual host 是一种可以在同一个rabbitMQ实例中隔离多个不同的应用，不同的用户可以拥有不同virtual host的权限，每一个virtual host都可以拥有不同的queues和exchanges</li>
+<li>Producer 应用中消息的生产者</li>
+<li>Consumer 应用中消息的消费者</li>
+<li>Queue 一个存储消息的buffer</li>
+<li>Message 生产者通过rabbitMQ投递给消费者的消息</li>
+<li>Connection 客户端应用程序和RabbitMQ之间的TCP连接,和生产者与RabbitMQ之间都是通过TCP连接建立的。</li>
+<li>Channel 在Connection中的一个虚拟连接，队列中的消息的发布和消费</li>
+</ul>
+<p>由Exchange、Queue、RoutingKey三个才能决定一个从Exchange到Queue的唯一的线路</p>
+<h1 id="exchange和exchange类型"><a href="#exchange和exchange类型" class="headerlink" title="exchange和exchange类型"></a>exchange和exchange类型</h1><p>Exchanges在AMQP模型中是消息被发送到的实体。Exchanges将消息路由到0个或更多个queue上面去，路由算法取决于exchange的类型和绑定规则，AMQP提供以下exchange类型</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>默认预定义的名字</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Direct Exchange</td>
+<td>空串或者 amqp.direct</td>
+</tr>
+<tr>
+<td>Fanout Exchange</td>
+<td>amq.fanout</td>
+</tr>
+<tr>
+<td>Topic Exchange</td>
+<td>amq.topic</td>
+</tr>
+<tr>
+<td>Headers Exchange</td>
+<td>amq.match</td>
+</tr>
+</tbody></table>
+<p>此外 AMQP中还定义了几个很重要的属性</p>
+<ul>
+<li>name </li>
+<li>durability(broker重启后exchange是否还存在)</li>
+<li>Auto-delete(当exchange上面的最后一个queue解绑后是否自动删除)</li>
+<li>Arguments(可选参数，插件或者broker的特定功能会用到)</li>
+</ul>
+<h1 id="Default-Exchanges"><a href="#Default-Exchanges" class="headerlink" title="Default Exchanges"></a>Default Exchanges</h1><p>默认的exchange是一个broker预定义的没有名字的direct exchange，它有一个特殊的性质:所有新建的queue都会绑定到默认的exchange上面，并且routing-key和queue名相同</p>
+<h1 id="Direct-Exchange"><a href="#Direct-Exchange" class="headerlink" title="Direct Exchange"></a>Direct Exchange</h1><p>direct exchange根据消息所带的routing-key将消息投递给对应的队列。direct exchange倾向于用作消息的单播路由(unicast routing),尽管它也可以用作多播路由(multicast routing)，工作原理:</p>
+<ul>
+<li>一个queue通过一个routing-key K绑定到一个exchange上</li>
+<li>当一条routing-key为R的消息到达direct-exchange时，direct exchange会把消息投递给routing-key跟R相等的queue上面去</li>
+</ul>
+<p>direct exchange通常用于循环分配任务给多个工作者，需要注意的是，消息的负载均衡是发生在consumer之间的，并不是发生在queue之间，举个例子(一个direct exchange 通过一个routing-key绑定了多个queue,消息会发到多个queue中，一个queue中消息的消费并不影响另一个queue的消费,也就是不会发生抢消息的行为)</p>
+<p><img src="https://www.rabbitmq.com/img/tutorials/intro/exchange-direct.png" alt><br>图片引用自<a href="https://www.rabbitmq.com/tutorials/amqp-concepts.html" target="_blank" rel="noopener">rabbitmq官网</a></p>
+<h1 id="Rabbit-MQ的使用场景"><a href="#Rabbit-MQ的使用场景" class="headerlink" title="Rabbit-MQ的使用场景"></a>Rabbit-MQ的使用场景</h1><hr>
+<p>未完待续</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cloudamqp.com/blog/2015-05-18-part1-rabbitmq-for-beginners-what-is-rabbitmq.html" target="_blank" rel="noopener">for RabbitMQ beginners- what is RabbitMQ?</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/10/db-index/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1228,7 +1412,7 @@
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-count">6</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
