@@ -89,7 +89,8 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png">
 <meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/exchange-direct.png">
-<meta property="og:updated_time" content="2020-04-14T06:49:42.988Z">
+<meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/exchange-fanout.png">
+<meta property="og:updated_time" content="2020-04-14T14:45:35.762Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="消息队列之Rabbit-MQ">
 <meta name="twitter:description" content="前言今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之Rabbit-MQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
@@ -382,6 +383,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
 <li>Auto-delete(当exchange上面的最后一个queue解绑后是否自动删除)</li>
 <li>Arguments(可选参数，插件或者broker的特定功能会用到)</li>
 </ul>
+<p>下面的内容全部引用自rabbitmq官网，提供了AMQP协议的概述</p>
 <h1 id="Default-Exchanges"><a href="#Default-Exchanges" class="headerlink" title="Default Exchanges"></a>Default Exchanges</h1><p>默认的exchange是一个broker预定义的没有名字的direct exchange，它有一个特殊的性质:所有新建的queue都会绑定到默认的exchange上面，并且routing-key和queue名相同</p>
 <h1 id="Direct-Exchange"><a href="#Direct-Exchange" class="headerlink" title="Direct Exchange"></a>Direct Exchange</h1><p>direct exchange根据消息所带的routing-key将消息投递给对应的队列。direct exchange倾向于用作消息的单播路由(unicast routing),尽管它也可以用作多播路由(multicast routing)，工作原理:</p>
 <ul>
@@ -390,7 +392,15 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
 </ul>
 <p>direct exchange通常用于循环分配任务给多个工作者，需要注意的是，消息的负载均衡是发生在consumer之间的，并不是发生在queue之间，举个例子(一个direct exchange 通过一个routing-key绑定了多个queue,消息会发到多个queue中，一个queue中消息的消费并不影响另一个queue的消费,也就是不会发生抢消息的行为)</p>
 <p><img src="https://www.rabbitmq.com/img/tutorials/intro/exchange-direct.png" alt><br>图片引用自<a href="https://www.rabbitmq.com/tutorials/amqp-concepts.html" target="_blank" rel="noopener">rabbitmq官网</a></p>
-<h1 id="Rabbit-MQ的使用场景"><a href="#Rabbit-MQ的使用场景" class="headerlink" title="Rabbit-MQ的使用场景"></a>Rabbit-MQ的使用场景</h1><hr>
+<h1 id="Fanout-Exchange-扇形交换机"><a href="#Fanout-Exchange-扇形交换机" class="headerlink" title="Fanout Exchange 扇形交换机"></a>Fanout Exchange 扇形交换机</h1><p>扇形交换机会把他收到的消息发送到所有绑定到它的queue中,并且这里的routing-key是被忽略的。如果有n个queue绑定到了扇形交换机上面，当一条新消息发布到交换机中时，消息会复制n份投递到所有的n个queue中，扇形交换机特别适合做广播消息<br><img src="https://www.rabbitmq.com/img/tutorials/intro/exchange-fanout.png" alt><br>图片引用自<a href="https://www.rabbitmq.com/tutorials/amqp-concepts.html" target="_blank" rel="noopener">rabbitmq官网</a></p>
+<p>因为扇形交换机会把消息广播到所有的queue中，他的使用场景非常相似:</p>
+<ul>
+<li>很多大型多人在线游戏会用它处理排行榜更新或其他全局事件</li>
+<li>体育新闻网站可以准实时地将比分发送给移动客户端</li>
+<li>分布式系统可以将不同的状态和配置更新进行广播</li>
+<li>可以通过扇形交换机来实现分发消息给群聊中 的用户</li>
+</ul>
+<h1 id="topic-exchange"><a href="#topic-exchange" class="headerlink" title="topic exchange"></a>topic exchange</h1><hr>
 <p>未完待续</p>
 <h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cloudamqp.com/blog/2015-05-18-part1-rabbitmq-for-beginners-what-is-rabbitmq.html" target="_blank" rel="noopener">for RabbitMQ beginners- what is RabbitMQ?</a></p>
 
@@ -437,8 +447,8 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/blog/2020/04/13/rabbit-mq-durable-mechanism/" rel="prev" title="RabbitMQ-持久化机制">
-                RabbitMQ-持久化机制 <i class="fa fa-chevron-right"></i>
+              <a href="/blog/2020/04/14/db-lock/" rel="prev" title="谈谈mysql中的锁">
+                谈谈mysql中的锁 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -523,7 +533,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-count">7</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -545,7 +555,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
               
               <div class="site-state-item site-state-tags">
                 <a href="/blog/tags/index.html">
-                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-count">8</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
@@ -578,7 +588,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是消息队列-为什么要用消息队列"><span class="nav-number">2.</span> <span class="nav-text">什么是消息队列,为什么要用消息队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息队列之Rabbit-MQ"><span class="nav-number">3.</span> <span class="nav-text">消息队列之Rabbit-MQ</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Rabbit-MQ中的基本概念"><span class="nav-number">4.</span> <span class="nav-text">Rabbit-MQ中的基本概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#exchange和exchange类型"><span class="nav-number">5.</span> <span class="nav-text">exchange和exchange类型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Default-Exchanges"><span class="nav-number">6.</span> <span class="nav-text">Default Exchanges</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Direct-Exchange"><span class="nav-number">7.</span> <span class="nav-text">Direct Exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Rabbit-MQ的使用场景"><span class="nav-number">8.</span> <span class="nav-text">Rabbit-MQ的使用场景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">9.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是消息队列-为什么要用消息队列"><span class="nav-number">2.</span> <span class="nav-text">什么是消息队列,为什么要用消息队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息队列之Rabbit-MQ"><span class="nav-number">3.</span> <span class="nav-text">消息队列之Rabbit-MQ</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Rabbit-MQ中的基本概念"><span class="nav-number">4.</span> <span class="nav-text">Rabbit-MQ中的基本概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#exchange和exchange类型"><span class="nav-number">5.</span> <span class="nav-text">exchange和exchange类型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Default-Exchanges"><span class="nav-number">6.</span> <span class="nav-text">Default Exchanges</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Direct-Exchange"><span class="nav-number">7.</span> <span class="nav-text">Direct Exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Fanout-Exchange-扇形交换机"><span class="nav-number">8.</span> <span class="nav-text">Fanout Exchange 扇形交换机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#topic-exchange"><span class="nav-number">9.</span> <span class="nav-text">topic exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">10.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
