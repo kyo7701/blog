@@ -88,7 +88,7 @@
 <meta property="og:description" content="前言今天又来写博客了，没错今天又被面试官锤了，这次被锤的问题是关于mysql中关于锁的问题，特此整理下有关锁的问题，避免今后对这种问题再次犯同样的错误(꒦_꒦)  什么是锁？为什么要加锁12345锁是计算机协调多个进程或纯线程并发访问某一资源的机制。在数据库中，除传统的计算资源(CPU,RAM,I/O)  的争用外,数据也是一种供许多用户共享的资源。如果保证数据并发访问的一致性、有效性是所有数据库">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://image-static.segmentfault.com/393/973/393973056-5ac1c82c4bc61_articlex">
-<meta property="og:updated_time" content="2020-04-14T08:06:33.734Z">
+<meta property="og:updated_time" content="2020-04-14T09:19:38.223Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="谈谈mysql中的锁">
 <meta name="twitter:description" content="前言今天又来写博客了，没错今天又被面试官锤了，这次被锤的问题是关于mysql中关于锁的问题，特此整理下有关锁的问题，避免今后对这种问题再次犯同样的错误(꒦_꒦)  什么是锁？为什么要加锁12345锁是计算机协调多个进程或纯线程并发访问某一资源的机制。在数据库中，除传统的计算资源(CPU,RAM,I/O)  的争用外,数据也是一种供许多用户共享的资源。如果保证数据并发访问的一致性、有效性是所有数据库">
@@ -344,6 +344,88 @@
 <li><strong>页级锁</strong> 开销和加锁时间介于表锁和行锁之间，会出现死锁，并发程度一般</li>
 <li><strong>行级锁</strong> 开销大，加锁慢，会出现死锁，锁定粒度最小，发生锁冲突的概率最低，并发程度也最高</li>
 </ul>
+<h2 id="按照锁模式进行分类"><a href="#按照锁模式进行分类" class="headerlink" title="按照锁模式进行分类"></a>按照锁模式进行分类</h2><ul>
+<li><strong>record lock</strong> 记录锁，对符合条件的行进行加锁，锁住索引项</li>
+<li><strong>gap lock</strong>   间隙锁，对符合条件的记录行之间的间隙进行加锁，不包含符合条件的索引项本身，只是锁定记录的范围，其他事务不能在锁范围内插入数据，这样就防止了别的数据新增幻影行(幻读)</li>
+<li><strong>next-key lock</strong> 锁定索引项本身和索引范围，即record lock + gap lock的结合 可解决幻读问题</li>
+<li><strong>意向锁</strong>  为了允许表锁和行锁共存，实现多粒度锁机制，innodb还有两种内部使用的意向锁(表级锁)分为<ul>
+<li><strong>意向共享锁(IS)</strong> 事务打算给数据行加共享锁，必须先取得该表的IS锁</li>
+<li><strong>意向排他锁(IX)</strong> 事务打算给数据行加排他锁，必须先取得该表的IX锁<br>意向锁是在给某一行进行加锁的时候，mysql会自动为这一行所处的表进行加意向锁，无需用户任何处理,意向锁的作用我们可以看下面一个例子</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>事务1</th>
+<th>事务2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td>更新table a中某一行数据</td>
+<td>do nothing</td>
+</tr>
+<tr>
+<td>t2</td>
+<td>do nothing</td>
+<td>更新table a全表数据,需要获取表锁</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>提交</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t4</td>
+<td>—</td>
+<td>提交</td>
+</tr>
+</tbody></table>
+<p>在上述例子中，事务1中在t1时刻对表中数据进行数据更新时，自动加该表的意向排他锁，这时事务2获取该表的写锁时会先判断是否和意向锁兼容，发现该表存在意向排他锁，锁类型不兼容，需要等待事务1提交后才能进行操作。<br>这样如果某张表存在行级锁，获取表锁的时候就不必遍历整张表判断是否存在行级锁，直接判断是否与表级的意向锁是否兼容就可以了。</p>
+<table>
+<thead>
+<tr>
+<th>—-</th>
+<th>IS</th>
+<th>IX</th>
+<th>S</th>
+<th>X</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IS</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>IX</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>冲突</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>S</td>
+<td>兼容</td>
+<td>冲突</td>
+<td>兼容</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>X</td>
+<td>冲突</td>
+<td>冲突</td>
+<td>冲突</td>
+<td>冲突</td>
+</tr>
+</tbody></table>
+<ul>
+<li>插入意向锁</li>
+</ul>
 <p>谈到这里其实可以聊聊今天被锤的一个面试问题,有关SQL优化相关的问题</p>
 <h1 id="面试中被面试官锤的问题"><a href="#面试中被面试官锤的问题" class="headerlink" title="面试中被面试官锤的问题"></a>面试中被面试官锤的问题</h1><p><strong>表级锁了解吗？什么时候会触发表级锁？update语句什么情况下会触发表级锁？</strong></p>
 <p>
@@ -356,9 +438,12 @@ innodb中默认使用行级锁，这个行级锁锁的是索引记录，换句�
 <ul>
 <li>全表更新 事务需要更新大部分数据或全部数据，如果使用行级锁，会导致事务执行效率低，从而导致其他事务长时间等待锁和更多的锁冲突</li>
 <li>多表级联 事务涉及多张表，比较复杂的关联查询，很可能造成死锁，这种情况若能一次性锁住事务涉及的表，从而避免死锁，减少数据库事务回滚所带来的开销</li>
-<li>本应部分更新，但是因为筛选条件中未用到索引或者索引区分度程度不高(innodb认为全表扫描比走索引效率更高的情况)，导致全表扫描</li>
+<li>本应部分更新，但是因为筛选条件中未用到索引或者索引区分度程度不高(innodb认为全表扫描比走索引效率更高导致索引失效的情况)，导致全表扫描</li>
 </ul>
-<p>这里面实际上第三种情况是可以避免的，在做业务时，需要谨慎的加索引,在合适的列上创建索引，索引列区分程度是否高(主键索引和唯一索引不用说区分度百分百，如果能用到主键索引或者唯一索引就尽可能的使用这两种索引，如果不能使用，确保索引列区分程度够高，区分度计算公式select dinstinct column_name from table/select count(*)  from table)</p>
+<h1 id="锁优化部分"><a href="#锁优化部分" class="headerlink" title="锁优化部分"></a>锁优化部分</h1><ul>
+<li>尽量让数据检索都通过索引来完成，避免无索引或者索引失效导致行级锁升级为表级锁</li>
+</ul>
+<p>这里面实际上第三种情况是可以避免的，在做业务时，需要谨慎的加索引,在合适的列上创建索引，索引列区分程度是否高(主键索引和唯一索引不用说区分度百分百，如果能用到主键索引或者唯一索引就尽可能的使用这两种索引，如果不能使用，确保索引列区分程度够高)</p>
 <h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://segmentfault.com/a/1190000014133576" target="_blank" rel="noopener">MySQL InnoDB锁机制全面解析分享</a><br><a href="https://zhuanlan.zhihu.com/p/29150809" target="_blank" rel="noopener">MySQL锁总结</a></p>
 
       
@@ -543,7 +628,7 @@ innodb中默认使用行级锁，这个行级锁锁的是索引记录，换句�
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是锁？为什么要加锁"><span class="nav-number">2.</span> <span class="nav-text">什么是锁？为什么要加锁</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#锁分类"><span class="nav-number">3.</span> <span class="nav-text">锁分类</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#按照加锁机制进行分类"><span class="nav-number">3.1.</span> <span class="nav-text">按照加锁机制进行分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#按照兼容性进行分类"><span class="nav-number">3.2.</span> <span class="nav-text">按照兼容性进行分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#按照锁的粒度进行分类"><span class="nav-number">3.3.</span> <span class="nav-text">按照锁的粒度进行分类</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#面试中被面试官锤的问题"><span class="nav-number">4.</span> <span class="nav-text">面试中被面试官锤的问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">5.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是锁？为什么要加锁"><span class="nav-number">2.</span> <span class="nav-text">什么是锁？为什么要加锁</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#锁分类"><span class="nav-number">3.</span> <span class="nav-text">锁分类</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#按照加锁机制进行分类"><span class="nav-number">3.1.</span> <span class="nav-text">按照加锁机制进行分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#按照兼容性进行分类"><span class="nav-number">3.2.</span> <span class="nav-text">按照兼容性进行分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#按照锁的粒度进行分类"><span class="nav-number">3.3.</span> <span class="nav-text">按照锁的粒度进行分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#按照锁模式进行分类"><span class="nav-number">3.4.</span> <span class="nav-text">按照锁模式进行分类</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#面试中被面试官锤的问题"><span class="nav-number">4.</span> <span class="nav-text">面试中被面试官锤的问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#锁优化部分"><span class="nav-number">5.</span> <span class="nav-text">锁优化部分</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">6.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
