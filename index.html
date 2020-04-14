@@ -349,9 +349,9 @@ innodb中默认使用行级锁，这个行级锁锁的是索引记录，换句�
 <ul>
 <li>全表更新 事务需要更新大部分数据或全部数据，如果使用行级锁，会导致事务执行效率低，从而导致其他事务长时间等待锁和更多的锁冲突</li>
 <li>多表级联 事务涉及多张表，比较复杂的关联查询，很可能造成死锁，这种情况若能一次性锁住事务涉及的表，从而避免死锁，减少数据库事务回滚所带来的开销</li>
-<li>本应部分更新，但是因为筛选条件中未用到索引，导致全表扫描</li>
+<li>本应部分更新，但是因为筛选条件中未用到索引或者索引区分度程度不高(innodb认为全表扫描比走索引效率更高的情况)，导致全表扫描</li>
 </ul>
-<p>这里面实际上第三种情况是可以避免的，在做业务时，需要谨慎的加索引，索引列区分程度是否高(主键索引和唯一索引不用说区分度百分百，如果能用到主键索引或者唯一索引就可能的使用这两种索引，如果不能使用，确保索引列区分程度够高，区分度计算公式select dinstinct column_name from table/select count(*)  from table)</p>
+<p>这里面实际上第三种情况是可以避免的，在做业务时，需要谨慎的加索引,在合适的列上创建索引，索引列区分程度是否高(主键索引和唯一索引不用说区分度百分百，如果能用到主键索引或者唯一索引就尽可能的使用这两种索引，如果不能使用，确保索引列区分程度够高，区分度计算公式select dinstinct column_name from table/select count(*)  from table)</p>
 <h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://segmentfault.com/a/1190000014133576" target="_blank" rel="noopener">MySQL InnoDB锁机制全面解析分享</a><br><a href="https://zhuanlan.zhihu.com/p/29150809" target="_blank" rel="noopener">MySQL锁总结</a></p>
 
           
