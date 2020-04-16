@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="中间件,后端,消息队列,">
+  <meta name="keywords" content="中间件,redis,后端技术,No-SQL,">
 
 
 
@@ -79,22 +79,21 @@
 
 
 
-<meta name="description" content="前言今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之Rabbit-MQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
-<meta name="keywords" content="中间件,后端,消息队列">
+<meta name="description" content="前言 我们都知道，系统中每引入一个新的中间件，都会造成可用性的降低，举个例子，本来我只需要保障应用本身高可用即可，现在又引入了中间件A，如果它宕机了怎么办？所以，伴随着这个话题，我们今天就来聊聊如果保证redis的高可用    高可用方案为什么要用保证redis的高可用？redis单点会带来哪些问题呢？ 单点故障问题如果目前只有一台redis服务器在运行，发生机器故障，服务直接不可用，如果故障比较">
+<meta name="keywords" content="中间件,redis,后端技术,No-SQL">
 <meta property="og:type" content="article">
-<meta property="og:title" content="消息队列之Rabbit-MQ">
-<meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/13/mq-Rabbit-MQ/index.html">
+<meta property="og:title" content="谈谈如何保障redis的高可用?">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/16/how-to-guarantee-redis-high-availability/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
-<meta property="og:description" content="前言今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之Rabbit-MQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
+<meta property="og:description" content="前言 我们都知道，系统中每引入一个新的中间件，都会造成可用性的降低，举个例子，本来我只需要保障应用本身高可用即可，现在又引入了中间件A，如果它宕机了怎么办？所以，伴随着这个话题，我们今天就来聊聊如果保证redis的高可用    高可用方案为什么要用保证redis的高可用？redis单点会带来哪些问题呢？ 单点故障问题如果目前只有一台redis服务器在运行，发生机器故障，服务直接不可用，如果故障比较">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png">
-<meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/exchange-direct.png">
-<meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/exchange-fanout.png">
-<meta property="og:updated_time" content="2020-04-14T14:45:35.762Z">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/07/GgEFqx.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/16/JEEvHs.png">
+<meta property="og:updated_time" content="2020-04-16T15:45:06.396Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="消息队列之Rabbit-MQ">
-<meta name="twitter:description" content="前言今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之Rabbit-MQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
-<meta name="twitter:image" content="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png">
+<meta name="twitter:title" content="谈谈如何保障redis的高可用?">
+<meta name="twitter:description" content="前言 我们都知道，系统中每引入一个新的中间件，都会造成可用性的降低，举个例子，本来我只需要保障应用本身高可用即可，现在又引入了中间件A，如果它宕机了怎么办？所以，伴随着这个话题，我们今天就来聊聊如果保证redis的高可用    高可用方案为什么要用保证redis的高可用？redis单点会带来哪些问题呢？ 单点故障问题如果目前只有一台redis服务器在运行，发生机器故障，服务直接不可用，如果故障比较">
+<meta name="twitter:image" content="https://s1.ax1x.com/2020/04/07/GgEFqx.png">
 
 
 
@@ -124,13 +123,13 @@
 
 
 
-  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/04/13/mq-Rabbit-MQ/">
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/04/16/how-to-guarantee-redis-high-availability/">
 
 
 
 
 
-  <title>消息队列之Rabbit-MQ | cris's blog</title>
+  <title>谈谈如何保障redis的高可用? | cris's blog</title>
   
 
 
@@ -257,7 +256,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/13/mq-Rabbit-MQ/">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/16/how-to-guarantee-redis-high-availability/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="mr_cris">
@@ -274,7 +273,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">消息队列之Rabbit-MQ</h1>
+          <h1 class="post-title" itemprop="name headline">谈谈如何保障redis的高可用?</h1>
         
 
         <div class="post-meta">
@@ -286,8 +285,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-13T12:31:03+08:00">
-                2020-04-13
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-16T20:02:54+08:00">
+                2020-04-16
               </time>
             
 
@@ -329,80 +328,32 @@
       
 
       
-        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。</p>
-<h1 id="什么是消息队列-为什么要用消息队列"><a href="#什么是消息队列-为什么要用消息队列" class="headerlink" title="什么是消息队列,为什么要用消息队列"></a>什么是消息队列,为什么要用消息队列</h1><p>这里的内容在上一篇(<a href="https://kyo7701.github.io/blog/2019/08/11/message_queue/">谈谈消息队列</a>)内容中已经讲过了，这里就不再赘述了</p>
-<h1 id="消息队列之Rabbit-MQ"><a href="#消息队列之Rabbit-MQ" class="headerlink" title="消息队列之Rabbit-MQ"></a>消息队列之Rabbit-MQ</h1><p>
-RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>
+我们都知道，系统中每引入一个新的中间件，都会造成可用性的降低，举个例子，本来我只需要保障应用本身高可用即可，现在又引入了中间件A，如果它宕机了怎么办？所以，伴随着这个话题，我们今天就来聊聊如果保证redis的高可用
+
 </p>
 
-<p>AMQP(Adavanced message queue),高级消息队列协议，它是应用层协议的一个开放标准，为面向消息的中间件设计，基于此协议的客户端与消息中间件可以传递消息，并且不受产品、开发语言等条件的限制。</p>
-<p>这里引用了RabbitMQ官网的图片，AMQP的消息模型<br><img src="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png" alt><br>消息代理(messaging broker)从publisher(消息生产者)接收消息，并且将消息路由给消费者，由于AMQP是个网络协议，生产者、消息代理和消费者可以位于不同的机器上</p>
-<h1 id="Rabbit-MQ中的基本概念"><a href="#Rabbit-MQ中的基本概念" class="headerlink" title="Rabbit-MQ中的基本概念"></a>Rabbit-MQ中的基本概念</h1><ul>
-<li>Exchange 从生产者接收消息，并且根据exchange的类型将消息推送到对应的队列中</li>
-<li>Binding queue和exchange的绑定，通过这个绑定rabbitmq可以知道如何正确地将消息路由到指定的queue上了</li>
-<li>Routing key 生产者将消息发送给exchange的时候，rabbitmq 需要指定一个routing key来确定这个消息的路由规则，这个路由规则将决定消息如何路由到queue中</li>
-<li>Users </li>
-<li>Vhost,virtual host 是一种可以在同一个rabbitMQ实例中隔离多个不同的应用，不同的用户可以拥有不同virtual host的权限，每一个virtual host都可以拥有不同的queues和exchanges</li>
-<li>Producer 应用中消息的生产者</li>
-<li>Consumer 应用中消息的消费者</li>
-<li>Queue 一个存储消息的buffer</li>
-<li>Message 生产者通过rabbitMQ投递给消费者的消息</li>
-<li>Connection 客户端应用程序和RabbitMQ之间的TCP连接,和生产者与RabbitMQ之间都是通过TCP连接建立的。</li>
-<li>Channel 在Connection中的一个虚拟连接，队列中的消息的发布和消费</li>
-</ul>
-<p>由Exchange、Queue、RoutingKey三个才能决定一个从Exchange到Queue的唯一的线路</p>
-<h1 id="exchange和exchange类型"><a href="#exchange和exchange类型" class="headerlink" title="exchange和exchange类型"></a>exchange和exchange类型</h1><p>Exchanges在AMQP模型中是消息被发送到的实体。Exchanges将消息路由到0个或更多个queue上面去，路由算法取决于exchange的类型和绑定规则，AMQP提供以下exchange类型</p>
-<table>
-<thead>
-<tr>
-<th>类型</th>
-<th>默认预定义的名字</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Direct Exchange</td>
-<td>空串或者 amqp.direct</td>
-</tr>
-<tr>
-<td>Fanout Exchange</td>
-<td>amq.fanout</td>
-</tr>
-<tr>
-<td>Topic Exchange</td>
-<td>amq.topic</td>
-</tr>
-<tr>
-<td>Headers Exchange</td>
-<td>amq.match</td>
-</tr>
-</tbody></table>
-<p>此外 AMQP中还定义了几个很重要的属性</p>
+<h1 id="高可用方案"><a href="#高可用方案" class="headerlink" title="高可用方案"></a>高可用方案</h1><p>为什么要用保证redis的高可用？redis单点会带来哪些问题呢？</p>
+<h2 id="单点故障问题"><a href="#单点故障问题" class="headerlink" title="单点故障问题"></a>单点故障问题</h2><p>如果目前只有一台redis服务器在运行，发生机器故障，服务直接不可用，如果故障比较严重，磁盘损坏了，数据就损坏了，单台机器时没有办法保证数据的安全性的</p>
+<h2 id="容量瓶颈"><a href="#容量瓶颈" class="headerlink" title="容量瓶颈"></a>容量瓶颈</h2><p>redis是内存存储的，单机很容易受到内存容量的限制</p>
+<h2 id="主从复制模式"><a href="#主从复制模式" class="headerlink" title="主从复制模式"></a>主从复制模式</h2><p>主从复制，顾名思义，分为主节点和从节点，主节点负责写，从节点负责扩展主节点的读能力，并且可以将主节点的数据同步给从节点，一旦发现主节点发生故障，从节点可以随时顶上来</p>
+<p><strong>主从复制模式面临的问题</strong></p>
 <ul>
-<li>name </li>
-<li>durability(broker重启后exchange是否还存在)</li>
-<li>Auto-delete(当exchange上面的最后一个queue解绑后是否自动删除)</li>
-<li>Arguments(可选参数，插件或者broker的特定功能会用到)</li>
+<li>并没有解决单点的写压力</li>
+<li>主节点发生故障的时候，需要手动将从节点晋升为主节点，同时需要通知应用放更改主节点地址并重启，并且需要命令其他从节点复制新的主节点，整个过程需要人工干预</li>
+<li>主节点的存储能力受到单机的限制</li>
 </ul>
-<p>下面的内容全部引用自rabbitmq官网，提供了AMQP协议的概述</p>
-<h1 id="Default-Exchanges"><a href="#Default-Exchanges" class="headerlink" title="Default Exchanges"></a>Default Exchanges</h1><p>默认的exchange是一个broker预定义的没有名字的direct exchange，它有一个特殊的性质:所有新建的queue都会绑定到默认的exchange上面，并且routing-key和queue名相同</p>
-<h1 id="Direct-Exchange"><a href="#Direct-Exchange" class="headerlink" title="Direct Exchange"></a>Direct Exchange</h1><p>direct exchange根据消息所带的routing-key将消息投递给对应的队列。direct exchange倾向于用作消息的单播路由(unicast routing),尽管它也可以用作多播路由(multicast routing)，工作原理:</p>
-<ul>
-<li>一个queue通过一个routing-key K绑定到一个exchange上</li>
-<li>当一条routing-key为R的消息到达direct-exchange时，direct exchange会把消息投递给routing-key跟R相等的queue上面去</li>
-</ul>
-<p>direct exchange通常用于循环分配任务给多个工作者，需要注意的是，消息的负载均衡是发生在consumer之间的，并不是发生在queue之间，举个例子(一个direct exchange 通过一个routing-key绑定了多个queue,消息会发到多个queue中，一个queue中消息的消费并不影响另一个queue的消费,也就是不会发生抢消息的行为)</p>
-<p><img src="https://www.rabbitmq.com/img/tutorials/intro/exchange-direct.png" alt><br>图片引用自<a href="https://www.rabbitmq.com/tutorials/amqp-concepts.html" target="_blank" rel="noopener">rabbitmq官网</a></p>
-<h1 id="Fanout-Exchange-扇形交换机"><a href="#Fanout-Exchange-扇形交换机" class="headerlink" title="Fanout Exchange 扇形交换机"></a>Fanout Exchange 扇形交换机</h1><p>扇形交换机会把他收到的消息发送到所有绑定到它的queue中,并且这里的routing-key是被忽略的。如果有n个queue绑定到了扇形交换机上面，当一条新消息发布到交换机中时，消息会复制n份投递到所有的n个queue中，扇形交换机特别适合做广播消息<br><img src="https://www.rabbitmq.com/img/tutorials/intro/exchange-fanout.png" alt><br>图片引用自<a href="https://www.rabbitmq.com/tutorials/amqp-concepts.html" target="_blank" rel="noopener">rabbitmq官网</a></p>
-<p>因为扇形交换机会把消息广播到所有的queue中，他的使用场景非常相似:</p>
-<ul>
-<li>很多大型多人在线游戏会用它处理排行榜更新或其他全局事件</li>
-<li>体育新闻网站可以准实时地将比分发送给移动客户端</li>
-<li>分布式系统可以将不同的状态和配置更新进行广播</li>
-<li>可以通过扇形交换机来实现分发消息给群聊中 的用户</li>
-</ul>
-<h1 id="topic-exchange"><a href="#topic-exchange" class="headerlink" title="topic exchange"></a>topic exchange</h1><hr>
-<p>未完待续</p>
-<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cloudamqp.com/blog/2015-05-18-part1-rabbitmq-for-beginners-what-is-rabbitmq.html" target="_blank" rel="noopener">for RabbitMQ beginners- what is RabbitMQ?</a></p>
+<p>redis 主从复制和sentinel架构示意图如下<br><img src="https://s1.ax1x.com/2020/04/07/GgEFqx.png" alt></p>
+<h2 id="redis-sentinel-哨兵模式"><a href="#redis-sentinel-哨兵模式" class="headerlink" title="redis sentinel 哨兵模式"></a>redis sentinel 哨兵模式</h2><p>哨兵模式实际上就是在主从复制的基础上，加上了一层监控的哨兵节点。Redis-sentinel也是官方提供的高可用方案，哨兵模式是在2.6以后开始提供的，如果需要在生产上使用，尽量使用2.8之后的版本，比较稳定。哨兵模式下在主节点发生故障时，可以实现自动的主备切换，并且可以监控多个主从集群，哨兵节点本身也支持集群，毕竟哨兵只有单个节点也无法支持哨兵节点的高可用，并且如果唯一的哨兵如果宕机了，哨兵模式又变回主从复制模式了，又将无法自动的进行主备切换了。<br>客户端连接的是哨兵节点，只要连接任意一个哨兵节点，就可以获得redis主从集群中的信息。</p>
+<p><img src="https://s1.ax1x.com/2020/04/16/JEEvHs.png" alt><br>图片引用自<a href="https://juejin.im/post/5d76f54b6fb9a06aeb10e53c#heading-8" target="_blank" rel="noopener">Redis哨兵（Sentinel）模式快速入门</a></p>
+<h2 id="哨兵节点的作用"><a href="#哨兵节点的作用" class="headerlink" title="哨兵节点的作用"></a>哨兵节点的作用</h2><h3 id="监控"><a href="#监控" class="headerlink" title="监控"></a><strong>监控</strong></h3><p>sentinel 会不间断的检查主服务器和从服务器是否正常运行</p>
+<h3 id="通知"><a href="#通知" class="headerlink" title="通知"></a><strong>通知</strong></h3><p>当被监控的某个redis服务器如果出现问题，sentinel通过api脚本向管理员或者其他应用程序发送通知</p>
+<h3 id="自动故障迁移"><a href="#自动故障迁移" class="headerlink" title="自动故障迁移"></a><strong>自动故障迁移</strong></h3><p>当主节点不能正常工作时，sentinel会开始一次自动的故障迁移，它将会与失效主节点是主从关系的其中一个主节点的其中一个从节点升级为新的主节点，并且将其他的从节点指向新的主节点。</p>
+<h3 id="配置提供者"><a href="#配置提供者" class="headerlink" title="配置提供者"></a><strong>配置提供者</strong></h3><p>在redis sentinel模式下，客户端在初始化连接的是sentinel的集合，从中获取主节点的信息。</p>
+<h2 id="主观下线和客观下线问题"><a href="#主观下线和客观下线问题" class="headerlink" title="主观下线和客观下线问题"></a>主观下线和客观下线问题</h2><p>默认情况下，每个sentinel会以每秒一次的频率对redis节点和其他sentinel节点发送ping命令，并通过节点的回复来判断是否在线</p>
+<p>主观下线适用于所有主节点和从节点。如果在down-after-milliseconds毫秒内，sentinel没有收到目标节点的有效回复，则会判定为该节点为主观下线</p>
+<p>客观下线只适用于主节点，如果主节点故障，sentinel会通过sentinel is-master-down-by-addr命令向其他sentinel节点询问该节点的状态，若果超过<quorum>个数的节点认为主节点不可达，则sentinel节点会判定主节点为客观下线</quorum></p>
+<h2 id="主节点选举"><a href="#主节点选举" class="headerlink" title="主节点选举"></a>主节点选举</h2><h2 id="redis-cluster"><a href="#redis-cluster" class="headerlink" title="redis cluster"></a>redis cluster</h2><h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5d76f54b6fb9a06aeb10e53c#heading-8" target="_blank" rel="noopener">Redis哨兵（Sentinel）模式快速入门</a><br><a href="https://juejin.im/post/5e47cbe451882549522ab508#heading-17" target="_blank" rel="noopener"></a></p>
 
       
     </div>
@@ -422,9 +373,11 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
           
             <a href="/blog/tags/中间件/" rel="tag"># 中间件</a>
           
-            <a href="/blog/tags/后端/" rel="tag"># 后端</a>
+            <a href="/blog/tags/redis/" rel="tag"># redis</a>
           
-            <a href="/blog/tags/消息队列/" rel="tag"># 消息队列</a>
+            <a href="/blog/tags/后端技术/" rel="tag"># 后端技术</a>
+          
+            <a href="/blog/tags/No-SQL/" rel="tag"># No-SQL</a>
           
         </div>
       
@@ -437,8 +390,8 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/blog/2020/04/10/db-index/" rel="next" title="谈谈数据库中的索引">
-                <i class="fa fa-chevron-left"></i> 谈谈数据库中的索引
+              <a href="/blog/2020/04/16/about-redis/" rel="next" title="聊聊中间件之redis">
+                <i class="fa fa-chevron-left"></i> 聊聊中间件之redis
               </a>
             
           </div>
@@ -446,10 +399,6 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/blog/2020/04/14/db-lock/" rel="prev" title="谈谈mysql中的锁">
-                谈谈mysql中的锁 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -588,7 +537,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是消息队列-为什么要用消息队列"><span class="nav-number">2.</span> <span class="nav-text">什么是消息队列,为什么要用消息队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息队列之Rabbit-MQ"><span class="nav-number">3.</span> <span class="nav-text">消息队列之Rabbit-MQ</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Rabbit-MQ中的基本概念"><span class="nav-number">4.</span> <span class="nav-text">Rabbit-MQ中的基本概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#exchange和exchange类型"><span class="nav-number">5.</span> <span class="nav-text">exchange和exchange类型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Default-Exchanges"><span class="nav-number">6.</span> <span class="nav-text">Default Exchanges</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Direct-Exchange"><span class="nav-number">7.</span> <span class="nav-text">Direct Exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Fanout-Exchange-扇形交换机"><span class="nav-number">8.</span> <span class="nav-text">Fanout Exchange 扇形交换机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#topic-exchange"><span class="nav-number">9.</span> <span class="nav-text">topic exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">10.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#高可用方案"><span class="nav-number">2.</span> <span class="nav-text">高可用方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#单点故障问题"><span class="nav-number">2.1.</span> <span class="nav-text">单点故障问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#容量瓶颈"><span class="nav-number">2.2.</span> <span class="nav-text">容量瓶颈</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主从复制模式"><span class="nav-number">2.3.</span> <span class="nav-text">主从复制模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis-sentinel-哨兵模式"><span class="nav-number">2.4.</span> <span class="nav-text">redis sentinel 哨兵模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哨兵节点的作用"><span class="nav-number">2.5.</span> <span class="nav-text">哨兵节点的作用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#监控"><span class="nav-number">2.5.1.</span> <span class="nav-text">监控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通知"><span class="nav-number">2.5.2.</span> <span class="nav-text">通知</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#自动故障迁移"><span class="nav-number">2.5.3.</span> <span class="nav-text">自动故障迁移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置提供者"><span class="nav-number">2.5.4.</span> <span class="nav-text">配置提供者</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主观下线和客观下线问题"><span class="nav-number">2.6.</span> <span class="nav-text">主观下线和客观下线问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主节点选举"><span class="nav-number">2.7.</span> <span class="nav-text">主节点选举</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis-cluster"><span class="nav-number">2.8.</span> <span class="nav-text">redis cluster</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
@@ -801,7 +750,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
         repo: 'blog-comment',
         owner: 'kyo7701',
         admin: ['kyo7701'],
-        id:'gitalk_20200413123103',
+        id:'gitalk_20200416200254',
         labels: 'gitalk'.split(',').filter(l => l),
         perPage: 10,
         pagerDirection: 'last',
