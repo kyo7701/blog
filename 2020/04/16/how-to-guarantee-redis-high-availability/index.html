@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="中间件,redis,后端技术,No-SQL,">
+  <meta name="keywords" content="redis,中间件,后端技术,No-SQL,">
 
 
 
@@ -80,7 +80,7 @@
 
 
 <meta name="description" content="前言 我们都知道，系统中每引入一个新的中间件，都会造成可用性的降低，举个例子，本来我只需要保障应用本身高可用即可，现在又引入了中间件A，如果它宕机了怎么办？所以，伴随着这个话题，我们今天就来聊聊如果保证redis的高可用    高可用方案为什么要用保证redis的高可用？redis单点会带来哪些问题呢？ 单点故障问题如果目前只有一台redis服务器在运行，发生机器故障，服务直接不可用，如果故障比较">
-<meta name="keywords" content="中间件,redis,后端技术,No-SQL">
+<meta name="keywords" content="redis,中间件,后端技术,No-SQL">
 <meta property="og:type" content="article">
 <meta property="og:title" content="谈谈如何保障redis的高可用?">
 <meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/16/how-to-guarantee-redis-high-availability/index.html">
@@ -89,7 +89,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://s1.ax1x.com/2020/04/07/GgEFqx.png">
 <meta property="og:image" content="https://s1.ax1x.com/2020/04/16/JEEvHs.png">
-<meta property="og:updated_time" content="2020-04-16T15:45:06.396Z">
+<meta property="og:updated_time" content="2020-04-17T05:47:38.983Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="谈谈如何保障redis的高可用?">
 <meta name="twitter:description" content="前言 我们都知道，系统中每引入一个新的中间件，都会造成可用性的降低，举个例子，本来我只需要保障应用本身高可用即可，现在又引入了中间件A，如果它宕机了怎么办？所以，伴随着这个话题，我们今天就来聊聊如果保证redis的高可用    高可用方案为什么要用保证redis的高可用？redis单点会带来哪些问题呢？ 单点故障问题如果目前只有一台redis服务器在运行，发生机器故障，服务直接不可用，如果故障比较">
@@ -350,10 +350,51 @@
 <h3 id="通知"><a href="#通知" class="headerlink" title="通知"></a><strong>通知</strong></h3><p>当被监控的某个redis服务器如果出现问题，sentinel通过api脚本向管理员或者其他应用程序发送通知</p>
 <h3 id="自动故障迁移"><a href="#自动故障迁移" class="headerlink" title="自动故障迁移"></a><strong>自动故障迁移</strong></h3><p>当主节点不能正常工作时，sentinel会开始一次自动的故障迁移，它将会与失效主节点是主从关系的其中一个主节点的其中一个从节点升级为新的主节点，并且将其他的从节点指向新的主节点。</p>
 <h3 id="配置提供者"><a href="#配置提供者" class="headerlink" title="配置提供者"></a><strong>配置提供者</strong></h3><p>在redis sentinel模式下，客户端在初始化连接的是sentinel的集合，从中获取主节点的信息。</p>
-<h2 id="主观下线和客观下线问题"><a href="#主观下线和客观下线问题" class="headerlink" title="主观下线和客观下线问题"></a>主观下线和客观下线问题</h2><p>默认情况下，每个sentinel会以每秒一次的频率对redis节点和其他sentinel节点发送ping命令，并通过节点的回复来判断是否在线</p>
-<p>主观下线适用于所有主节点和从节点。如果在down-after-milliseconds毫秒内，sentinel没有收到目标节点的有效回复，则会判定为该节点为主观下线</p>
-<p>客观下线只适用于主节点，如果主节点故障，sentinel会通过sentinel is-master-down-by-addr命令向其他sentinel节点询问该节点的状态，若果超过<quorum>个数的节点认为主节点不可达，则sentinel节点会判定主节点为客观下线</quorum></p>
-<h2 id="主节点选举"><a href="#主节点选举" class="headerlink" title="主节点选举"></a>主节点选举</h2><h2 id="redis-cluster"><a href="#redis-cluster" class="headerlink" title="redis cluster"></a>redis cluster</h2><h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5d76f54b6fb9a06aeb10e53c#heading-8" target="_blank" rel="noopener">Redis哨兵（Sentinel）模式快速入门</a><br><a href="https://juejin.im/post/5e47cbe451882549522ab508#heading-17" target="_blank" rel="noopener"></a></p>
+<h2 id="主观下线-SDOWN"><a href="#主观下线-SDOWN" class="headerlink" title="主观下线(SDOWN)"></a>主观下线(SDOWN)</h2><p>主观下线其实是指单个sentinel实例对节点做出的下线判断，默认情况下，每个sentinel会以每秒一次的频率对redis节点和其他sentinel节点发送PING命令，并通过节点的回复来判断是否在线。</p>
+<p>主观下线适用于所有主节点和从节点。如果在down-after-milliseconds毫秒内，sentinel没有收到目标节点的有效回复(+PONG,-LOADING,-MASTERDOWN)，则会判定为该节点为主观下线</p>
+<h2 id="客观下线-ODOWN"><a href="#客观下线-ODOWN" class="headerlink" title="客观下线(ODOWN)"></a>客观下线(ODOWN)</h2><p>客观下线是指多个sentinel实例对同一个实例进行主观下线判断。</p>
+<p>客观下线只适用于主节点，如果哨兵节点发现主节点主观下线后，会通过is-master-down-by-addr命令向其他sentinel节点询问该节点的状态，若果超过<quorum>个数的节点认为主节点不可达(主节点已经主观下线)，则sentinel节点会判定主节点为客观下线，只有发现主节点客观下线后，才会开启自动的故障迁移</quorum></p>
+<h2 id="自动故障迁移-automatic-failover-过程"><a href="#自动故障迁移-automatic-failover-过程" class="headerlink" title="自动故障迁移(automatic-failover)过程"></a>自动故障迁移(automatic-failover)过程</h2><ol>
+<li>sentinel发现主节点主观下线，修改其状态为SDOWN</li>
+<li>sentinel和其他sentinel节点确认master是否down掉(SENTINEL is-master-down-by-addr)，确认其状态为客观下线(ODOWN),</li>
+<li>sentinel间进行leader选举，由被选出的leader sentinel节点来进行后续的故障切换工作，选举基于Raft协议</li>
+<li>sentinel节点开始进行故障切换，并选出合适的从节点作为主节点</li>
+<li>对选出的从节点执行 slaveof no one将其晋升为新的主节点</li>
+<li>对其余的从节点发送命令，使其变为新的主节点的从节点，并且从新的主节点复制数据</li>
+<li>leader sentinel继续监控已下线主节点，一旦其重新上线，就把他降级为新的主节点的从节点，并且从新的主节点中复制数据</li>
+</ol>
+<h2 id="leader哨兵节点选举"><a href="#leader哨兵节点选举" class="headerlink" title="leader哨兵节点选举"></a>leader哨兵节点选举</h2><ol>
+<li><p>某个sentinel发现master节点主观下线后，执行以下操作</p>
+<ul>
+<li>如果该哨兵节点没有投过票，它就成为candidate</li>
+<li>如果该哨兵节点已经投过票，则在2倍的故障时间内就不会成为leader，也就是相当于一个follower</li>
+</ul>
+</li>
+<li><p>sentinel节点成为candidate后执行以下操作</p>
+<ul>
+<li>更新故障转移状态为start</li>
+<li>令当前epoch + 1,即发起新一轮的选举,在sentinel中epoch相当于Raft协议中的term</li>
+<li>向其他节点发送SENTINEL is-master-down-by-addr指令，该命令包含自己的epoch</li>
+<li>投自己一票，投票的方式是将自己master结构中的leader和leader_epoch改成投给的sentinel和它的epoch</li>
+</ul>
+</li>
+<li><p>其他节点收到Candidate的SENTINEL is-master-down-by-addr命令，如果收到命令的sentinel判断发现当前epoch和通过命令收到的epoch一样，证明它已经投过票了，当前epoch内该sentinel就只能成为follower</p>
+</li>
+<li><p>candidate会不断统计自己的票数，直到他发现认同他成为leader超过一半且超过它配置的quorum，则该candidate成为leader哨兵节点</p>
+</li>
+<li><p>在一个选举时间内，如果一个candidate没有获得超过一半的票数且超过quorum,则该次选举失败</p>
+</li>
+<li><p>如果在一个epoch内，没有一个candidate获得更多的票数，则2倍故障转移的时间后，candidate增加epoch并重新投票</p>
+</li>
+</ol>
+<h2 id="master服务器选举"><a href="#master服务器选举" class="headerlink" title="master服务器选举"></a>master服务器选举</h2><p>从已经宕机的主节点的从节点中挑选一个节点作为主节点，这个主节点是按照以下规则选出来的</p>
+<ul>
+<li>slave优先级(手动配置的) 如果有配置最高的slave节点，则返回，没有则继续</li>
+<li>复制偏移量最大的(对主节点数据复制的最完整的从节点)，如果有则返回，没有则继续</li>
+<li>启动最早的slave节点(run_id最小)</li>
+</ul>
+<h2 id="redis-cluster"><a href="#redis-cluster" class="headerlink" title="redis cluster"></a>redis cluster</h2><p>未完待续</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5d76f54b6fb9a06aeb10e53c#heading-8" target="_blank" rel="noopener">Redis哨兵（Sentinel）模式快速入门</a><br><a href="https://juejin.im/post/5e47cbe451882549522ab508#heading-17" target="_blank" rel="noopener">Redis 知识汇总</a></p>
 
       
     </div>
@@ -371,9 +412,9 @@
       
         <div class="post-tags">
           
-            <a href="/blog/tags/中间件/" rel="tag"># 中间件</a>
-          
             <a href="/blog/tags/redis/" rel="tag"># redis</a>
+          
+            <a href="/blog/tags/中间件/" rel="tag"># 中间件</a>
           
             <a href="/blog/tags/后端技术/" rel="tag"># 后端技术</a>
           
@@ -537,7 +578,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#高可用方案"><span class="nav-number">2.</span> <span class="nav-text">高可用方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#单点故障问题"><span class="nav-number">2.1.</span> <span class="nav-text">单点故障问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#容量瓶颈"><span class="nav-number">2.2.</span> <span class="nav-text">容量瓶颈</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主从复制模式"><span class="nav-number">2.3.</span> <span class="nav-text">主从复制模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis-sentinel-哨兵模式"><span class="nav-number">2.4.</span> <span class="nav-text">redis sentinel 哨兵模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哨兵节点的作用"><span class="nav-number">2.5.</span> <span class="nav-text">哨兵节点的作用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#监控"><span class="nav-number">2.5.1.</span> <span class="nav-text">监控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通知"><span class="nav-number">2.5.2.</span> <span class="nav-text">通知</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#自动故障迁移"><span class="nav-number">2.5.3.</span> <span class="nav-text">自动故障迁移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置提供者"><span class="nav-number">2.5.4.</span> <span class="nav-text">配置提供者</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主观下线和客观下线问题"><span class="nav-number">2.6.</span> <span class="nav-text">主观下线和客观下线问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主节点选举"><span class="nav-number">2.7.</span> <span class="nav-text">主节点选举</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis-cluster"><span class="nav-number">2.8.</span> <span class="nav-text">redis cluster</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#高可用方案"><span class="nav-number">2.</span> <span class="nav-text">高可用方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#单点故障问题"><span class="nav-number">2.1.</span> <span class="nav-text">单点故障问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#容量瓶颈"><span class="nav-number">2.2.</span> <span class="nav-text">容量瓶颈</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主从复制模式"><span class="nav-number">2.3.</span> <span class="nav-text">主从复制模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis-sentinel-哨兵模式"><span class="nav-number">2.4.</span> <span class="nav-text">redis sentinel 哨兵模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哨兵节点的作用"><span class="nav-number">2.5.</span> <span class="nav-text">哨兵节点的作用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#监控"><span class="nav-number">2.5.1.</span> <span class="nav-text">监控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通知"><span class="nav-number">2.5.2.</span> <span class="nav-text">通知</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#自动故障迁移"><span class="nav-number">2.5.3.</span> <span class="nav-text">自动故障迁移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置提供者"><span class="nav-number">2.5.4.</span> <span class="nav-text">配置提供者</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主观下线-SDOWN"><span class="nav-number">2.6.</span> <span class="nav-text">主观下线(SDOWN)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#客观下线-ODOWN"><span class="nav-number">2.7.</span> <span class="nav-text">客观下线(ODOWN)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自动故障迁移-automatic-failover-过程"><span class="nav-number">2.8.</span> <span class="nav-text">自动故障迁移(automatic-failover)过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#leader哨兵节点选举"><span class="nav-number">2.9.</span> <span class="nav-text">leader哨兵节点选举</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#master服务器选举"><span class="nav-number">2.10.</span> <span class="nav-text">master服务器选举</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis-cluster"><span class="nav-number">2.11.</span> <span class="nav-text">redis cluster</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
