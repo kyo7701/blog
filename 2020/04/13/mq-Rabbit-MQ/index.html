@@ -79,21 +79,21 @@
 
 
 
-<meta name="description" content="前言今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之Rabbit-MQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
+<meta name="description" content="前言今天继续整理下跟RabbitMQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之RabbitMQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
 <meta name="keywords" content="中间件,后端,消息队列">
 <meta property="og:type" content="article">
-<meta property="og:title" content="消息队列之Rabbit-MQ">
+<meta property="og:title" content="消息队列之RabbitMQ">
 <meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/13/mq-Rabbit-MQ/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
-<meta property="og:description" content="前言今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之Rabbit-MQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
+<meta property="og:description" content="前言今天继续整理下跟RabbitMQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之RabbitMQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png">
 <meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/exchange-direct.png">
 <meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/exchange-fanout.png">
-<meta property="og:updated_time" content="2020-04-14T14:45:35.762Z">
+<meta property="og:updated_time" content="2020-04-17T14:02:59.853Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="消息队列之Rabbit-MQ">
-<meta name="twitter:description" content="前言今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之Rabbit-MQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
+<meta name="twitter:title" content="消息队列之RabbitMQ">
+<meta name="twitter:description" content="前言今天继续整理下跟RabbitMQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之RabbitMQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
 <meta name="twitter:image" content="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png">
 
 
@@ -130,7 +130,7 @@
 
 
 
-  <title>消息队列之Rabbit-MQ | cris's blog</title>
+  <title>消息队列之RabbitMQ | cris's blog</title>
   
 
 
@@ -274,7 +274,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">消息队列之Rabbit-MQ</h1>
+          <h1 class="post-title" itemprop="name headline">消息队列之RabbitMQ</h1>
         
 
         <div class="post-meta">
@@ -296,6 +296,61 @@
             
           </span>
 
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/rabbitmq/" itemprop="url" rel="index">
+                    <span itemprop="name">rabbitmq</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/rabbitmq/中间件/" itemprop="url" rel="index">
+                    <span itemprop="name">中间件</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/rabbitmq/中间件/消息队列/" itemprop="url" rel="index">
+                    <span itemprop="name">消息队列</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/rabbitmq/中间件/消息队列/中间件/" itemprop="url" rel="index">
+                    <span itemprop="name">中间件</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -329,15 +384,15 @@
       
 
       
-        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天继续整理下跟Rabbit-MQ有关的内容，加深一下理解,还是避免被面试官锤。</p>
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天继续整理下跟RabbitMQ有关的内容，加深一下理解,还是避免被面试官锤。</p>
 <h1 id="什么是消息队列-为什么要用消息队列"><a href="#什么是消息队列-为什么要用消息队列" class="headerlink" title="什么是消息队列,为什么要用消息队列"></a>什么是消息队列,为什么要用消息队列</h1><p>这里的内容在上一篇(<a href="https://kyo7701.github.io/blog/2019/08/11/message_queue/">谈谈消息队列</a>)内容中已经讲过了，这里就不再赘述了</p>
-<h1 id="消息队列之Rabbit-MQ"><a href="#消息队列之Rabbit-MQ" class="headerlink" title="消息队列之Rabbit-MQ"></a>消息队列之Rabbit-MQ</h1><p>
+<h1 id="消息队列之RabbitMQ"><a href="#消息队列之RabbitMQ" class="headerlink" title="消息队列之RabbitMQ"></a>消息队列之RabbitMQ</h1><p>
 RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现
 </p>
 
 <p>AMQP(Adavanced message queue),高级消息队列协议，它是应用层协议的一个开放标准，为面向消息的中间件设计，基于此协议的客户端与消息中间件可以传递消息，并且不受产品、开发语言等条件的限制。</p>
 <p>这里引用了RabbitMQ官网的图片，AMQP的消息模型<br><img src="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png" alt><br>消息代理(messaging broker)从publisher(消息生产者)接收消息，并且将消息路由给消费者，由于AMQP是个网络协议，生产者、消息代理和消费者可以位于不同的机器上</p>
-<h1 id="Rabbit-MQ中的基本概念"><a href="#Rabbit-MQ中的基本概念" class="headerlink" title="Rabbit-MQ中的基本概念"></a>Rabbit-MQ中的基本概念</h1><ul>
+<h1 id="RabbitMQ中的基本概念"><a href="#RabbitMQ中的基本概念" class="headerlink" title="RabbitMQ中的基本概念"></a>RabbitMQ中的基本概念</h1><ul>
 <li>Exchange 从生产者接收消息，并且根据exchange的类型将消息推送到对应的队列中</li>
 <li>Binding queue和exchange的绑定，通过这个绑定rabbitmq可以知道如何正确地将消息路由到指定的queue上了</li>
 <li>Routing key 生产者将消息发送给exchange的时候，rabbitmq 需要指定一个routing key来确定这个消息的路由规则，这个路由规则将决定消息如何路由到queue中</li>
@@ -544,7 +599,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
               
               <div class="site-state-item site-state-categories">
                 <a href="/blog/categories/index.html">
-                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-count">18</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -588,7 +643,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是消息队列-为什么要用消息队列"><span class="nav-number">2.</span> <span class="nav-text">什么是消息队列,为什么要用消息队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息队列之Rabbit-MQ"><span class="nav-number">3.</span> <span class="nav-text">消息队列之Rabbit-MQ</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Rabbit-MQ中的基本概念"><span class="nav-number">4.</span> <span class="nav-text">Rabbit-MQ中的基本概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#exchange和exchange类型"><span class="nav-number">5.</span> <span class="nav-text">exchange和exchange类型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Default-Exchanges"><span class="nav-number">6.</span> <span class="nav-text">Default Exchanges</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Direct-Exchange"><span class="nav-number">7.</span> <span class="nav-text">Direct Exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Fanout-Exchange-扇形交换机"><span class="nav-number">8.</span> <span class="nav-text">Fanout Exchange 扇形交换机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#topic-exchange"><span class="nav-number">9.</span> <span class="nav-text">topic exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">10.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是消息队列-为什么要用消息队列"><span class="nav-number">2.</span> <span class="nav-text">什么是消息队列,为什么要用消息队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息队列之RabbitMQ"><span class="nav-number">3.</span> <span class="nav-text">消息队列之RabbitMQ</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RabbitMQ中的基本概念"><span class="nav-number">4.</span> <span class="nav-text">RabbitMQ中的基本概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#exchange和exchange类型"><span class="nav-number">5.</span> <span class="nav-text">exchange和exchange类型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Default-Exchanges"><span class="nav-number">6.</span> <span class="nav-text">Default Exchanges</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Direct-Exchange"><span class="nav-number">7.</span> <span class="nav-text">Direct Exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Fanout-Exchange-扇形交换机"><span class="nav-number">8.</span> <span class="nav-text">Fanout Exchange 扇形交换机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#topic-exchange"><span class="nav-number">9.</span> <span class="nav-text">topic exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">10.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>

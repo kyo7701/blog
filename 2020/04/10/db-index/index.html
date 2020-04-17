@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT">
+  <meta name="keywords" content="中间件,数据库,mysql,索引,">
 
 
 
@@ -80,13 +80,14 @@
 
 
 <meta name="description" content="前言今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。  索引的定义在开始看mysql中的">
+<meta name="keywords" content="中间件,数据库,mysql,索引">
 <meta property="og:type" content="article">
 <meta property="og:title" content="谈谈数据库中的索引">
 <meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/10/db-index/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
 <meta property="og:description" content="前言今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。  索引的定义在开始看mysql中的">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-04-11T04:21:50.349Z">
+<meta property="og:updated_time" content="2020-04-17T14:01:45.516Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="谈谈数据库中的索引">
 <meta name="twitter:description" content="前言今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。  索引的定义在开始看mysql中的">
@@ -292,6 +293,50 @@
           </span>
 
           
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/mysql/中间件/" itemprop="url" rel="index">
+                    <span itemprop="name">中间件</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/mysql/中间件/数据库/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
 
           
             
@@ -412,6 +457,18 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/blog/tags/中间件/" rel="tag"># 中间件</a>
+          
+            <a href="/blog/tags/数据库/" rel="tag"># 数据库</a>
+          
+            <a href="/blog/tags/mysql/" rel="tag"># mysql</a>
+          
+            <a href="/blog/tags/索引/" rel="tag"># 索引</a>
+          
+        </div>
+      
 
       
       
@@ -431,8 +488,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/blog/2020/04/13/mq-Rabbit-MQ/" rel="prev" title="消息队列之Rabbit-MQ">
-                消息队列之Rabbit-MQ <i class="fa fa-chevron-right"></i>
+              <a href="/blog/2020/04/13/mq-Rabbit-MQ/" rel="prev" title="消息队列之RabbitMQ">
+                消息队列之RabbitMQ <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -528,7 +585,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/blog/categories/index.html">
-                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-count">18</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
