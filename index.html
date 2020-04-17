@@ -381,7 +381,7 @@
 <li><p>如果在一个epoch内，没有一个candidate获得更多的票数，则2倍故障转移的时间后，candidate增加epoch并重新投票</p>
 </li>
 </ol>
-<h3 id="master服务器选举"><a href="#master服务器选举" class="headerlink" title="master服务器选举"></a>master服务器选举</h3><p>从已经宕机的主节点的从节点中挑选一个节点作为主节点，这个主节点是按照以下规则选出来的</p>
+<h3 id="master节点选举"><a href="#master节点选举" class="headerlink" title="master节点选举"></a>master节点选举</h3><p>从已经宕机的主节点的从节点中挑选一个节点作为主节点，这个主节点是按照以下规则选出来的</p>
 <ul>
 <li>slave优先级(手动配置的) 如果有配置最高的slave节点，则返回，没有则继续</li>
 <li>复制偏移量最大的(对主节点数据复制的最完整的从节点)，如果有则返回，没有则继续</li>
