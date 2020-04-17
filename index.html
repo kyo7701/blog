@@ -387,8 +387,16 @@
 <li>复制偏移量最大的(对主节点数据复制的最完整的从节点)，如果有则返回，没有则继续</li>
 <li>启动最早的slave节点(run_id最小)</li>
 </ul>
-<h2 id="redis-cluster"><a href="#redis-cluster" class="headerlink" title="redis cluster"></a>redis cluster</h2><p>未完待续</p>
-<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5d76f54b6fb9a06aeb10e53c#heading-8" target="_blank" rel="noopener">Redis哨兵（Sentinel）模式快速入门</a><br><a href="https://juejin.im/post/5e47cbe451882549522ab508#heading-17" target="_blank" rel="noopener">Redis 知识汇总</a></p>
+<h2 id="redis-cluster"><a href="#redis-cluster" class="headerlink" title="redis cluster"></a>redis cluster</h2><p>来聊redis cluster之前先来聊聊几个问题 </p>
+<h3 id="水平扩展性"><a href="#水平扩展性" class="headerlink" title="水平扩展性"></a>水平扩展性</h3><p>水平扩展性或者说给系统中添加节点的能力，对于redis来说特别重要，redis只能进行垂直扩展(给予redis进程更多的CPU或者内存)，不过垂直扩展的特点也很明显，很快就会变得非常昂贵并且变得无法管理。</p>
+<p>我们只能通过把redis中的数据进行分区，将不同分区的数据存储到不同的redis实例中，很多公司针对redis已经实现了自己的分区方案，不过大部分方案都是在客户端进行分区，也就是，数据在哪个节点进行读写是客户端来决定的，这个方法的缺点也很明显，所有的客户端都要实现这个相同的分区策略，并且连接到同一个redis实例的不同的redis客户端将会紧紧的耦合在一起。</p>
+<p>另一种分区策略对客户端进行了解耦，就是用代理进行协助分区，Twitter就采用了这种分区策略，在这种方式下，<br>proxy就像一个在客户端和redis实例之间的一个单独的节点负责处理数据分区，虽然这种方式给客户端解耦，但是又引入了proxy单点故障的问题，又需要考虑proxy的高可用问题，还有一个问题就是如果将来需要添加或者删除节点的时候，又会带来数据的重新分区，如果只是用redis做缓存的话，这个问题没什么大不了的，但是如果用来做数据存储，只是改变分区策略可能会引起数据的“丢失”(原来的key值可能会被分区到别的redis实例上面去了)，并且这个新的redis实例上还没有数据，调整了分区策略后必须要进行数据迁移</p>
+<h3 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h3><p>当在一个大型企业级应用中依赖一个数据库的时候，是不允许数据库有停机时间的，现代的数据库必须要尽可能地有容灾和容错能力，并且不需要人为干预。尽管redis实例很少发生宕机，但是也有一些异常情况会导致redis实例不可用，由于没有好的redis高可用方案，一些公司开始自行研发自己的redis高可用方案，但是大部分用户都没有高可用方案，并且一些stackoverflow上面的问答都太专业化了，普通用户根本就被抛弃了，于是redis团队立刻研发了一套高可用方案redis sentinel,这是一个官方的高可用方案，但是引入了额外的复杂度，并且这种方案并不提供主节点的水平扩展，在redis实例外还需要3台额外的机器(存放哨兵节点)。</p>
+<p>为了解决上述问题，redis 3.0.0发布了redis cluster ，redis cluster是一个多主多从并且去中心的架构，redis cluster简而言之就是一个数据分片策略，它可以在集群运行的时候将数据重新分片到其他节点上面，并且提供了故障切换的方法可以确保系统可以应对各种各样的故障。redis cluster使用hash分区将key分配到16,384个hash槽内，集群的每一个主节点负责一部分hash槽，集群中的每一个从节点负责复制指定主节点的数据，并且可以重新分配给别的主节点或者是被选举为新的主节点，主节点接收来自客户端的读和写请求，从节点不与客户端做任何交互，只做主节点的数据备份。</p>
+<p><img src="https://img-blog.csdn.net/20180902175117548?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xvdmU5MDU2NjE0MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt><br>图片引用自<a href="https://blog.csdn.net/love905661433/article/details/82317635" target="_blank" rel="noopener">Redis Cluster集群使用与原理</a></p>
+<p>未完待续</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5d76f54b6fb9a06aeb10e53c#heading-8" target="_blank" rel="noopener">Redis哨兵（Sentinel）模式快速入门</a><br><a href="https://juejin.im/post/5e47cbe451882549522ab508#heading-17" target="_blank" rel="noopener">Redis 知识汇总</a><br><a href="https://www.credera.com/blog/technology-insights/open-source-technology-insights/an-introduction-to-redis-cluster/" target="_blank" rel="noopener">An Introduction to Redis Cluster</a></p>
+<p>关于Raft协议，<a href="http://thesecretlivesofdata.com/raft/" target="_blank" rel="noopener">这个网站</a>上面有动画演示，非常容易理解，可以去了解下</p>
 
           
         
