@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="中间件,数据库,redis,">
+  <meta name="keywords" content="redis,中间件,数据库,">
 
 
 
@@ -80,14 +80,14 @@
 
 
 <meta name="description" content="前言 不知不觉4月份已经过去大半了，转眼间自己已经失业半个月了，感觉还有好多东西没有复习，不管怎么样，不能让自己闲下来,今天就来整理一下redis相关的内容   about redis1Redis是一个使用ANSI C编写的开源、支持网络、基于内存、可选持久性的键值对存储数据库。  --- wikipedia  redis是一款基于内存的数据库，即NOSQL,采用单线程模型，能支持10W的并发常用">
-<meta name="keywords" content="中间件,数据库,redis">
+<meta name="keywords" content="redis,中间件,数据库">
 <meta property="og:type" content="article">
 <meta property="og:title" content="聊聊中间件之redis">
 <meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/16/about-redis/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
 <meta property="og:description" content="前言 不知不觉4月份已经过去大半了，转眼间自己已经失业半个月了，感觉还有好多东西没有复习，不管怎么样，不能让自己闲下来,今天就来整理一下redis相关的内容   about redis1Redis是一个使用ANSI C编写的开源、支持网络、基于内存、可选持久性的键值对存储数据库。  --- wikipedia  redis是一款基于内存的数据库，即NOSQL,采用单线程模型，能支持10W的并发常用">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-04-17T14:14:22.747Z">
+<meta property="og:updated_time" content="2020-04-20T06:15:53.887Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="聊聊中间件之redis">
 <meta name="twitter:description" content="前言 不知不觉4月份已经过去大半了，转眼间自己已经失业半个月了，感觉还有好多东西没有复习，不管怎么样，不能让自己闲下来,今天就来整理一下redis相关的内容   about redis1Redis是一个使用ANSI C编写的开源、支持网络、基于内存、可选持久性的键值对存储数据库。  --- wikipedia  redis是一款基于内存的数据库，即NOSQL,采用单线程模型，能支持10W的并发常用">
@@ -354,6 +354,11 @@
 <h1 id="about-redis"><a href="#about-redis" class="headerlink" title="about redis"></a>about redis</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Redis是一个使用ANSI C编写的开源、支持网络、基于内存、可选持久性的键值对存储数据库。  --- wikipedia</span><br></pre></td></tr></table></figure>
 
 <p>redis是一款基于内存的数据库，即NOSQL,采用单线程模型，能支持10W的并发<br>常用的数据结构 String List Set ZSet Hash<br>持久化方式:RDB(快照)，AOF（日志追加）</p>
+<h1 id="redis为什么高性能？"><a href="#redis为什么高性能？" class="headerlink" title="redis为什么高性能？"></a>redis为什么高性能？</h1><ul>
+<li>单线程模型避免线程上下文切换问题</li>
+<li>纯内存操作</li>
+<li>核心基于非阻塞的IO多路复用</li>
+</ul>
 <h1 id="redis中的数据结构"><a href="#redis中的数据结构" class="headerlink" title="redis中的数据结构"></a>redis中的数据结构</h1><h2 id="string字符串-Simple-Dynamic-String-动态字符串"><a href="#string字符串-Simple-Dynamic-String-动态字符串" class="headerlink" title="string字符串 Simple Dynamic String(动态字符串)"></a>string字符串 Simple Dynamic String(动态字符串)</h2><p>String是redis里面最简单的key-value类型了，它的value不仅可以是String还可以是数字，它也是Memcached中的唯一的数据类型，redis String底层使用SDS(Simple Dynamic String)实现,常见的用法就是缓存、计数等功能，常用指令 set get decr(-1) incr(+1) mget(获取一个或多个给定key的值)</p>
 <h2 id="list-列表"><a href="#list-列表" class="headerlink" title="list 列表"></a>list 列表</h2><p>list就是列表，在redis底层是用链表实现的，通过列表可以轻松实现最新消息列表等与插入序有关的业务。<br>常用指令 lpush(链表头插入一个元素),lpop(链表头删除一个元素),rpush,rpop,lrange(获取指定范围内的元素)</p>
 <h2 id="set-集合"><a href="#set-集合" class="headerlink" title="set 集合"></a>set 集合</h2><p>set就是一个集合，一堆不重复值得集合，利用redis提供的set可以存储一些集合性的数据，比如微博中一个人关注的人，粉丝等等，redis还对set提供了一系列的函数可以实现对集合的并、交、差，这就可以非常方便的实现共同好友、共同关注、二度好友等功能</p>
@@ -399,11 +404,11 @@
       
         <div class="post-tags">
           
+            <a href="/blog/tags/redis/" rel="tag"># redis</a>
+          
             <a href="/blog/tags/中间件/" rel="tag"># 中间件</a>
           
             <a href="/blog/tags/数据库/" rel="tag"># 数据库</a>
-          
-            <a href="/blog/tags/redis/" rel="tag"># redis</a>
           
         </div>
       
@@ -512,7 +517,7 @@
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-count">11</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -534,7 +539,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/blog/tags/index.html">
-                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-count">12</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
@@ -567,7 +572,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#about-redis"><span class="nav-number">2.</span> <span class="nav-text">about redis</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis中的数据结构"><span class="nav-number">3.</span> <span class="nav-text">redis中的数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#string字符串-Simple-Dynamic-String-动态字符串"><span class="nav-number">3.1.</span> <span class="nav-text">string字符串 Simple Dynamic String(动态字符串)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#list-列表"><span class="nav-number">3.2.</span> <span class="nav-text">list 列表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#set-集合"><span class="nav-number">3.3.</span> <span class="nav-text">set 集合</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#zset有序集合-内部实现为skip-list跳跃表"><span class="nav-number">3.4.</span> <span class="nav-text">zset有序集合 内部实现为skip list跳跃表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hash-字典"><span class="nav-number">3.5.</span> <span class="nav-text">hash 字典</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis常见的使用场景"><span class="nav-number">4.</span> <span class="nav-text">redis常见的使用场景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis-分布式锁"><span class="nav-number">5.</span> <span class="nav-text">redis 分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#单节点分布式锁"><span class="nav-number">5.1.</span> <span class="nav-text">单节点分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#setnx-del"><span class="nav-number">5.1.1.</span> <span class="nav-text">setnx + del</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#setnx-expire"><span class="nav-number">5.1.2.</span> <span class="nav-text">setnx + expire</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lua脚本-setnx-expire"><span class="nav-number">5.1.3.</span> <span class="nav-text">lua脚本 setnx + expire</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#set-nx-ex"><span class="nav-number">5.1.4.</span> <span class="nav-text">set nx  ex</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多节点redis分布式锁"><span class="nav-number">5.2.</span> <span class="nav-text">多节点redis分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RedLock-真正意义上的分布式锁"><span class="nav-number">5.2.1.</span> <span class="nav-text">RedLock(真正意义上的分布式锁)</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#about-redis"><span class="nav-number">2.</span> <span class="nav-text">about redis</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis为什么高性能？"><span class="nav-number">3.</span> <span class="nav-text">redis为什么高性能？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis中的数据结构"><span class="nav-number">4.</span> <span class="nav-text">redis中的数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#string字符串-Simple-Dynamic-String-动态字符串"><span class="nav-number">4.1.</span> <span class="nav-text">string字符串 Simple Dynamic String(动态字符串)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#list-列表"><span class="nav-number">4.2.</span> <span class="nav-text">list 列表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#set-集合"><span class="nav-number">4.3.</span> <span class="nav-text">set 集合</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#zset有序集合-内部实现为skip-list跳跃表"><span class="nav-number">4.4.</span> <span class="nav-text">zset有序集合 内部实现为skip list跳跃表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hash-字典"><span class="nav-number">4.5.</span> <span class="nav-text">hash 字典</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis常见的使用场景"><span class="nav-number">5.</span> <span class="nav-text">redis常见的使用场景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis-分布式锁"><span class="nav-number">6.</span> <span class="nav-text">redis 分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#单节点分布式锁"><span class="nav-number">6.1.</span> <span class="nav-text">单节点分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#setnx-del"><span class="nav-number">6.1.1.</span> <span class="nav-text">setnx + del</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#setnx-expire"><span class="nav-number">6.1.2.</span> <span class="nav-text">setnx + expire</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lua脚本-setnx-expire"><span class="nav-number">6.1.3.</span> <span class="nav-text">lua脚本 setnx + expire</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#set-nx-ex"><span class="nav-number">6.1.4.</span> <span class="nav-text">set nx  ex</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多节点redis分布式锁"><span class="nav-number">6.2.</span> <span class="nav-text">多节点redis分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RedLock-真正意义上的分布式锁"><span class="nav-number">6.2.1.</span> <span class="nav-text">RedLock(真正意义上的分布式锁)</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>

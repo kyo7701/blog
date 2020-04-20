@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/blog/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/blog/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="redis,中间件,持久化机制,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="为什么要进行持久化为了避免数据丢失  redis作为一个键值对的内存数据库，数据全存储在内存当中，当遇到进程退出或者服务器重启宕机的情况，内存中的数据就会消失，那这样存在redis中的数据就全丢了，如果业务场景仅仅是缓存，数据丢失影响或许不大，重新去数据库加载下再次写入redis就行了，但是如果把业务数据存储在redis中，拿redis当数据库使用的话，数据的丢失可能是毁灭性的打击，所以为了避免数">
+<meta name="keywords" content="redis,中间件,持久化机制">
+<meta property="og:type" content="article">
+<meta property="og:title" content="谈谈redis中的持久化机制">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/20/about-redis-durability/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="为什么要进行持久化为了避免数据丢失  redis作为一个键值对的内存数据库，数据全存储在内存当中，当遇到进程退出或者服务器重启宕机的情况，内存中的数据就会消失，那这样存在redis中的数据就全丢了，如果业务场景仅仅是缓存，数据丢失影响或许不大，重新去数据库加载下再次写入redis就行了，但是如果把业务数据存储在redis中，拿redis当数据库使用的话，数据的丢失可能是毁灭性的打击，所以为了避免数">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-04-20T12:23:49.535Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="谈谈redis中的持久化机制">
+<meta name="twitter:description" content="为什么要进行持久化为了避免数据丢失  redis作为一个键值对的内存数据库，数据全存储在内存当中，当遇到进程退出或者服务器重启宕机的情况，内存中的数据就会消失，那这样存在redis中的数据就全丢了，如果业务场景仅仅是缓存，数据丢失影响或许不大，重新去数据库加载下再次写入redis就行了，但是如果把业务数据存储在redis中，拿redis当数据库使用的话，数据的丢失可能是毁灭性的打击，所以为了避免数">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/04/20/about-redis-durability/">
+
+
+
+
+
+  <title>谈谈redis中的持久化机制 | cris's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">cris's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/20/about-redis-durability/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">谈谈redis中的持久化机制</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-20T12:07:33+08:00">
+                2020-04-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/redis/" itemprop="url" rel="index">
+                    <span itemprop="name">redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="为什么要进行持久化"><a href="#为什么要进行持久化" class="headerlink" title="为什么要进行持久化"></a>为什么要进行持久化</h1><p>为了避免数据丢失</p>
+<p>
+redis作为一个键值对的内存数据库，数据全存储在内存当中，当遇到进程退出或者服务器重启宕机的情况，内存中的数据就会消失，那这样存在redis中的数据就全丢了，如果业务场景仅仅是缓存，数据丢失影响或许不大，重新去数据库加载下再次写入redis就行了，但是如果把业务数据存储在redis中，拿redis当数据库使用的话，数据的丢失可能是毁灭性的打击，所以为了避免数据丢失，redis提供了持久化的支持，可以选择不同的方式将数据从内存保存到磁盘上面，使数据可以持久化保存。
+</p>
+
+<h1 id="redis持久化机制"><a href="#redis持久化机制" class="headerlink" title="redis持久化机制"></a>redis持久化机制</h1><h2 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h2><p>RDB 是一种快照存储持久化方式，持久化的时候fork一个子进程，通过COW机制生成RDB文件保证持久化</p>
+<p>具体就是将某一时刻的内存数据保存为一个快照存储到磁盘中，默认文件名为dump.rdb,在redis服务启动的时候会将dump.rdb文件加载到内存中恢复数据。</p>
+<h3 id="RDB触发条件"><a href="#RDB触发条件" class="headerlink" title="RDB触发条件"></a>RDB触发条件</h3><h4 id="手动触发"><a href="#手动触发" class="headerlink" title="手动触发"></a>手动触发</h4><p>通过在redis服务上面执行以下命令触发</p>
+<ul>
+<li>save 阻塞当前redis服务，执行save期间，redis服务不能处理其他命令，直到RDB过程完成为止，线上环境不建议使用</li>
+<li>bgsave 执行该命令时，redis会在后台异步进行快照操作，此时redis服务仍然可以响应客户端请求。<br>具体操作是执行该命令时，redis会执行fork操作创建一个子进程，由子进程来负责RDB持久化过程，完成后自动结束。这里需要注意的是在fork的时候需要阻塞主进程，一般时间比较短，但是如果redis服务中的数据量比较大的话，fork时间就会变长，且占用内存会加倍。</li>
+</ul>
+<h4 id="自动触发"><a href="#自动触发" class="headerlink" title="自动触发"></a>自动触发</h4><p>自动触发是通过redis.conf配置自动触发 通过save “”来停用自动触发RDB</p>
+<p>etc: </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">save 60 1 60s内如果 &gt;= 1个key值发生变化则会触发RDB</span><br><span class="line">save 600 10 600s内如果 &gt;= 10个key值发生变化会触发RDB</span><br></pre></td></tr></table></figure>
+
+<h3 id="bgsave流程"><a href="#bgsave流程" class="headerlink" title="bgsave流程"></a>bgsave流程</h3><ol>
+<li>查看是否正在进行RDB或者AOF持久化，是则直接返回</li>
+<li>当前不在进行持久化，fork子进程，子进程和父进程共享内存数据，父进程发生新的写入操作时，会对影响的数据拷贝一个新的内存段(<strong>存在疑问</strong>)，在新的内存段上面进行处理，不影响子进程的数据</li>
+<li>子进程将数据集写入到一个临时的RDB文件中</li>
+<li>子进程对临时RDB文件写入完成后，用新的RDB文件替换老的RDB文件，并删除旧的RDB文件，并通过信号通知父进程</li>
+</ol>
+<h2 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h2><p>AOF(Append Only File)是指把每次执行的写命令追加写入到日志中，当需要恢复数据的时候重新执行AOF中的命令就行了</p>
+<h3 id="AOF执行流程"><a href="#AOF执行流程" class="headerlink" title="AOF执行流程"></a>AOF执行流程</h3><p>AOF不需要设置任何触发条件，对redis服务的所有写命令都会记录到AOF文件中</p>
+<p>AOF的写入流程可以分为以下3个步骤</p>
+<ol>
+<li>命令追加(append): 将redis的写命令追加到AOF的缓冲区aof_buf</li>
+<li>文件写入(write)和文件同步(fsync):AOF根据策略将aof_buf中的数据同步到磁盘</li>
+<li>文件重写(rewrite):由于AOF文件会越来越大，定期对AOF文件进行重写，从而对写命令进行压缩</li>
+</ol>
+<h4 id="命令追加"><a href="#命令追加" class="headerlink" title="命令追加"></a>命令追加</h4><p>redis使用单线程处理客户端命令，如果每次一有写命令就写磁盘的话，磁盘IO就成为redis的性能瓶颈了，所以redis会预先将执行的写命令追加(append)到一个缓冲区(aof_buf)，而不是直接写入文件</p>
+<h4 id="文件写入和文件同步"><a href="#文件写入和文件同步" class="headerlink" title="文件写入和文件同步"></a>文件写入和文件同步</h4><ol>
+<li>write()<br>为了提高文件写入效率，当用户调用write函数将数据写入文件时，操作系统会先把数据写入到一个内存缓冲区中，当缓冲区被填满或者超过了指定时限时，才真正将缓冲区的数据写入磁盘中</li>
+<li>fsync()<br>虽然操作系统对write函数进行了优化，但是也带来了安全问题，如果宕机内存缓冲区中的数据会丢失，因此操作系统同时提供了同步函数fsync(),强制操作系统把缓冲区内部的数据写入到磁盘中，从而保证了数据持久化</li>
+</ol>
+<p>redis提供了appendfsync配置项来控制AOF缓冲区的文件同步策略，可以配置以下三种策略</p>
+<ul>
+<li>appendfsync always: 每执行一次命令就保存一次</li>
+</ul>
+<p>命令写入aof_buf后立即调用系统函数fsync函数同步到aof文件，fsync操作完成后线程返回，整个过程是阻塞的，这种情况下，每次写命令都要同步到AOF文件，硬盘IO成为性能瓶颈,redis只能支持大约几百TPS写入，严重降低了redis的性能</p>
+<ul>
+<li><p>appendfsync no: 不强制保存，由操作系统决定什么时候写入磁盘<br>命令写入aof_buf中缓冲区调用系统write操作，不对AOF文件做fsync操作，同步由操作系统负责，通常同步周期为30秒，这种情况下、文件同步时间不可控制，且缓冲区内的数据会很多，数据安全性无法得到保证</p>
+</li>
+<li><p>appendfsync everysec: 每秒钟保存一次<br>命令写入aof_buf缓冲区后，调用系统write操作，write完成后立即返回，fsync同步操作由单独的进程每秒调用一次，everysec是前两种策略的折中方案，是性能和数据安全性的平衡，因此也是redis的默认设置，也是比较推崇的选项</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>文件同步策略</th>
+<th>write 阻塞</th>
+<th>fsync阻塞</th>
+<th>宕机时丢失的数据量</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>always</td>
+<td>阻塞</td>
+<td>阻塞</td>
+<td>最多只丢失一个命令的数据量</td>
+</tr>
+<tr>
+<td>no</td>
+<td>阻塞</td>
+<td>不阻塞</td>
+<td>操作系统最后一次对AOF文件fsync后的数据</td>
+</tr>
+<tr>
+<td>everysec</td>
+<td>阻塞</td>
+<td>不阻塞</td>
+<td>一般不超过一秒的数据</td>
+</tr>
+</tbody></table>
+<h4 id="文件重写"><a href="#文件重写" class="headerlink" title="文件重写"></a>文件重写</h4><p>AOF重写过程提供了手动触发和自动触发两种方式</p>
+<ul>
+<li>手动触发: 直接调用bgrewriteaof,执行方式类似于bgsave，fork子进程执行具体的操作，fork时阻塞</li>
+<li>自动触发: 使用auto-aof-rewrite-min-size和auto-aof-rewrite-percentage配置项以及aof_current_size和aof_base_size的状态确定触发时机<ul>
+<li>auto-aof-rewrite-min-size: 执行AOF重写时,文件的最小体积，默认64M</li>
+<li>auto-aof-rewrite-percentage: 执行AOF重写时，当前AOF文件的大小(aof_current_size)和上一次AOF重写时AOF文件大小(aof_base_size)的比值</li>
+</ul>
+</li>
+</ul>
+<h4 id="文件重写流程"><a href="#文件重写流程" class="headerlink" title="文件重写流程"></a>文件重写流程</h4><p>这里以手动调用bgrewriteaof为例，叙述下AOF重写的流程</p>
+<ol>
+<li><p>客户端通过bgrewriteaof对redis主进程发起AOF重写请求</p>
+</li>
+<li><p>当前不存在bgsave/bgrewriteaof的子进程时，redis主进程fork子进程(阻塞)，如果发现bgrewriteaof子进程则直接返回，如果发现bgsave子进程则等待bgsave操作完成后再fork操作</p>
+</li>
+<li><p>主进程fork操作执行完毕后，继续处理其他命令，同时把新的写命令追加到aof_buf中和aof_rewrite_buf缓冲区中</p>
+<ul>
+<li>文件重写完成之前，主进程会继续把写命令追加到aof_buf缓冲区，根据appendfsync策略将写命令同步到老的AOF文件内，这样可以避免AOF重写失败造成数据丢失，保证原有AOF文件的正确性</li>
+<li>由于fork操作时运用写时复制技术，子进程共享fork操作时的内存数据，主进程会把新命令追加到一个aof_rewrite_buf缓冲区中，避免AOF重写失败造成数据丢失这部分数据</li>
+</ul>
+</li>
+<li><p>子进程读取redis进程中的数据快照，生成写入命令后按照命令合并规则批量写入到新的AOF文件</p>
+</li>
+<li><p>子进程写完新的AOF文件后，向主进程发信号，主进程更新统计信息，具体可以通过info persistence指令查看</p>
+</li>
+<li><p>主进程接收到子进程的写入完成信号后，将aof_rewrite_buf缓冲区的写命令追加到新的AOF文件</p>
+</li>
+<li><p>主进程使用新的AOF文件替换旧的AOF文件，AOF重写完成</p>
+</li>
+</ol>
+<h3 id="压缩机制"><a href="#压缩机制" class="headerlink" title="压缩机制"></a>压缩机制</h3><p>文件重写之所以能够压缩AOF文件的大小，主要在于以下原因</p>
+<ul>
+<li>过期的数据不再写入AOF文件</li>
+<li>无效的命令不再写入AOF文件(比如重复的key值设置，set key1 v1 set key1 v2,已经删除的数据)</li>
+<li>多条命令可以合并为单个 sadd testset v1 sadd testset v2 sadd testset v3可以合并为 sadd testset v1 v2 v3</li>
+</ul>
+<h3 id="RDB、AOF对比"><a href="#RDB、AOF对比" class="headerlink" title="RDB、AOF对比"></a>RDB、AOF对比</h3><p>RDB优点</p>
+<ul>
+<li>与AOF相比，通过rdb文件恢复数据比较快</li>
+<li>rdb十分紧凑，适合用来做数据备份</li>
+<li>通过RDB进行数据备份，由于使用子进程生成，所以对redis服务器性能影响较小</li>
+</ul>
+<p>缺点</p>
+<ul>
+<li>如果服务器宕机的话，使用RDB方式会造成某个时间段内的数据丢失，比如设置10分钟同步一次，或者5分钟写入1000次就同步一次，如果在这个过程中服务器宕机，则这个时间段的数据就会丢失</li>
+<li>使用save方式会造成服务器阻塞，同步完成后才能响应后续请求</li>
+<li>使用bgsave命令的时候，如果内存中的数据太大，fork也会发生阻塞，另外fork子进程会耗费内存</li>
+<li>redis子进程向磁盘写入数据会带来IO压力</li>
+</ul>
+<p>AOF优点：</p>
+<ul>
+<li>AOF只是追加日志文件，对服务器性能影响较小，速度比RDB要快，消耗的内存较少<br>AOF的缺点:</li>
+<li>AOF生成的日志太大，即使有重写操作，文件体积仍然很大</li>
+<li>恢复数据的速度比RDB要慢很多</li>
+<li>AOF文件重写也是通过fork子进程的方式处理的，存在fork时阻塞问题</li>
+</ul>
+<h2 id="RDB还是AOF，如何去选择？"><a href="#RDB还是AOF，如何去选择？" class="headerlink" title="RDB还是AOF，如何去选择？"></a>RDB还是AOF，如何去选择？</h2><p>其实策略的选择主要是看业务中对数据丢失的容忍度，如果可以接受十几分钟或者更多的数据丢失，那么就可以选择RDB,性能更好，如果只能接受秒级别的数据丢失，选择AOF方案更为合适</p>
+<h2 id="主从部署模式中，一种可行的持久化方式"><a href="#主从部署模式中，一种可行的持久化方式" class="headerlink" title="主从部署模式中，一种可行的持久化方式"></a>主从部署模式中，一种可行的持久化方式</h2><p>大多数情况下，redis都会配置主从部署机制，从节点既可以实现数据的备份，又可以实现分担主节点读请求的作用，还可以在主节点宕机后随时顶上来，在这种情况下，可以采用以下方式</p>
+<ul>
+<li>master完全关闭持久化(包括RDB和AOF)，可以让读写性能达到最好的状态</li>
+<li>slave根据实际情况选择开启RDB或者AOF的一种，如果选择AOF需要关闭自动重写功能，选择开个定时任务在某个服务器闲时手动调用bgrewriteaof进行重写</li>
+</ul>
+<p>已经开启了主从复制，为什么还要开启持久化？<br>如果master 和slave在同一个机房，机房如果发生一次停电事故的话，就可能导致master和slave同时关机，如果没开启持久化，将会面临数据的完全丢失</p>
+<p>master重启，如果master因为故障重启还没有开启持久化，master重启后数据是空的，slave通过主从复制后也变成空了，如果从节点没有开启持久化，同样面临数据完全丢失</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5da14c37e51d45784603adb7#heading-17" target="_blank" rel="noopener">一文深度揭秘Redis的磁盘持久化机制</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/redis/" rel="tag"># redis</a>
+          
+            <a href="/blog/tags/中间件/" rel="tag"># 中间件</a>
+          
+            <a href="/blog/tags/持久化机制/" rel="tag"># 持久化机制</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2020/04/17/how-to-guarantee-message-sending-reliably-with-rabbitmq/" rel="next" title="谈谈如何保证rabbitmq的可靠消息投递">
+                <i class="fa fa-chevron-left"></i> 谈谈如何保证rabbitmq的可靠消息投递
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+       <div id="gitalk-container"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/blog/images/avatar.jpg" alt="mr_cris">
+            
+              <p class="site-author-name" itemprop="name">mr_cris</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/blog/archives/">
+              
+                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/blog/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/blog/tags/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#为什么要进行持久化"><span class="nav-number">1.</span> <span class="nav-text">为什么要进行持久化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis持久化机制"><span class="nav-number">2.</span> <span class="nav-text">redis持久化机制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#RDB"><span class="nav-number">2.1.</span> <span class="nav-text">RDB</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RDB触发条件"><span class="nav-number">2.1.1.</span> <span class="nav-text">RDB触发条件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#手动触发"><span class="nav-number">2.1.1.1.</span> <span class="nav-text">手动触发</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#自动触发"><span class="nav-number">2.1.1.2.</span> <span class="nav-text">自动触发</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bgsave流程"><span class="nav-number">2.1.2.</span> <span class="nav-text">bgsave流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AOF"><span class="nav-number">2.2.</span> <span class="nav-text">AOF</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#AOF执行流程"><span class="nav-number">2.2.1.</span> <span class="nav-text">AOF执行流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#命令追加"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">命令追加</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#文件写入和文件同步"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">文件写入和文件同步</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#文件重写"><span class="nav-number">2.2.1.3.</span> <span class="nav-text">文件重写</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#文件重写流程"><span class="nav-number">2.2.1.4.</span> <span class="nav-text">文件重写流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#压缩机制"><span class="nav-number">2.2.2.</span> <span class="nav-text">压缩机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RDB、AOF对比"><span class="nav-number">2.2.3.</span> <span class="nav-text">RDB、AOF对比</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RDB还是AOF，如何去选择？"><span class="nav-number">2.3.</span> <span class="nav-text">RDB还是AOF，如何去选择？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主从部署模式中，一种可行的持久化方式"><span class="nav-number">2.4.</span> <span class="nav-text">主从部署模式中，一种可行的持久化方式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mr_cris</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问人数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>  总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: 'd7ac612bb7b78584fa57',
+        clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+        repo: 'blog-comment',
+        owner: 'kyo7701',
+        admin: ['kyo7701'],
+        id:'gitalk_20200420120733',
+        labels: 'gitalk'.split(',').filter(l => l),
+        perPage: 10,
+        pagerDirection: 'last',
+        createIssueManually: false,
+        distractionFreeMode: true
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
