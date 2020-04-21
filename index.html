@@ -320,7 +320,7 @@
       
         
           
-            
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1>
           
         
       
@@ -474,6 +474,7 @@ redis作为一个键值对的内存数据库，数据全存储在内存当中，
 <li>bgsave 执行该命令时，redis会在后台异步进行快照操作，此时redis服务仍然可以响应客户端请求。<br>具体操作是执行该命令时，redis会执行fork操作创建一个子进程，由子进程来负责RDB持久化过程，完成后自动结束。这里需要注意的是在fork的时候需要阻塞主进程，一般时间比较短，但是如果redis服务中的数据量比较大的话，fork时间就会变长，且占用内存会加倍。</li>
 </ul>
 <h4 id="自动触发"><a href="#自动触发" class="headerlink" title="自动触发"></a>自动触发</h4><p>自动触发是通过redis.conf配置自动触发 通过save “”来停用自动触发RDB</p>
+<p>主从同步时，从节点向主节点发起同步请求，主节点收到sync命令后，开始执行bgsave</p>
 <p>etc: </p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">save 60 1 60s内如果 &gt;= 1个key值发生变化则会触发RDB</span><br><span class="line">save 600 10 600s内如果 &gt;= 10个key值发生变化会触发RDB</span><br></pre></td></tr></table></figure>
 
@@ -592,13 +593,6 @@ redis作为一个键值对的内存数据库，数据全存储在内存当中，
 <li>AOF文件重写也是通过fork子进程的方式处理的，存在fork时阻塞问题</li>
 </ul>
 <h2 id="RDB还是AOF，如何去选择？"><a href="#RDB还是AOF，如何去选择？" class="headerlink" title="RDB还是AOF，如何去选择？"></a>RDB还是AOF，如何去选择？</h2><p>其实策略的选择主要是看业务中对数据丢失的容忍度，如果可以接受十几分钟或者更多的数据丢失，那么就可以选择RDB,性能更好，如果只能接受秒级别的数据丢失，选择AOF方案更为合适</p>
-<h2 id="主从部署模式中，一种可行的持久化方式"><a href="#主从部署模式中，一种可行的持久化方式" class="headerlink" title="主从部署模式中，一种可行的持久化方式"></a>主从部署模式中，一种可行的持久化方式</h2><p>大多数情况下，redis都会配置主从部署机制，从节点既可以实现数据的备份，又可以实现分担主节点读请求的作用，还可以在主节点宕机后随时顶上来，在这种情况下，可以采用以下方式</p>
-<ul>
-<li>master完全关闭持久化(包括RDB和AOF)，可以让读写性能达到最好的状态</li>
-<li>slave根据实际情况选择开启RDB或者AOF的一种，如果选择AOF需要关闭自动重写功能，选择开个定时任务在某个服务器闲时手动调用bgrewriteaof进行重写</li>
-</ul>
-<p>已经开启了主从复制，为什么还要开启持久化？<br>如果master 和slave在同一个机房，机房如果发生一次停电事故的话，就可能导致master和slave同时关机，如果没开启持久化，将会面临数据的完全丢失</p>
-<p>master重启，如果master因为故障重启还没有开启持久化，master重启后数据是空的，slave通过主从复制后也变成空了，如果从节点没有开启持久化，同样面临数据完全丢失</p>
 <h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5da14c37e51d45784603adb7#heading-17" target="_blank" rel="noopener">一文深度揭秘Redis的磁盘持久化机制</a></p>
 
           
