@@ -86,7 +86,7 @@
 <meta property="og:site_name" content="cris&#39;s blog">
 <meta property="og:description" content="前言之前文章提到过，redis的常见使用场景之一就是缓存，那么既然聊到缓存，那么肯定会聊到缓存和数据库双写一致性的问题，今天就来聊聊缓存跟数据库双写一致性的问题 缓存双写一致性问题只要系统用缓存，就可能涉及到缓存和数据库双写，只要设计到双写，就可能存在一致性问题 缓存更新的策略先删除缓存，再更新数据库为什么是删除缓存而不是更新缓存？ 缓存更新的代价可能比较高，数据更新如果不是热点数据存在资源浪费写">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-04-22T06:53:46.738Z">
+<meta property="og:updated_time" content="2020-04-22T06:54:32.347Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="谈谈缓存">
 <meta name="twitter:description" content="前言之前文章提到过，redis的常见使用场景之一就是缓存，那么既然聊到缓存，那么肯定会聊到缓存和数据库双写一致性的问题，今天就来聊聊缓存跟数据库双写一致性的问题 缓存双写一致性问题只要系统用缓存，就可能涉及到缓存和数据库双写，只要设计到双写，就可能存在一致性问题 缓存更新的策略先删除缓存，再更新数据库为什么是删除缓存而不是更新缓存？ 缓存更新的代价可能比较高，数据更新如果不是热点数据存在资源浪费写">
@@ -396,7 +396,7 @@ Redis服务重启或者宕机，或者大量缓存在同一时刻失效，此时
 <li>设置热点数据永不过期</li>
 <li>查缓存时候没有拿到去数据库查询，更新缓存的这一步加上互斥锁，拿不到的读请求需要进行一个自旋，等一会儿再去拿数据，拿到互斥锁的请求将数据更新到缓存后，后续的请求全都自旋完毕后直接从缓存中拿数据了，相当于给缓存“续了个费”</li>
 </ul>
-<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cnblogs.com/rjzheng/p/9041659.html" target="_blank" rel="noopener">分布式之数据库和缓存双写一致性方案解析</a></p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cnblogs.com/rjzheng/p/9041659.html" target="_blank" rel="noopener">分布式之数据库和缓存双写一致性方案解析</a><br><a href="https://juejin.im/post/5dbef8306fb9a0203f6fa3e2" target="_blank" rel="noopener">《我们一起进大厂》系列-缓存雪崩、击穿、穿透</a></p>
 
       
     </div>
