@@ -557,7 +557,7 @@ redis作为一个键值对的内存数据库，数据全存储在内存当中，
 <li>子进程将数据集写入到一个临时的RDB文件中</li>
 <li>子进程对临时RDB文件写入完成后，用新的RDB文件替换老的RDB文件，并删除旧的RDB文件，并通过信号通知父进程</li>
 </ol>
-<h2 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h2><p>AOF(Append Only File)是指把每次执行的写命令追加写入到日志中，当需要恢复数据的时候重新执行AOF中的命令就行了</p>
+<h2 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h2><p>AOF(Append Only File)是指把每次执行的写命令追加写入到日志中，当需要恢复数据的时候重新执行AOF中的命令就行了。实际上redis每次写入并没有直接写入到日志文件里，而是写入到一个缓冲区(aof_buf)中，而后通过缓冲区同步策略对缓冲区的数据进行落盘操作</p>
 <h3 id="AOF执行流程"><a href="#AOF执行流程" class="headerlink" title="AOF执行流程"></a>AOF执行流程</h3><p>AOF不需要设置任何触发条件，对redis服务的所有写命令都会记录到AOF文件中</p>
 <p>AOF的写入流程可以分为以下3个步骤</p>
 <ol>
@@ -666,7 +666,61 @@ redis作为一个键值对的内存数据库，数据全存储在内存当中，
 <li>AOF文件重写也是通过fork子进程的方式处理的，存在fork时阻塞问题</li>
 </ul>
 <h2 id="RDB还是AOF，如何去选择？"><a href="#RDB还是AOF，如何去选择？" class="headerlink" title="RDB还是AOF，如何去选择？"></a>RDB还是AOF，如何去选择？</h2><p>其实策略的选择主要是看业务中对数据丢失的容忍度，如果可以接受十几分钟或者更多的数据丢失，那么就可以选择RDB,性能更好，如果只能接受秒级别的数据丢失，选择AOF方案更为合适</p>
+<h2 id="主从复制原理"><a href="#主从复制原理" class="headerlink" title="主从复制原理"></a>主从复制原理</h2><p>为什么这里会牵扯到主从复制原理呢？因为主从复制的内容实际上部分内容就是通过RDB来实现的，所以我们在这篇文章一同就给处理了，下面就来讲解下主从复制的原理</p>
+<h3 id="如何开启主从复制"><a href="#如何开启主从复制" class="headerlink" title="如何开启主从复制"></a>如何开启主从复制</h3><ul>
+<li>redis服务启动后，执行slaveof <masterip> <masterport>命令</masterport></masterip></li>
+<li>配置文件配置 slaveof <masterip> <masterport></masterport></masterip></li>
+<li>启动命令后面加 –slaveof <masterip> <masterport></masterport></masterip></li>
+</ul>
+<p>主从复制的开启完全是在从节点发起的，不需要主节点做任何事情</p>
+<h3 id="保存主节点信息"><a href="#保存主节点信息" class="headerlink" title="保存主节点信息"></a>保存主节点信息</h3><p>该阶段主要是在主从节点之间建立连接，为数据同步做好准备，保存主节点信息 从节点服务器内部维护了masterhost和masterport两个字段用于存储主节点ip和端口<br>一般redis节点通过slaveof host port命令来将当前redis服务器变为指定服务器的从属服务器，从而使得从服务器对该主服务器进行复制(实际的复制操作在这之后才开始进行)</p>
+<h3 id="建立socket连接"><a href="#建立socket连接" class="headerlink" title="建立socket连接"></a>建立socket连接</h3><p>从节点每秒1次调用复制定时函数replicationCron(),如果发现有主节点可以连接，便会根据主节点的ip和port，创建socket连接，如果连接成功，则：<br>从节点： 为该socket建立一个专门处理复制工作的文件事件处理器，负责后续复制工作，收接收RDB文件，接收命令传播</p>
+<p>主节点:接收到从节点的socket连接后，并将从节点当作是连接到主节点的一个客户端，后续的命令会以从节点向主节点发送命令请求的形式来进行</p>
+<h3 id="发送ping命令"><a href="#发送ping命令" class="headerlink" title="发送ping命令"></a>发送ping命令</h3><p>从节点向主节点发送ping命令<br>可能有以下三种情况</p>
+<ul>
+<li>主节点返回pong,socket 正常，主节点可以处理请求，复制过程继续</li>
+<li>超时，一定时间内仍未收到主节点的回复，说明socket连接不可用，从节点断开socket连接并重连</li>
+<li>返回pong以外的结果，如果主节点返回其他结果，如果处理正在超时运行的脚本，说明主节点当前无法处理命令，断开socket连接并重连</li>
+</ul>
+<h3 id="身份验证"><a href="#身份验证" class="headerlink" title="身份验证"></a>身份验证</h3><p>如果从节点设置了masterauth选项，则从节点需要进行身份验证，没有配置则跳过<br>身份验证是通过从节点向主节点发送auth命令进行的，auth的参数为配置文件中masterauth的值，如果主从masterauth状态一致，则身份验证通过，复制过程继续，不一致，则断开socket连接，并重连</p>
+<h3 id="发送从节点端口信息"><a href="#发送从节点端口信息" class="headerlink" title="发送从节点端口信息"></a>发送从节点端口信息</h3><p>身份验证通过后，从节点会向主节点发送其监听的端口号,主节点将信息保存到该从节点对应的客户端的slave_listen_port中，这个端口信息是用来在主节点查询主从复制状态的</p>
+<h3 id="同步数据"><a href="#同步数据" class="headerlink" title="同步数据"></a>同步数据</h3><p>主从节点的连接建立后，便可以开始数据同步</p>
+<ul>
+<li>从节点第一次/重新连接主节点，发起数据同步指令(2.8之前是SYNC,2.8之后是PSYNC)</li>
+<li>主节点接收到同步指令后，根据主从节点状态的不同，可以分为全量复制和部分复制<h4 id="全量复制"><a href="#全量复制" class="headerlink" title="全量复制"></a>全量复制</h4>用于初次复制或者其他无法进行部分复制的情况，将主节点的所有数据发送给从节点，是一个非常重型的操作</li>
+</ul>
+<p><strong>全量复制过程</strong></p>
+<ul>
+<li>从节点判断无法进行部分复制，向主节点发送全量复制请求(或从节点发送部分复制请求，主节点判断无法进行部分复制)</li>
+<li>主节点接收到全量复制的指令后，执行bgsave,    在后台生成RDB文件，并用一个缓冲区记录记录从生成快照的时间节点后开始执行的写命令</li>
+<li>主节点bgsave执行完毕后，将RDB文件发送给从节点，从节点首先清除自己的旧数据，然后载入收到的RDB文件，将状态更新至主节点执行bgsave时候的状态</li>
+<li>主节点将缓冲区中的所有写命令发给从节点，从节点执行这些命令，从节点更新至主节点最新状态</li>
+</ul>
+<p>通过全量复制的过程，可以发现全量复制是非常重型的操作</p>
+<ul>
+<li>主节点通过bgsave fork子进程进行RDB持久化，该过程非常耗费CPU，内存，硬盘IO</li>
+<li>主节点通过网络节点将RDB文件发送给从节点，对主从节点的带宽消耗很大</li>
+<li>从节点清空老数据、载入RDB文件的过程是阻塞的，无法响应客户端的命令</li>
+</ul>
+<h4 id="部分复制"><a href="#部分复制" class="headerlink" title="部分复制"></a>部分复制</h4><p>用于网络中断后等情况的复制，只将中断期间主节点执行的写命令发送给从节点，比全量复制更加高效，但是如果网络中断时间过长，主节点没有能够完整地保存中断期间的写命令，仍然无法用部分复制还是使用全量复制</p>
+<p>由于全量复制在主节点数据量较大的时候效率太低，redis从2.8开始提供部分复制，部分复制的实现依赖于三个重要的概念：</p>
+<h5 id="复制偏移量"><a href="#复制偏移量" class="headerlink" title="复制偏移量"></a>复制偏移量</h5><p>主节点和从节点分别维护了一份复制偏移量(offset),代表的是主节点向从节点传递的字节数，主节点每次向从节点传播N个字节数据时，主节点offset增加N,从节点每次收到主节点N字节的数据时，从节点的offset增加N<br>offset用于判断主从节点状态是否不一致，二者offset相同，则一致，二者offset不一致，可以根据offset找出从节点缺少的那部分数据，比如主节点offset是1000，从节点offset是500，则需要把主节点501-1000的数据传递给从节点</p>
+<h5 id="复制积压缓冲区"><a href="#复制积压缓冲区" class="headerlink" title="复制积压缓冲区"></a>复制积压缓冲区</h5><p>主节点维护的、固定长度的、先进先出的队列，默认大小1MB,当主节点开始有从节点时创建，其作用是备份主节点最近发给从节点的数据，无论有几个从节点，复制积压缓冲区都只有一个，命令传播阶段，主节点除了将写命令发送给从节点，还会发送一份给复制积压缓冲区，作为写命令的备份，复制积压缓冲区还存储了每个字节对应的复制偏移量，由于复制缓冲区定长且先进先出，所以它保存的是主节点最近执行的写命令，时间较早的会被挤出缓冲区</p>
+<p>从节点将offset发送给主节点后，主节点根据offset和缓冲区大小判断能否进行部分复制</p>
+<ul>
+<li>如果从节点offset偏移量之后的数据，还在主节点复制缓冲区里面，则执行部分复制</li>
+<li>如果从节点offset偏移量之后的数据，已不在复制积压缓冲区内，则执行全量复制</li>
+</ul>
+<h5 id="psync命令的执行"><a href="#psync命令的执行" class="headerlink" title="psync命令的执行"></a>psync命令的执行</h5><p><img src="https://images2018.cnblogs.com/blog/1174710/201806/1174710-20180628011547892-692403928.png" alt></p>
+<h5 id="服务器运行ID-runid"><a href="#服务器运行ID-runid" class="headerlink" title="服务器运行ID(runid)"></a>服务器运行ID(runid)</h5><p>每个redis节点(主从均适用)都有一个runid(启动时随机生成的，每次启动都不一样),主节点初次复制的时候，主节点将自己的runid发送给从节点,从节点保存起来，断线重连后从节点将保存的runid发送给主节点，主节点根据runid判断是否能够进行部分复制</p>
+<ul>
+<li>如果从节点传过来的runid和和主节点现在的runid相同，证明之前跟主节点同步过，尝试进行部分复制(具体能不能复制还要看offset和复制积压缓冲区情况)</li>
+<li>如果传过来的runid和主节点现在的runid不同，说明断线前同步的节点不是当前主节点，只能进行全量复制</li>
+</ul>
+<h3 id="命令传播阶段"><a href="#命令传播阶段" class="headerlink" title="命令传播阶段"></a>命令传播阶段</h3><p>数据同步完成后，主节点进入命令传播阶段，主节点将自己执行的写命令发送给从节点，从节点接收命令并执行，从而保持主从节点的数据一致性</p>
 <h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5da14c37e51d45784603adb7#heading-17" target="_blank" rel="noopener">一文深度揭秘Redis的磁盘持久化机制</a></p>
+<p><a href="https://blog.csdn.net/Stubborn_Cow/article/details/50442950" target="_blank" rel="noopener">Redis 主从复制 原理与用法</a></p>
+<p><a href="http://redisdoc.com/replication/slaveof.html" target="_blank" rel="noopener">redis命令参考#slaveof</a></p>
 
           
         
