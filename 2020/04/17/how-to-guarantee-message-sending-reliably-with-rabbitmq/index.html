@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="前言这篇篇文章还没开始写呢，今天周五了，去打会游戏~ coming soon">
+<meta name="description" content="前言我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，  消息是如何投递的？ 消息是否成功的投递到了消息队列中？ 消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？带着上述的几个问题">
 <meta name="keywords" content="中间件,rabbitmq,后端技术">
 <meta property="og:type" content="article">
-<meta property="og:title" content="谈谈如何保证rabbitmq的可靠消息投递">
+<meta property="og:title" content="谈谈rabbitmq中如何保证消息的可靠传输">
 <meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/17/how-to-guarantee-message-sending-reliably-with-rabbitmq/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
-<meta property="og:description" content="前言这篇篇文章还没开始写呢，今天周五了，去打会游戏~ coming soon">
+<meta property="og:description" content="前言我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，  消息是如何投递的？ 消息是否成功的投递到了消息队列中？ 消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？带着上述的几个问题">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-04-17T14:18:44.302Z">
+<meta property="og:updated_time" content="2020-04-23T16:00:58.481Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="谈谈如何保证rabbitmq的可靠消息投递">
-<meta name="twitter:description" content="前言这篇篇文章还没开始写呢，今天周五了，去打会游戏~ coming soon">
+<meta name="twitter:title" content="谈谈rabbitmq中如何保证消息的可靠传输">
+<meta name="twitter:description" content="前言我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，  消息是如何投递的？ 消息是否成功的投递到了消息队列中？ 消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？带着上述的几个问题">
 
 
 
@@ -126,7 +126,7 @@
 
 
 
-  <title>谈谈如何保证rabbitmq的可靠消息投递 | cris's blog</title>
+  <title>谈谈rabbitmq中如何保证消息的可靠传输 | cris's blog</title>
   
 
 
@@ -270,7 +270,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">谈谈如何保证rabbitmq的可靠消息投递</h1>
+          <h1 class="post-title" itemprop="name headline">谈谈rabbitmq中如何保证消息的可靠传输</h1>
         
 
         <div class="post-meta">
@@ -347,7 +347,50 @@
       
 
       
-        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这篇篇文章还没开始写呢，今天周五了，去打会游戏<del>~</del> coming soon</p>
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，</p>
+<ol>
+<li>消息是如何投递的？</li>
+<li>消息是否成功的投递到了消息队列中？</li>
+<li>消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？<br>带着上述的几个问题并以rabbitmq为例开始我们今天的主题</li>
+</ol>
+<h1 id="消息可靠性"><a href="#消息可靠性" class="headerlink" title="消息可靠性"></a>消息可靠性</h1><p>在计算机网络中，一个可靠的通讯协议可以通知发送者它发送的数据是否成功到达消息接收方，那么在rabbitmq中消息是怎样投递的呢？</p>
+<h1 id="rabbitmq-消息投递过程"><a href="#rabbitmq-消息投递过程" class="headerlink" title="rabbitmq 消息投递过程"></a>rabbitmq 消息投递过程</h1><ul>
+<li>生产者生产消息</li>
+<li>生产者建立与broker的连接</li>
+<li>生产者发送消息到broker</li>
+<li>broker收到消息，并通过消息中的exchange，routing-key将其路由到指定队列</li>
+<li>consumer监听到指定队列的消息并消费</li>
+</ul>
+<p>那么这里我们可以提出几个问题</p>
+<h2 id="生产者是否成功地将消息投递到broker"><a href="#生产者是否成功地将消息投递到broker" class="headerlink" title="生产者是否成功地将消息投递到broker?"></a>生产者是否成功地将消息投递到broker?</h2><p>在默认情况下，rabbitmq 生产者发送完消息后，是不会给rabbitmq返回任何结果的，那很有可能消息发送到一半因为网络或其他原因，消息没有到达broker，消息直接丢失，这种情况是我们无法忍受的，当然rabbitmq也提供了两种方式解决这种问题，供我们自行选择。</p>
+<ul>
+<li>事务消息模式</li>
+<li>发送方确认模式</li>
+</ul>
+<h2 id="生产者的消息到达broker后，在broker中是否会丢失？"><a href="#生产者的消息到达broker后，在broker中是否会丢失？" class="headerlink" title="生产者的消息到达broker后，在broker中是否会丢失？"></a>生产者的消息到达broker后，在broker中是否会丢失？</h2><p>消息到达broker后，很有可能因为一些原因导致broker重启或者退出，因为rabbitmq的消息默认都是在内存里面的，发生重启会导致消息丢失，这也是我们无法忍受的，这里用到了rabbitmq中的持久化机制，需要我们同时保证3个条件，才能保证消息的持久化</p>
+<ul>
+<li>消息投递时开启了持久化</li>
+<li>目标交换机开启了持久化</li>
+<li>目标队列开启了持久化</li>
+</ul>
+<ul>
+<li>消息是否被消费者成功消费呢？</li>
+</ul>
+<p>正常来讲如果消息投递成功了，并且在broker开启了持久化是不是就能保证消息可靠传输了呢？答案是否定的，消费者消费也可能出现问题，比如消费失败，或者消息压根就没有到达消费者(丢了)，这个时候又该如何处理呢？RabbitMQ这里提供了一个消费确认的机制，这种机制分为手动确认和自动确认</p>
+<ul>
+<li>manual ack 需要业务方根据消费情况手动确认消息消费情况</li>
+<li>auto ack 消息一经broker发出，就认为已经投递成功了</li>
+</ul>
+<p>很显然 autoack这种是有消息丢失风险的，我们很难保证业务方正确消费的情况，所以一般来说我们想要保证消费的可靠性需要开启手动ack模式，确保业务方正确消费后，再进行确认，下面就说一下手动确认在标准AMQP协议中定义的手动ack的接口方法</p>
+<ul>
+<li><p>basic.ack 如果业务方正确消费了消息，那么业务方需要给broker发送一个ack消息，代表消息已经正确处理, broker可以将这条消息删除了</p>
+</li>
+<li><p>basic.reject 如果业务方发生了异常或者因为某些原因导致无法消费消息，可以给broker发送拒绝消息，让这条消息重新入队，以便让别的消费者可以消费这条消息   对应标准AMQP0.9.1.1协议中的 basic.reject方法</p>
+</li>
+<li><p>basic.nack  在basic.reject的基础上提供批量拒绝消息的方法</p>
+</li>
+</ul>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.rabbitmq.com/confirms.html" target="_blank" rel="noopener">rabbitmq官网#Consumer Acknowledgements and Publisher Confirms</a></p>
 
       
     </div>
@@ -533,7 +576,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息可靠性"><span class="nav-number">2.</span> <span class="nav-text">消息可靠性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rabbitmq-消息投递过程"><span class="nav-number">3.</span> <span class="nav-text">rabbitmq 消息投递过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#生产者是否成功地将消息投递到broker"><span class="nav-number">3.1.</span> <span class="nav-text">生产者是否成功地将消息投递到broker?</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#生产者的消息到达broker后，在broker中是否会丢失？"><span class="nav-number">3.2.</span> <span class="nav-text">生产者的消息到达broker后，在broker中是否会丢失？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">4.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
