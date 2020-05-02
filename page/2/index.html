@@ -249,6 +249,389 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2019/12/03/db-transaction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2019/12/03/db-transaction/" itemprop="url">谈谈数据库事务</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-03T00:17:37+08:00">
+                2019-12-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="什么是事务"><a href="#什么是事务" class="headerlink" title="什么是事务"></a>什么是事务</h1><p>事务是数据库管理系统执行过程中的一个逻辑单位，由一个有限的数据库操作序列构成。</p>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>当事务被提交给了DBMS（数据库管理系统），则DBMS需要保证该事务的所有操作成功完成，并且其结果被永久保存在数据库中，如果事务中有的操作没有成功完成，则数据库中的所有操作都需要回滚，回到事务之前的状态，同时该事务对数据库其他事务的执行无影响，所有事务好像都在独立的运行。</p>
+<h1 id="事务的ACID特性"><a href="#事务的ACID特性" class="headerlink" title="事务的ACID特性"></a>事务的ACID特性</h1><h2 id="Atomicity-原子性"><a href="#Atomicity-原子性" class="headerlink" title="Atomicity 原子性"></a>Atomicity 原子性</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">事务作为一个整体被执行，要么全部执行，要么全部不执行(由undo-log保证，事务某处发生错误的时候通过undo-log进行回滚，保证了原子性)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Consistency-一致性"><a href="#Consistency-一致性" class="headerlink" title="Consistency 一致性()"></a>Consistency 一致性()</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">事务应确保数据库的状态从一个一致状态转变为另一个一致状态，一致状态的含义是数据库内的数据应满足完整性约束.</span><br></pre></td></tr></table></figure>
+
+<h2 id="Isolation-隔离性"><a href="#Isolation-隔离性" class="headerlink" title="Isolation 隔离性"></a>Isolation 隔离性</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">多个事务并发执行时，一个事务的执行应该不影响其他事务的执行。(由MVCC||加锁保证)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Durability-持久性"><a href="#Durability-持久性" class="headerlink" title="Durability 持久性"></a>Durability 持久性</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">已经提交的事务对数据库的修改应该永久保存在数据库当中。(由redo-log保证,数据库保存数据的时候会先写入)</span><br></pre></td></tr></table></figure>
+
+<h1 id="事务的隔离级别"><a href="#事务的隔离级别" class="headerlink" title="事务的隔离级别"></a>事务的隔离级别</h1><h2 id="READ-UNCOMMITED-未提交读"><a href="#READ-UNCOMMITED-未提交读" class="headerlink" title="READ-UNCOMMITED(未提交读)"></a>READ-UNCOMMITED(未提交读)</h2><p>该隔离级别下的事务会读到其他未提交的事务的数据,这种现象也被称之为脏读</p>
+<h2 id="READ-COMMITED-提交读"><a href="#READ-COMMITED-提交读" class="headerlink" title="READ-COMMITED(提交读)"></a>READ-COMMITED(提交读)</h2><p>一个事务可以读取另一个已经提交的事务，多次读取会产生不一样的结果，此现象被称为不可重复读</p>
+<h2 id="REPEATABLE-READ-可重复读"><a href="#REPEATABLE-READ-可重复读" class="headerlink" title="REPEATABLE-READ(可重复读)"></a>REPEATABLE-READ(可重复读)</h2><p>同一个事务内，同样的查询语句多次执行所获取的结果是一致的，但是可能会出现幻读现象</p>
+<h2 id="SERIALIZABLE-序列化"><a href="#SERIALIZABLE-序列化" class="headerlink" title="SERIALIZABLE(序列化)"></a>SERIALIZABLE(序列化)</h2><p>该隔离级别下，所有事务都是串行执行的。此级别是最高隔离级别,同时性能也是最差的</p>
+<h1 id="事务的并发带来的问题"><a href="#事务的并发带来的问题" class="headerlink" title="事务的并发带来的问题"></a>事务的并发带来的问题</h1><h2 id="脏读"><a href="#脏读" class="headerlink" title="脏读"></a>脏读</h2><p>当一个事务正在访问数据，并且对数据进行了修改，但是该事务还未提交，这时另一个事务访问到了该事务中未提交的数据，产生了脏读</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>事务1</th>
+<th>事务2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td>开启事务</td>
+<td>开启事务</td>
+</tr>
+<tr>
+<td>t2</td>
+<td>—</td>
+<td>update table set property = ‘newValue’ where id = 1;</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>select * from table where id = 1</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t4</td>
+<td>commit</td>
+<td>commit</td>
+</tr>
+</tbody></table>
+<p>假设事务2未更新前是’oldValue’,事务2更改后修改还没有提交,事务1读到了事务2未提交的’newValue’,这时，事务2进行了回滚，导致事务1拿到的数据变为无效数据，因为事务2对该数据的修改还是未提交的，那么事务1此时读到的数据就是脏数据，对脏数据进行的操作可能是不正确的。</p>
+<h2 id="幻读"><a href="#幻读" class="headerlink" title="幻读"></a>幻读</h2><p>多次读取一定范围内的记录，发现结果不一致(一般指记录增多或记录减少,下述操作在mysql8.0.0版本未能出现，mysql innodb 引擎部分解决了幻读问题，可以尝试在其他数据库执行该操作)</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>事务1</th>
+<th>事务2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td>开启事务</td>
+<td>开启事务</td>
+</tr>
+<tr>
+<td>t2</td>
+<td>查询所有年龄为20的person，结果为20</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>—</td>
+<td>新增一个年龄为20的person并commit</td>
+</tr>
+<tr>
+<td>t4</td>
+<td>查询所有年龄为20的person，结果为21</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t5</td>
+<td>commit</td>
+<td>commit</td>
+</tr>
+</tbody></table>
+<p>假设事务2插入前，年龄为20的人有20条记录, 事务1第一次查询的时候发现有20个年龄为20的人，第二次查询却发现年龄为20的人多了一个，好像产生了幻觉</p>
+<h2 id="不可重复读"><a href="#不可重复读" class="headerlink" title="不可重复读"></a>不可重复读</h2><p>多次读取同一条记录，发现该记录列值被修改过</p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>事务1</th>
+<th>事务2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td>开启事务</td>
+<td>开启事务</td>
+</tr>
+<tr>
+<td>t2</td>
+<td>查询张三的年龄，结果为20</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>—</td>
+<td>更新张三年龄为21</td>
+</tr>
+<tr>
+<td>t4</td>
+<td>查询张三的年龄，结果为21</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t5</td>
+<td>commit</td>
+<td>commit</td>
+</tr>
+</tbody></table>
+<p>假设张三原来的年龄为20，发现张三第一次查询的结果20和第二次查询的结果21不一致，这就是不可重复读</p>
+<h2 id="各事务隔离级别对应解决的问题"><a href="#各事务隔离级别对应解决的问题" class="headerlink" title="各事务隔离级别对应解决的问题"></a>各事务隔离级别对应解决的问题</h2><table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>脏读</th>
+<th>不可重复读</th>
+<th>幻读</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>READ-UNCOMMITED</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>READ-COMMITED</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>REPEATABLE-READ</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+</tr>
+<tr>
+<td>SERIALIZABLE</td>
+<td>×</td>
+<td>×</td>
+<td>×</td>
+</tr>
+</tbody></table>
+<p>mysql的InnoDB存储引擎解决了RR模式下部分幻读的问题，但是并不能完全避免幻读,解释见下文快照读和当前读部分<br><a href="https://github.com/Yhzhtk/note/issues/42" target="_blank" rel="noopener">github</a>上面有关于这个问题的讨论</p>
+<hr>
+<h1 id="并发事务解决方案"><a href="#并发事务解决方案" class="headerlink" title="并发事务解决方案"></a>并发事务解决方案</h1><h2 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h2><p>解决<strong>写</strong>-<strong>写</strong>冲突问题，效率很差</p>
+<ul>
+<li><p>悲观锁 依靠数据库提供的锁机制实现 当一个线程需要对共享资源进行操作的时候，首先对其进行加锁，当该线程持有该资源的时候，其他线程对该资源操作的时候就会阻塞</p>
+</li>
+<li><p>乐观锁 基于版本号实现<br>当一个线程需要操作共享资源的时候，不进行加锁，而是在操作之后，通过一个版本号进行控制，如果在该线程执行操作完成后通过版本号进行判断，如果发现已经被其他线程操作了，则通知该线程操作失败。</p>
+</li>
+</ul>
+<h2 id="MVCC-多版本并发控制"><a href="#MVCC-多版本并发控制" class="headerlink" title="MVCC(多版本并发控制)"></a>MVCC(多版本并发控制)</h2><p>解决读写冲突问题，通过一种快照机制生成一个数据请求时间节点的数据快照，通过这个快照来进行数据的读取，这样，因为不需要加锁，读写操作都不会相互阻塞(仅作用于RR和RC)。</p>
+<p>Mysql InnoDB 引擎在每一行数据都都加了几个隐藏列(参考自<a href="https://dev.mysql.com/doc/refman/5.7/en/innodb-multi-versioning.html" target="_blank" rel="noopener">mysql官方文档</a>)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Internally, InnoDB adds three fields to each row stored in the database. A 6-byte  DB_TRX_ID field indicates the transaction identifier for the last transaction that inserted or updated the row.  </span><br><span class="line">Also, a deletion is treated internally as an  </span><br><span class="line">update where a special bit in the row is set to mark it as deleted.  </span><br><span class="line">Each row also contains a 7-byte DB_ROLL_PTR field called the roll pointer. The roll pointer points to an undo log record written to the rollback segment. If the row was updated, the  </span><br><span class="line">undo log record contains the information necessary to rebuild the content of the row before it was updated. </span><br><span class="line">A 6-byte DB_ROW_ID field contains a row ID that increases monotonically as new rows are inserted.  </span><br><span class="line">If InnoDB generates a clustered index automatically, the index contains row ID values. Otherwise, the DB_ROW_ID column does not appear in any index.</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>DB_TRX_ID 6字节的事务id,代表最近一次插入或更新该行记录的事务id<br>在inno db存储引擎下，delete操作被视为update操作，做法就是在记录行中有一个特殊的标记位标记该行是否被删除，而并非真删除</p>
+</li>
+<li><p>DB_ROLL_PTR:7字节回滚指针，每次对一行数据进行修改的时候，会生成一条undo log，保留数据修改前的状态，回滚指针即指向该undo log记录</p>
+</li>
+<li><p>DB_ROW_ID: 隐藏的自增id,当建表时候没有指定主键的时候，就会使用该rowId创建聚簇索引，否则聚簇索引中将不包含该DB_ROW_ID内容</p>
+</li>
+</ul>
+<h3 id="read-view-又称快照snapshot"><a href="#read-view-又称快照snapshot" class="headerlink" title="read-view(又称快照snapshot)"></a>read-view(又称快照snapshot)</h3><p>事务的快照主要是用来存储数据库的事务运行情况，通常用来进行可见性判断。</p>
+<ul>
+<li>查看当前所有未提交的活跃事务，存储在数组中记作m_ids<br>RR是在第一次快照读操作前生成readView,之后的查询操作复用该readView<br>RC是在每一次快照读操作前都生成一个readView</li>
+</ul>
+<h3 id="可见性比较算法"><a href="#可见性比较算法" class="headerlink" title="可见性比较算法"></a>可见性比较算法</h3><ul>
+<li><p>如果 DB_TRX_ID &lt; m_ids中最小事务id，则代表被访问的数据版本在生成快照之前就已经提交，当前事务可以获得该条记录的稳定版本</p>
+</li>
+<li><p>如果 DB_TRX_ID &lt; m_ids中最大事务id，则代表生成该事务的版本在生成快照之后，所以该版本对当前事务是不可见的</p>
+</li>
+<li><p>如果DB_TRX_ID在最大事务id和最小事务id之间，则需要判断下DB_TRX_ID是否在m_ids当中，如果存在，则说明事务还是活跃的，该版本数据不可访问，如果不存在，说明该事务在生成快照之后已经提交，该数据版本可以被该事务访问</p>
+</li>
+</ul>
+<h3 id="当前读和快照读"><a href="#当前读和快照读" class="headerlink" title="当前读和快照读"></a>当前读和快照读</h3><ul>
+<li>快照读 普通的select操作(不包含 select … for update, select … lock in share mode)</li>
+<li>当前读 <ul>
+<li>select … in share mode</li>
+<li>select … for update</li>
+<li>insert </li>
+<li>update </li>
+<li>delete</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>事务1</th>
+<th>事务2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td>开启事务</td>
+<td>开启事务</td>
+</tr>
+<tr>
+<td>t2</td>
+<td>查询年龄为20的人，结果为20</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>—</td>
+<td>新增一个人李四，id为31</td>
+</tr>
+<tr>
+<td>t4</td>
+<td>—</td>
+<td>commit</td>
+</tr>
+<tr>
+<td>t5</td>
+<td>更新李四的年龄为31，可以更新成功，此时再次查询年龄为20的人，结果为21，出现幻读</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t6</td>
+<td>commit</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p>inno db引擎只能部分避免幻读，这个部分指的是只能避免当前读的幻读，而对于上表中快照读的情况却不能避免</p>
+<h3 id="版本链"><a href="#版本链" class="headerlink" title="版本链"></a>版本链</h3><p>每次对记录进行改动，都会记录一条undo-log,每条undo-log上面也会有一个roll-ptr属性，指向历史版本的undo-log，可以将这些undo-log串联起来，形成一个版本链,如下图(图片引用自参考文章中《MySQL事务隔离级别和MVCC》<br>)</p>
+<p><img src="https://ae01.alicdn.com/kf/U89d96162aca0469287e9e881b3a5347fw.png" alt></p>
+<h2 id="MVCC总结"><a href="#MVCC总结" class="headerlink" title="MVCC总结"></a>MVCC总结</h2><p>所谓的MVCC，就是指RR，RC这两个事务隔离级别的事务在执行快照读操作时访问版本链的过程，使得不同事务的读-读，读-写操作并发执行，从而提升系统性能</p>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a href="https://segmentfault.com/a/1190000012650596" target="_blank" rel="noopener">MySQL-InnoDB-MVCC多版本并发控制</a></p>
+<p><a href="https://www.cnblogs.com/kismetv/p/10331633.html" target="_blank" rel="noopener">深入学习MySQL事务：ACID特性的实现原理</a></p>
+<p><a href="https://dev.mysql.com/doc/refman/5.7/en/innodb-multi-versioning.html" target="_blank" rel="noopener">mysql官方文档</a></p>
+<p><a href="https://juejin.im/post/5c9b1b7df265da60e21c0b57#heading-6" target="_blank" rel="noopener">MySQL事务隔离级别和MVCC</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2019/08/11/message_queue/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -701,7 +1084,7 @@
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-count">14</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
