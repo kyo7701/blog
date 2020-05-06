@@ -86,16 +86,16 @@
 <meta property="og:site_name" content="cris&#39;s blog">
 <meta property="og:description" content="前言在讲以下内容之前，我们先通过一个思维导图了解一下本文的大致内容 该图片引用自深入理解Java虚拟机总结-思维导图 ————————————————  内存区域划分这一部分我们主要来详细了解一下运行时数据区的内容 Java虚拟机栈特点线程私有区域，生命周期与线程相同 作用Java虚拟机栈是描述的Java中方法执行的内存模型: 每个方法在执行的同时会创建一个栈帧(stack frame),用于存储">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://img-blog.csdn.net/20160519210929340">
-<meta property="og:image" content="https://img-blog.csdn.net/20160519211151032">
+<meta property="og:image" content="https://s1.ax1x.com/2020/05/06/YAMRkq.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/05/06/YAMdtP.png">
 <meta property="og:image" content="https://pic.yupoo.com/crowhawk/6b90388c/6c281cf0.png">
 <meta property="og:image" content="https://pic.yupoo.com/crowhawk/605f57b5/75122b84.png">
 <meta property="og:image" content="https://pic.yupoo.com/crowhawk/fffcf9a2/f60599b2.png">
-<meta property="og:updated_time" content="2020-05-02T16:52:15.438Z">
+<meta property="og:updated_time" content="2020-05-06T03:16:49.465Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="聊聊JVM">
 <meta name="twitter:description" content="前言在讲以下内容之前，我们先通过一个思维导图了解一下本文的大致内容 该图片引用自深入理解Java虚拟机总结-思维导图 ————————————————  内存区域划分这一部分我们主要来详细了解一下运行时数据区的内容 Java虚拟机栈特点线程私有区域，生命周期与线程相同 作用Java虚拟机栈是描述的Java中方法执行的内存模型: 每个方法在执行的同时会创建一个栈帧(stack frame),用于存储">
-<meta name="twitter:image" content="https://img-blog.csdn.net/20160519210929340">
+<meta name="twitter:image" content="https://s1.ax1x.com/2020/05/06/YAMRkq.png">
 
 
 
@@ -332,8 +332,8 @@
       
         <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在讲以下内容之前，我们先通过一个思维导图了解一下本文的大致内容</p>
 <p>该图片引用自<a href="https://blog.csdn.net/sheep_3/article/details/51457116" target="_blank" rel="noopener">深入理解Java虚拟机总结-思维导图</a></p>
-<p>————————————————<br><img src="https://img-blog.csdn.net/20160519210929340" alt></p>
-<p><img src="https://img-blog.csdn.net/20160519211151032" alt></p>
+<p>————————————————<br><img src="https://s1.ax1x.com/2020/05/06/YAMRkq.png" alt></p>
+<p><img src="https://s1.ax1x.com/2020/05/06/YAMdtP.png" alt></p>
 <h2 id="内存区域划分"><a href="#内存区域划分" class="headerlink" title="内存区域划分"></a>内存区域划分</h2><p>这一部分我们主要来详细了解一下运行时数据区的内容</p>
 <h3 id="Java虚拟机栈"><a href="#Java虚拟机栈" class="headerlink" title="Java虚拟机栈"></a>Java虚拟机栈</h3><p><strong>特点</strong><br>线程私有区域，生命周期与线程相同</p>
 <p><strong>作用</strong><br>Java虚拟机栈是描述的Java中方法执行的内存模型: 每个方法在执行的同时会创建一个栈帧(stack frame),用于存储<strong>局部变量表</strong>、<strong>操作数栈</strong>、<strong>动态链接</strong>、<strong>方法出口</strong>等信息。每一个方法调用至执行完成的时候，都对应着一个栈帧在虚拟机栈中从入栈到出栈的过程</p>
