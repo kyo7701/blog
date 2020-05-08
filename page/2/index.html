@@ -249,6 +249,222 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/10/db-index/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/04/10/db-index/" itemprop="url">谈谈数据库中的索引</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-10T21:01:27+08:00">
+                2020-04-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天来聊聊数据库当中的索引，想整理一下关于索引的基础内容，不仅是因为我最近比较闲，而且因为我今天面试中聊到索引的内容，感觉自己回答的特别水，特此整理一下相关的内容加深一下记忆，以便于下回面试的时候不至于被面试官锤(这么简单的内容你特么都答不出来,辣鸡)，本文要讲的索引全部是在mysql数据库中的，因此后续再说索引，说的就是mysql数据库中的索引，不再赘述。</p>
+<hr>
+<h2 id="索引的定义"><a href="#索引的定义" class="headerlink" title="索引的定义"></a>索引的定义</h2><p>在开始看mysql中的索引之前，我们先了解下在DMBS系统中索引的定义是怎样的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">数据库索引，是数据库管理系统的一个排序的数据结构,</span><br><span class="line">以协助快速查询、更新表中数据.     ------ 维基百科</span><br></pre></td></tr></table></figure>
+
+<h2 id="索引的分类"><a href="#索引的分类" class="headerlink" title="索引的分类"></a>索引的分类</h2><p>那么索引有哪些类别呢？这里从几个不同的角度来分析有哪些类别的索引</p>
+<h3 id="物理存储角度"><a href="#物理存储角度" class="headerlink" title="物理存储角度"></a>物理存储角度</h3><ul>
+<li><strong>聚集索引(又称聚簇索引)</strong></li>
+<li><strong>非聚集索引(又称非聚簇索引)</strong></li>
+</ul>
+<p>聚集索引的特点是，数据库中表数据的物理顺序和索引顺序相同，而非聚集索引在数据库中的索引的逻辑顺序和表中数据的物理顺序并不相同。所以说聚集索引和非聚集索引是从物理存储角度来划分的，此外，因为数据表的结构只能有一个，所以一张表的聚集索引只能有一个。</p>
+<h3 id="逻辑角度"><a href="#逻辑角度" class="headerlink" title="逻辑角度:"></a>逻辑角度:</h3><ol>
+<li><strong>主键索引</strong> 一种特殊的唯一索引，不允许有空值</li>
+<li><strong>普通索引或者单列索引</strong> 最基本的索引，没有任何限制</li>
+<li><strong>联合索引或者多列索引</strong> 建立在多个列上的索引，被称为联合索引，遵循最左前缀原则</li>
+<li><strong>唯一索引</strong>   与普通索引类似，不同的是唯一索引要求索引的值必须唯一，但允许有空值</li>
+</ol>
+<p>在这里顺便介绍下 上述的索引的创建和删除，水一下</p>
+<ul>
+<li>普通索引</li>
+</ul>
+<p>创建</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">ADD</span> <span class="keyword">INDEX</span> <span class="string">`index_name`</span>(<span class="string">`column_name`</span>);</span><br></pre></td></tr></table></figure>
+
+<p>删除</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">DROP</span> <span class="keyword">INDEX</span> <span class="string">`index_name`</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>联合索引</li>
+</ul>
+<p>创建</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">ADD</span> <span class="keyword">INDEX</span> <span class="string">`index_name`</span>(<span class="string">`column_name_1`</span>,<span class="string">`column_name_2`</span>);</span><br></pre></td></tr></table></figure>
+
+<p>删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE `table_name` DROP INDEX `index_name`;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>主键索引</li>
+</ul>
+<p>创建</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#可以在建表时指定 </span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">add</span> PRIMARY <span class="keyword">KEY</span>(<span class="keyword">id</span>);</span><br></pre></td></tr></table></figure>
+
+<p>删除(如果主键索引是自增列，那么删除主键将不满足自增列必须是索引列的定义,所以需要额外做一些手脚才能删除)</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> <span class="string">`table_name`</span> <span class="keyword">DROP</span> PRIMARY <span class="keyword">KEY</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>唯一索引</li>
+</ul>
+<p>创建</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE `table_name` ADD UNIQUE INDEX `index_name`(`column_name`);</span><br></pre></td></tr></table></figure>
+
+<p>删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE `table_name` DROP INDEX `index_name`;</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据结构角度"><a href="#数据结构角度" class="headerlink" title="数据结构角度"></a>数据结构角度</h3><ol>
+<li>B-Tree索引，在mysql中B-Tree索引实际上是由B+树结构实现的，更适合于范围查询</li>
+<li>hash 索引 等值比较    效率非常高,通常用于精确内容查找(etc: in(),=, &lt;=&gt;,这里的“&lt;=&gt;”等价于=),但是mysql的InnoDB存储引擎并不支持hash索引</li>
+<li>full-text索引(全文索引)</li>
+</ol>
+<h2 id="索引的优点"><a href="#索引的优点" class="headerlink" title="索引的优点"></a>索引的优点</h2><ul>
+<li>索引大大减少了服务器需要扫描的数据量</li>
+<li>索引可以帮助服务器避免排序和临时表</li>
+<li>索引可以将随机I/O变为顺序I/O</li>
+</ul>
+<p>摘自《高性能mysql》第5.2节</p>
+<h2 id="索引的缺点"><a href="#索引的缺点" class="headerlink" title="索引的缺点"></a>索引的缺点</h2><ul>
+<li>创建索引和维护索引需要花费时间，并且随着数据量的增加所耗费的时间也会增加</li>
+<li>虽然索引大大提高了查询速度，但是同时会降低更新表(insert,update,delete)的速度,mysql不仅要保存数据，还要保存索引文件</li>
+<li>建立索引会建立占用磁盘空间的索引文件，一般情况下这种问题不大，但是如果一张大表上建立多种组合索引，索引文件会膨胀的很快。</li>
+<li>如果某个列数据上包含许多重复的内容，那么在这列上建立索引就没有太大的效果(索引列区分程度不高，计算公式select distinct(col) from table/select count(*) from table)</li>
+<li>非常小的表，大部分情况下简单的全表扫描更高效</li>
+</ul>
+<h2 id="索引为什么能加速数据查询？"><a href="#索引为什么能加速数据查询？" class="headerlink" title="索引为什么能加速数据查询？"></a>索引为什么能加速数据查询？</h2><p>在数据库系统中，索引就像书中的目录，想象一下，看书的时候没有目录，那我们想要找到我们想要看到的精彩内容就需要一页一页的找，同样地，在没有索引的情况下，在数据库中查询数据是需要进行全表扫描的，如果一张表只有几十条数据，这个时候不加索引是完全没有问题的，但是如果数据量很大呢？我们都知道数据库中的数据是存在磁盘上的，取数据的时候是把需要的数据块读取到内存中，然而内存是有限的，并不能把所有的数据一次性全部取出，所以我们拿到想要的数据可能会发生很多次磁盘IO(磁盘IO是很重的操作，速率远小于从内存中直接操作，所以提升效率的关键是尽量减少磁盘IO次数)，如果是全表扫描可能发生很多次磁盘IO所以会很慢，以mysql为例，mysql的innodb引擎是以B+树作为索引树，1个3层的B+数大概可以存储2000W数据，也就是说通常情况下，我们对表中数据(不超过3层B+树最大容量情况)的查询一般需要3次磁盘IO就能拿到磁盘数据了，如果全表扫描这种效率是不堪设想的，而为什么索引不用二叉树(有序时退化为单链表，退化为线性查找)、平衡二叉树(一个节点可存储的子节点数量太少，数据量较大时候，树的平均高度过高)、B树(非叶子节点既存数据元素，又存储指针，可存放的数据量更少)可以自行了解一下，这里不过多解释了，这也就是为什么索引能加速数据查询</p>
+<h2 id="索引原理？"><a href="#索引原理？" class="headerlink" title="索引原理？"></a>索引原理？</h2><p>未完待续</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://segmentfault.com/q/1010000003832312" target="_blank" rel="noopener">MySQL有哪些索引类型 ?</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2019/12/03/db-transaction/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1084,7 +1300,7 @@
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">14</span>
+                  <span class="site-state-item-count">15</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
