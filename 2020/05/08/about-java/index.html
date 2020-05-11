@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/blog/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/blog/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Java基础之集合类CollectionCollection接口继承自Iterable接口，Iterable接口允许使用foreach方式遍历，并且定义了一个迭代器 listList接口继承自Collection接口，存储一组不唯一的有序(插入序)的对象。采用线性列表存储，长度可以动态改变，可以通过索引访问 ArrayList 和LinkedList区别ArrayList底层用数组实现，随机访问效">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java基础">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/05/08/about-java/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="Java基础之集合类CollectionCollection接口继承自Iterable接口，Iterable接口允许使用foreach方式遍历，并且定义了一个迭代器 listList接口继承自Collection接口，存储一组不唯一的有序(插入序)的对象。采用线性列表存储，长度可以动态改变，可以通过索引访问 ArrayList 和LinkedList区别ArrayList底层用数组实现，随机访问效">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-05-10T03:12:36.314Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="java基础">
+<meta name="twitter:description" content="Java基础之集合类CollectionCollection接口继承自Iterable接口，Iterable接口允许使用foreach方式遍历，并且定义了一个迭代器 listList接口继承自Collection接口，存储一组不唯一的有序(插入序)的对象。采用线性列表存储，长度可以动态改变，可以通过索引访问 ArrayList 和LinkedList区别ArrayList底层用数组实现，随机访问效">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/05/08/about-java/">
+
+
+
+
+
+  <title>java基础 | cris's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">cris's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/05/08/about-java/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">java基础</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-08T10:49:49+08:00">
+                2020-05-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Java基础之集合类"><a href="#Java基础之集合类" class="headerlink" title="Java基础之集合类"></a>Java基础之集合类</h1><h1 id="Collection"><a href="#Collection" class="headerlink" title="Collection"></a>Collection</h1><p>Collection接口继承自Iterable接口，Iterable接口允许使用foreach方式遍历，并且定义了一个迭代器</p>
+<h2 id="list"><a href="#list" class="headerlink" title="list"></a>list</h2><p>List接口继承自Collection接口，存储一组<strong>不唯一</strong>的<strong>有序</strong>(插入序)的对象。<br>采用线性列表存储，长度可以动态改变，可以通过索引访问</p>
+<h3 id="ArrayList-和LinkedList区别"><a href="#ArrayList-和LinkedList区别" class="headerlink" title="ArrayList 和LinkedList区别"></a>ArrayList 和LinkedList区别</h3><p>ArrayList底层用数组实现，随机访问效率高(O(1)),插入删除效率低(O(n),需要移动后面元素)<br>LinkedList底层用链表实现，随机访问效率低(O(n)),插入删除效率高(O(1))</p>
+<h3 id="ArrayList-和vector的区别"><a href="#ArrayList-和vector的区别" class="headerlink" title="ArrayList 和vector的区别"></a>ArrayList 和vector的区别</h3><p>Vector的所有方法都是同步方法,而ArrayList不是，如果需要用到线程安全的list可以考虑用Vector，不过即使需要用线程安全的list我们也是推荐用CopyOnWriteList而不是用Vector</p>
+<h3 id="ArrayList是否是线程安全的？"><a href="#ArrayList是否是线程安全的？" class="headerlink" title="ArrayList是否是线程安全的？"></a>ArrayList是否是线程安全的？</h3><p>非线程安全，如果需要线程安全，可以使用Vector或者CopyOnWriteList</p>
+<h2 id="set"><a href="#set" class="headerlink" title="set"></a>set</h2><h3 id="HashSet是如何去重的"><a href="#HashSet是如何去重的" class="headerlink" title="HashSet是如何去重的?"></a>HashSet是如何去重的?</h3><p>HashSet底层是通过HashMap实现的，HashSet中的元素放在HashMap中的K上面，我们都知道HashMap中的K是不重复的，内容相同的对象hashCode是相同的(HashCode决定元素存储在HashMap中Entry数组中的位置)，并且如果equals方法返回对象是相同的话默认会覆盖Value内容，但其实这里对Hashset来讲value覆盖与否都无所谓(hashset中放入的是PRENSENT对象每次都一样)，因为关注的是hashmap中的k</p>
+<h2 id="map"><a href="#map" class="headerlink" title="map"></a>map</h2><h3 id="HashMap和HashTable的区别"><a href="#HashMap和HashTable的区别" class="headerlink" title="HashMap和HashTable的区别"></a>HashMap和HashTable的区别</h3><ul>
+<li>HashTable是线程安全的(所有方法被sychronized修饰)，HashMap不是</li>
+<li>HashTable不允许有空的key和value，HashMap可以</li>
+</ul>
+<h3 id="HashMap是否是线程安全的-如果在多线程环境下并发访问会不会有问题？"><a href="#HashMap是否是线程安全的-如果在多线程环境下并发访问会不会有问题？" class="headerlink" title="HashMap是否是线程安全的?如果在多线程环境下并发访问会不会有问题？"></a>HashMap是否是线程安全的?如果在多线程环境下并发访问会不会有问题？</h3><p>HashMap不是线程安全的，jdk1.7的时候HashMap在多线程下并发增加元素扩容的时候会出现环形链表，导致死循环，jdk1.8的时候采用尾插法解决了环形链表的问题，不过还是非线程安全的</p>
+<h3 id="HashMap底层是怎么实现的"><a href="#HashMap底层是怎么实现的" class="headerlink" title="HashMap底层是怎么实现的?"></a>HashMap底层是怎么实现的?</h3><p>HashMap在jdk1.7版本的时候是通过数组+链表的方式实现的,在jdk1.8里面引入了红黑树，在使用拉链法解决hash碰撞的时候，链中元素超过8的时候会转为红黑树</p>
+<h3 id="红黑树和二叉排序树、AVL树的区别-延伸话题"><a href="#红黑树和二叉排序树、AVL树的区别-延伸话题" class="headerlink" title="红黑树和二叉排序树、AVL树的区别(延伸话题)"></a>红黑树和二叉排序树、AVL树的区别(延伸话题)</h3><p>二叉排序树</p>
+<p>特点:</p>
+<ul>
+<li>若他的左子树不为空，则他的左子树上所有的值小于根节点的值</li>
+<li>若他的右子树不为空，则它的右子树上所有的值大于根节点的值</li>
+<li>它的左子树和右子树都是平衡二叉树</li>
+<li>中序遍历二叉排序树可以得到一个正序有序的序列</li>
+<li>通常情况下，操作时间复杂度为O(logn),极端情况下退化为O(n)</li>
+</ul>
+<p>这样的数据结构实际上是一个非常典型的适合进行二分法进行查找的结构，每当需要查找元素的时候，先跟根节点比较，就可以判断它在树的哪一端，每次查询都能够缩小一半的候选集，达到时间复杂度为O(logn),但是这里面有个问题，极端情况，如果二叉排序树插入的数据比较极端，比如插入了一组正序有序的数据，使得二叉排序树向右侧单侧倾斜，这时如果查找元素其实就相当于退化成了一个单链表，查找元素的时间复杂度退化为O(n),这种情况下实际上为了提高查找效率就引入了平衡二叉树和红黑树来使得二叉排序树构建的更加平衡。</p>
+<p>平衡二叉树(AVL树、高度平衡树)<br>特点：</p>
+<ul>
+<li>是一种平衡二叉树</li>
+<li>每一个节点的左子树和右子树的高度差的绝对值不会超过1<br>平衡二叉树是在构建二叉排序树的过程中，每插入或者删除一个节点，都会先检查是否破坏了树的平衡性，如果是，则找出最小的不平衡的树，通过右旋或者左旋，使之成为新的平衡树</li>
+<li>平衡二叉树的插入、查找、删除的时间复杂度是O(logn)</li>
+</ul>
+<p>平衡二叉树追求的是全局平衡，在插入和删除的时候需要调整整棵树，显然这是很费时的，所以希望在调整的时候，不是整棵树进行结构性调整，而是局部性的调整，这样也就引出了红黑树</p>
+<p>红黑树是一种二叉查找树，并在此基础上在每个节点上增加了一个存储位来表示节点的颜色，可以是红色或者黑色，通过对任何一条从根节点到叶子结点的路径的各节点着色方式的限制，确保红黑树没有任何一条路径多于其最短路径的两倍长，这保证了红黑树是大致平衡的，而且又不像平衡二叉树那样要求全局性的平衡</p>
+<p>红黑树由以下约束保证了红黑树没有任何一条路径多于其最短路径的两倍长<br>特点：</p>
+<ul>
+<li>节点是红色或者黑色</li>
+<li>根是黑色</li>
+<li>所有叶子节点都是黑色</li>
+<li>每个红色节点必须有两个黑色的子节点(从每个叶子到根节点的所有路径上不能有两个连续的红色节点)</li>
+<li>从任一节点到其每个叶子节点的所有简单路径都包含相同数目的黑色节点</li>
+</ul>
+<p>在通过插入和删除时，会使得红黑树不再符合红黑树的性质，这时，需要少量(O(logn))的颜色变更和不超过三次的树旋转，牺牲了部分平衡性以换取插入删除时少量的旋转操作，整体性能优于AVL树</p>
+<h3 id="ConcurrentHashMap是怎么实现的？"><a href="#ConcurrentHashMap是怎么实现的？" class="headerlink" title="ConcurrentHashMap是怎么实现的？"></a>ConcurrentHashMap是怎么实现的？</h3><h1 id="Java基础之关键字"><a href="#Java基础之关键字" class="headerlink" title="Java基础之关键字"></a>Java基础之关键字</h1><h2 id="final关键字"><a href="#final关键字" class="headerlink" title="final关键字"></a>final关键字</h2><p>作用<br>final可以用来修饰类、方法、变量</p>
+<p>修饰类的时候表示该类不能被继承<br>修饰方法的时候表示该方法在子类中不能被重写<br>修饰变量的时候，如果修饰的是基本数据类型，一旦被赋值就不能被再次赋值，如果是引用数据类型，只能保证引用所指向的地址不改变，而引用的对象的属性是可以改变的</p>
+<h2 id="String为什么是不可变类-延伸问题"><a href="#String为什么是不可变类-延伸问题" class="headerlink" title="String为什么是不可变类(延伸问题)"></a>String为什么是不可变类(延伸问题)</h2><h2 id="序列化"><a href="#序列化" class="headerlink" title="序列化"></a>序列化</h2><h2 id="泛型"><a href="#泛型" class="headerlink" title="泛型"></a>泛型</h2><h2 id="接口和抽象类的区别"><a href="#接口和抽象类的区别" class="headerlink" title="接口和抽象类的区别"></a>接口和抽象类的区别</h2><p>既然要聊接口和抽象类的区别，就得先聊一下接口和抽象类分别是什么，他们的共同点，然后再聊区别更容易理解一些。</p>
+<p>抽象类概述:</p>
+<p>当我们在设计一些行为和属性差不多的类的时候其实可以想到面向对象中的继承，用来抽取一个基类，既可以减少重复代码，又可以让代码变得简洁，抽象类的作用就是如此，用于抽取子类通用属性的一种类，只能用作父类，用于给子类继承并且不能够实例化，作为继承的模板，也是多态的一种表现形式<br>因此我们可以总 结下抽象类的特点</p>
+<ul>
+<li>不能被实例化，可以有构造函数</li>
+<li>可以包含具体方法，也可以包含抽象方法(必须被子类(非抽象子类)实现)</li>
+<li>可以包含成员变量和静态成员变量</li>
+<li>子类的抽象方法不可以与父类的抽象方法同名</li>
+</ul>
+<p>接口概述:<br>接口是抽象方法的集合，如果某一个类实现了某个接口，那么他就必须实现这个接口的抽象方法，接口本身并不能做任何事情</p>
+<p>接口的特点：</p>
+<ul>
+<li>接口中不能有构造方法</li>
+<li>接口中可以定义”成员变量”,但是会自动转换为 public static final,即Java中的常量，并且必须被显式初始化</li>
+<li>接口中的所有方法都是抽象方法，不能包含具体的方法，也不能包含静态的方法(jdk 8可以包含)</li>
+<li>不可以通过new来实例化接口</li>
+</ul>
+<p>有了这些内容，我们就可以来回答接口和抽象类的区别了</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>抽象类</th>
+<th>接口</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>默认的方法实现</td>
+<td>可以有</td>
+<td>jdk 8之后可以提供，之前不允许有</td>
+</tr>
+<tr>
+<td>关键字</td>
+<td>子类通过extends继承抽象类</td>
+<td>子类通过implements实现接口</td>
+</tr>
+<tr>
+<td>访问修饰符</td>
+<td>抽象方法可以用public protected这些修饰符</td>
+<td>接口方法默认public，不可以用其他修饰符</td>
+</tr>
+<tr>
+<td>添加新方法</td>
+<td>如果需要往抽象类中添加新的方法，可以提供默认的实现方法，不需要改变现有代码</td>
+<td>jdk8以后可以提供默认方法，jdk8之前不可以，所以之前子类必须实现所有接口中的方法</td>
+</tr>
+<tr>
+<td>构造方法</td>
+<td>可以有</td>
+<td>不可以有</td>
+</tr>
+<tr>
+<td>设计理念</td>
+<td>is-a的关系，是一种关系的延续</td>
+<td>like-a的关系，体现的是一种功能扩展</td>
+</tr>
+</tbody></table>
+<h2 id="static关键字"><a href="#static关键字" class="headerlink" title="static关键字"></a>static关键字</h2><h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><ul>
+<li>修饰成员变量  static可以用来修饰成员变量，也叫静态变量，在内存中只有一个副本，可通过类名访问<br>应用场景:<br>对象间传值</li>
+</ul>
+<ul>
+<li>修饰方法   一般用来抽取工具方法，通过类名直接访问，不可以访问实例变量和实例方法。</li>
+<li>修饰代码块  </li>
+<li>静态内部类  </li>
+<li>静态导入  写代码的时候可以导入某个类或者某个静态方法或静态变量，用来节省代码</li>
+</ul>
+<h2 id="sychronized怎么用的，里面是怎么实现的？"><a href="#sychronized怎么用的，里面是怎么实现的？" class="headerlink" title="sychronized怎么用的，里面是怎么实现的？"></a>sychronized怎么用的，里面是怎么实现的？</h2><h1 id="Java基础之数据结构"><a href="#Java基础之数据结构" class="headerlink" title="Java基础之数据结构"></a>Java基础之数据结构</h1><h1 id="Java基础之面向对象"><a href="#Java基础之面向对象" class="headerlink" title="Java基础之面向对象"></a>Java基础之面向对象</h1><h2 id="面向对象的特点或者说谈谈面向对象的理解？"><a href="#面向对象的特点或者说谈谈面向对象的理解？" class="headerlink" title="面向对象的特点或者说谈谈面向对象的理解？"></a>面向对象的特点或者说谈谈面向对象的理解？</h2><p>面向过程的特点是封装、继承、多态<br>聊到面向对象其实就不得不提面向过程，</p>
+<p>面向过程是一种以事件为中心的变成思想，把解决问题的步骤分析出来，使用函数将这一个个步骤实现，使用的时候直接依次调用即可，简单的问题可以通过面向过程的思路来解决，直接有效，但是问题的规模很大时，面向过程的思想就不太够用了，慢慢的出现了面向对象的编程思想<br>而面向对象是一种以对象为核心的编程思想，把要解决的问题分解成各个对象，建立对象的目的不是为了完成一个步骤，而是为了描述某个对象在解决问题中步骤中的属性和行为。</p>
+<p>面向过程和面向对象的优缺点:</p>
+<p>面向过程:<br>优点：</p>
+<ul>
+<li>流程化，编程任务明确</li>
+<li>效率高，面向过程强调代码的短小精悍，善于结合数据结构来开发高效率的程序<br>缺点：<br>需要深入思考，耗费精力，代码重用性差，扩展能力差，后期维护难度较大</li>
+</ul>
+<p>面向对象：<br>优点：</p>
+<ul>
+<li>结构清晰，模块化结构化，符合人类思维方式</li>
+<li>易扩展，代码重用率高，可继承，可覆盖，可以设计出低耦合的系统</li>
+<li>易维护，系统低耦合的特点有利于减少后期维护工作量<br>缺点：</li>
+<li>开销大，修改更改对象内部时，对象的属性不允许直接存取，所以需要增加很多无意义，只负责读写的行为，使得编程工作增加负担，增加运行开销，程序变得臃肿</li>
+</ul>
+<h2 id="Java为什么不支持多继承"><a href="#Java为什么不支持多继承" class="headerlink" title="Java为什么不支持多继承"></a>Java为什么不支持多继承</h2><p>多继承会产生继承的二义性问题，比如B，C同时继承于A；D又多继承于B和C,这时候如果A中定义了一个f()方法，D到底是会调用谁呢？支持多继承的语言像C++是引入了虚继承来解决这个问题的，十分的晦涩难懂，Java的设计者在这里秉持着简单易用的原则，就把类的多继承给移除了</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2020/05/07/about-knowledge-tree/" rel="next" title="知识树的建立">
+                <i class="fa fa-chevron-left"></i> 知识树的建立
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog/2020/05/11/about-lock-of-java/" rel="prev" title="聊聊Java中的锁">
+                聊聊Java中的锁 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+       <div id="gitalk-container"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/blog/images/avatar.jpg" alt="mr_cris">
+            
+              <p class="site-author-name" itemprop="name">mr_cris</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/blog/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/blog/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/blog/tags/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Java基础之集合类"><span class="nav-number">1.</span> <span class="nav-text">Java基础之集合类</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Collection"><span class="nav-number">2.</span> <span class="nav-text">Collection</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#list"><span class="nav-number">2.1.</span> <span class="nav-text">list</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ArrayList-和LinkedList区别"><span class="nav-number">2.1.1.</span> <span class="nav-text">ArrayList 和LinkedList区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ArrayList-和vector的区别"><span class="nav-number">2.1.2.</span> <span class="nav-text">ArrayList 和vector的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ArrayList是否是线程安全的？"><span class="nav-number">2.1.3.</span> <span class="nav-text">ArrayList是否是线程安全的？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#set"><span class="nav-number">2.2.</span> <span class="nav-text">set</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HashSet是如何去重的"><span class="nav-number">2.2.1.</span> <span class="nav-text">HashSet是如何去重的?</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#map"><span class="nav-number">2.3.</span> <span class="nav-text">map</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap和HashTable的区别"><span class="nav-number">2.3.1.</span> <span class="nav-text">HashMap和HashTable的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap是否是线程安全的-如果在多线程环境下并发访问会不会有问题？"><span class="nav-number">2.3.2.</span> <span class="nav-text">HashMap是否是线程安全的?如果在多线程环境下并发访问会不会有问题？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap底层是怎么实现的"><span class="nav-number">2.3.3.</span> <span class="nav-text">HashMap底层是怎么实现的?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#红黑树和二叉排序树、AVL树的区别-延伸话题"><span class="nav-number">2.3.4.</span> <span class="nav-text">红黑树和二叉排序树、AVL树的区别(延伸话题)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ConcurrentHashMap是怎么实现的？"><span class="nav-number">2.3.5.</span> <span class="nav-text">ConcurrentHashMap是怎么实现的？</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Java基础之关键字"><span class="nav-number">3.</span> <span class="nav-text">Java基础之关键字</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#final关键字"><span class="nav-number">3.1.</span> <span class="nav-text">final关键字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#String为什么是不可变类-延伸问题"><span class="nav-number">3.2.</span> <span class="nav-text">String为什么是不可变类(延伸问题)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#序列化"><span class="nav-number">3.3.</span> <span class="nav-text">序列化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#泛型"><span class="nav-number">3.4.</span> <span class="nav-text">泛型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#接口和抽象类的区别"><span class="nav-number">3.5.</span> <span class="nav-text">接口和抽象类的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#static关键字"><span class="nav-number">3.6.</span> <span class="nav-text">static关键字</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#作用"><span class="nav-number">3.6.1.</span> <span class="nav-text">作用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sychronized怎么用的，里面是怎么实现的？"><span class="nav-number">3.7.</span> <span class="nav-text">sychronized怎么用的，里面是怎么实现的？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Java基础之数据结构"><span class="nav-number">4.</span> <span class="nav-text">Java基础之数据结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Java基础之面向对象"><span class="nav-number">5.</span> <span class="nav-text">Java基础之面向对象</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#面向对象的特点或者说谈谈面向对象的理解？"><span class="nav-number">5.1.</span> <span class="nav-text">面向对象的特点或者说谈谈面向对象的理解？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java为什么不支持多继承"><span class="nav-number">5.2.</span> <span class="nav-text">Java为什么不支持多继承</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mr_cris</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问人数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>  总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: 'd7ac612bb7b78584fa57',
+        clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+        repo: 'blog-comment',
+        owner: 'kyo7701',
+        admin: ['kyo7701'],
+        id:'gitalk_20200508104949',
+        labels: 'gitalk'.split(',').filter(l => l),
+        perPage: 10,
+        pagerDirection: 'last',
+        createIssueManually: false,
+        distractionFreeMode: true
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
