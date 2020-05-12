@@ -331,7 +331,7 @@
 <p>比如类A有两个实例方法C,D，这两个方法都被sychronized修饰，在C方法内部调用了D，那么某一个线程在进入C已经拿到锁的情况下进入D方法就会自动拿到锁</p>
 <h1 id="无锁-VS-偏向锁-VS-轻量级锁-VS-重量级锁"><a href="#无锁-VS-偏向锁-VS-轻量级锁-VS-重量级锁" class="headerlink" title="无锁 VS 偏向锁 VS 轻量级锁 VS 重量级锁"></a>无锁 VS 偏向锁 VS 轻量级锁 VS 重量级锁</h1><p>这些锁实际上是按照锁的状态来区分，并且是专门针对synchronized关键字来说的，但是在对这四种锁描述之前需要对一些概念进行了解:对象头和Monitor</p>
 <h2 id="对象头"><a href="#对象头" class="headerlink" title="对象头"></a>对象头</h2><p>Hotspot虚拟机中，对象在虚拟机中的布局分为3部分，分别是对象头、实例数据、对齐填充<br>普通对象的对象头包括两部分:MarkWord和ClassMetaData Address(类型指针)，如果是数组对象还额外包括一个额外的数组长度部分</p>
-<p><strong>Markword</strong><br>用于存储对象自身的运行数据，如HashCode,GC分代年龄，锁状态标志，线程持有的锁、偏向线程ID,偏向时间戳等等，占用内存大小跟虚拟机位长一致<br><strong>Class MetaData Address</strong><br>类型指针，指向对象的类元数据，虚拟机通过这个指针确定该对象是哪个类的实例</p>
+<p><strong>Markword</strong><br>用于存储对象自身的运行数据，如HashCode,GC分代年龄，锁状态标志，线程持有的锁、偏向线程ID,偏向时间戳等等，占用内存大小跟虚拟机位长一致<br><strong>Kclass Pointer</strong><br>类型指针，指向对象的类元数据，虚拟机通过这个指针确定该对象是哪个类的实例</p>
 <p><strong>Array Length</strong><br>数组长度</p>
 <p>对象需要存储的数据很多，这已经超出了32bit或者是64bit能表示的限度，此外对象头信息是对象自定义的数据无关的额外存储成本，在考虑虚拟机空间效率的时候，MarkWord被设计成一个非固定的数据结构用来在极小的空间里面存储尽量多的信息，它会根据对象的状态复用自己的存储空间，也就是说MarkWord中存储的内容会伴随着锁的状态变化而变化。</p>
 <p>例如在32bit的hotspot的虚拟机中，其各个锁状态下的存储内容如下所示</p>
