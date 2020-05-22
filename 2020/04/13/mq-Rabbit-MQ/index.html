@@ -90,7 +90,7 @@
 <meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png">
 <meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/exchange-direct.png">
 <meta property="og:image" content="https://www.rabbitmq.com/img/tutorials/intro/exchange-fanout.png">
-<meta property="og:updated_time" content="2020-04-17T14:15:24.474Z">
+<meta property="og:updated_time" content="2020-05-22T07:30:48.193Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="消息队列之RabbitMQ">
 <meta name="twitter:description" content="前言今天继续整理下跟RabbitMQ有关的内容，加深一下理解,还是避免被面试官锤。 什么是消息队列,为什么要用消息队列这里的内容在上一篇(谈谈消息队列)内容中已经讲过了，这里就不再赘述了 消息队列之RabbitMQ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现">
@@ -422,7 +422,20 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
 <li>分布式系统可以将不同的状态和配置更新进行广播</li>
 <li>可以通过扇形交换机来实现分发消息给群聊中 的用户</li>
 </ul>
-<h1 id="topic-exchange"><a href="#topic-exchange" class="headerlink" title="topic exchange"></a>topic exchange</h1><hr>
+<h1 id="topic-exchange"><a href="#topic-exchange" class="headerlink" title="topic exchange"></a>topic exchange</h1><p>topic exchange通过routing-key通配的方式将消息路由到一个或多个队列上面，正因如此，topic exchange一般用于实现各种发布/订阅的变种。topic exchange也常用来做消息的广播，topic exchange有很广泛的用途，当涉及到多个消费者可以选择性的接收它们所关注类型的消息的时候，就可以考虑topic exchange的使用了</p>
+<p>使用场景</p>
+<ul>
+<li>将数据按照地理位置的相关性做分发，比如销售点</li>
+<li>多个执行者处理一个后台任务，每一个执行者处理特定的一块任务</li>
+<li>股票价格更新(或者其他金融数据的更新)</li>
+<li>新闻更新(包括分类、标签的更新)</li>
+<li>云上不同类型服务的服务编排</li>
+<li>分布式(架构/系统)软件构建或者打包时，每个builder只能处理一种架构或者系统</li>
+</ul>
+<h1 id="spring-rabbitmq启动流程"><a href="#spring-rabbitmq启动流程" class="headerlink" title="spring rabbitmq启动流程"></a>spring rabbitmq启动流程</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">通过SpringFactoriesLoader机制,扫描META-INF/Spring.factories</span><br><span class="line">发现需要加载org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration</span><br><span class="line">加载RabbitAutoConfiguration后发现需要按条件进行装配，RabbitTemplate类加载后，则进行自动装配</span><br><span class="line">加载配置文件RabbitProperties,装配CachingConnectionFactory</span><br><span class="line"></span><br><span class="line">在Spring容器初始化完毕，并初始化对应listener bean时</span><br><span class="line"></span><br><span class="line">RabbitListenerAnnotationBeanPostProcessor#postProcessAfterInitialization()</span><br><span class="line">//</span><br><span class="line">processAmqpListener()</span><br><span class="line">processListener()</span><br><span class="line">RabbitListenerEndpointRegistrar#registerEndpoint()</span><br><span class="line">//用AmqpListenerEndpointDescriptor包装endPoint和containerfactory</span><br><span class="line">//如果是立刻启动，则调用</span><br><span class="line">RabbitListenerEndpointRegistry#registerListenerContainer()</span><br></pre></td></tr></table></figure>
+
+<p>通过RabbitListenerAnnotationBeanPostProcessor注册被rabbitListener注解的方法</p>
+<hr>
 <p>未完待续</p>
 <h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cloudamqp.com/blog/2015-05-18-part1-rabbitmq-for-beginners-what-is-rabbitmq.html" target="_blank" rel="noopener">for RabbitMQ beginners- what is RabbitMQ?</a></p>
 
@@ -555,7 +568,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-count">18</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -610,7 +623,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是消息队列-为什么要用消息队列"><span class="nav-number">2.</span> <span class="nav-text">什么是消息队列,为什么要用消息队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息队列之RabbitMQ"><span class="nav-number">3.</span> <span class="nav-text">消息队列之RabbitMQ</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RabbitMQ中的基本概念"><span class="nav-number">4.</span> <span class="nav-text">RabbitMQ中的基本概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#exchange和exchange类型"><span class="nav-number">5.</span> <span class="nav-text">exchange和exchange类型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Default-Exchanges"><span class="nav-number">6.</span> <span class="nav-text">Default Exchanges</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Direct-Exchange"><span class="nav-number">7.</span> <span class="nav-text">Direct Exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Fanout-Exchange-扇形交换机"><span class="nav-number">8.</span> <span class="nav-text">Fanout Exchange 扇形交换机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#topic-exchange"><span class="nav-number">9.</span> <span class="nav-text">topic exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">10.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是消息队列-为什么要用消息队列"><span class="nav-number">2.</span> <span class="nav-text">什么是消息队列,为什么要用消息队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息队列之RabbitMQ"><span class="nav-number">3.</span> <span class="nav-text">消息队列之RabbitMQ</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RabbitMQ中的基本概念"><span class="nav-number">4.</span> <span class="nav-text">RabbitMQ中的基本概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#exchange和exchange类型"><span class="nav-number">5.</span> <span class="nav-text">exchange和exchange类型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Default-Exchanges"><span class="nav-number">6.</span> <span class="nav-text">Default Exchanges</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Direct-Exchange"><span class="nav-number">7.</span> <span class="nav-text">Direct Exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Fanout-Exchange-扇形交换机"><span class="nav-number">8.</span> <span class="nav-text">Fanout Exchange 扇形交换机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#topic-exchange"><span class="nav-number">9.</span> <span class="nav-text">topic exchange</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#spring-rabbitmq启动流程"><span class="nav-number">10.</span> <span class="nav-text">spring rabbitmq启动流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">11.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>

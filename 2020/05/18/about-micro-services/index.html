@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="中间件,rabbitmq,后端技术,">
+  <meta name="keywords" content="Hexo, NexT">
 
 
 
@@ -79,18 +79,17 @@
 
 
 
-<meta name="description" content="前言我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，  消息是如何投递的？ 消息是否成功的投递到了消息队列中？ 消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？带着上述的几个问题">
-<meta name="keywords" content="中间件,rabbitmq,后端技术">
+<meta name="description" content="什么是微服务？它有哪些特点？微服务是一种软件架构风格，他是以专注于单一职责与功能的小型功能模块为基础，利用模块化的方式组合成大型的复杂应用程序，各功能模块使用与语言无关的API相互通信 —-wikipedia 微服务架构 将单体应用拆分为多个高内聚低耦合的小型服务，每个小服务运行在独立进程，由不同的团队进行开发和维护，服务间采用轻量级通信机制，独立自动部署，可以采用不同的技术进行开发和使用独立的存">
 <meta property="og:type" content="article">
-<meta property="og:title" content="谈谈rabbitmq中如何保证消息的可靠传输">
-<meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/17/how-to-guarantee-message-sending-reliably-with-rabbitmq/index.html">
+<meta property="og:title" content="聊聊微服务">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/05/18/about-micro-services/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
-<meta property="og:description" content="前言我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，  消息是如何投递的？ 消息是否成功的投递到了消息队列中？ 消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？带着上述的几个问题">
+<meta property="og:description" content="什么是微服务？它有哪些特点？微服务是一种软件架构风格，他是以专注于单一职责与功能的小型功能模块为基础，利用模块化的方式组合成大型的复杂应用程序，各功能模块使用与语言无关的API相互通信 —-wikipedia 微服务架构 将单体应用拆分为多个高内聚低耦合的小型服务，每个小服务运行在独立进程，由不同的团队进行开发和维护，服务间采用轻量级通信机制，独立自动部署，可以采用不同的技术进行开发和使用独立的存">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-04-23T16:00:58.481Z">
+<meta property="og:updated_time" content="2020-05-18T12:17:06.931Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="谈谈rabbitmq中如何保证消息的可靠传输">
-<meta name="twitter:description" content="前言我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，  消息是如何投递的？ 消息是否成功的投递到了消息队列中？ 消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？带着上述的几个问题">
+<meta name="twitter:title" content="聊聊微服务">
+<meta name="twitter:description" content="什么是微服务？它有哪些特点？微服务是一种软件架构风格，他是以专注于单一职责与功能的小型功能模块为基础，利用模块化的方式组合成大型的复杂应用程序，各功能模块使用与语言无关的API相互通信 —-wikipedia 微服务架构 将单体应用拆分为多个高内聚低耦合的小型服务，每个小服务运行在独立进程，由不同的团队进行开发和维护，服务间采用轻量级通信机制，独立自动部署，可以采用不同的技术进行开发和使用独立的存">
 
 
 
@@ -120,13 +119,13 @@
 
 
 
-  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/04/17/how-to-guarantee-message-sending-reliably-with-rabbitmq/">
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/05/18/about-micro-services/">
 
 
 
 
 
-  <title>谈谈rabbitmq中如何保证消息的可靠传输 | cris's blog</title>
+  <title>聊聊微服务 | cris's blog</title>
   
 
 
@@ -253,7 +252,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/17/how-to-guarantee-message-sending-reliably-with-rabbitmq/">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/05/18/about-micro-services/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="mr_cris">
@@ -270,7 +269,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">谈谈rabbitmq中如何保证消息的可靠传输</h1>
+          <h1 class="post-title" itemprop="name headline">聊聊微服务</h1>
         
 
         <div class="post-meta">
@@ -282,8 +281,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-17T21:56:46+08:00">
-                2020-04-17
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-18T15:19:37+08:00">
+                2020-05-18
               </time>
             
 
@@ -292,28 +291,6 @@
             
           </span>
 
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/rabbitmq/" itemprop="url" rel="index">
-                    <span itemprop="name">rabbitmq</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -347,50 +324,34 @@
       
 
       
-        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，</p>
-<ol>
-<li>消息是如何投递的？</li>
-<li>消息是否成功的投递到了消息队列中？</li>
-<li>消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？<br>带着上述的几个问题并以rabbitmq为例开始我们今天的主题</li>
-</ol>
-<h1 id="消息可靠性"><a href="#消息可靠性" class="headerlink" title="消息可靠性"></a>消息可靠性</h1><p>在计算机网络中，一个可靠的通讯协议可以通知发送者它发送的数据是否成功到达消息接收方，那么在rabbitmq中消息是怎样投递的呢？</p>
-<h1 id="rabbitmq-消息投递过程"><a href="#rabbitmq-消息投递过程" class="headerlink" title="rabbitmq 消息投递过程"></a>rabbitmq 消息投递过程</h1><ul>
-<li>生产者生产消息</li>
-<li>生产者建立与broker的连接</li>
-<li>生产者发送消息到broker</li>
-<li>broker收到消息，并通过消息中的exchange，routing-key将其路由到指定队列</li>
-<li>consumer监听到指定队列的消息并消费</li>
+        <h1 id="什么是微服务？它有哪些特点？"><a href="#什么是微服务？它有哪些特点？" class="headerlink" title="什么是微服务？它有哪些特点？"></a>什么是微服务？它有哪些特点？</h1><p>微服务是一种软件架构风格，他是以专注于单一职责与功能的小型功能模块为基础，利用模块化的方式组合成大型的复杂应用程序，各功能模块使用与语言无关的API相互通信 —-wikipedia</p>
+<p>微服务架构 将单体应用拆分为多个高内聚低耦合的小型服务，每个小服务运行在独立进程，由不同的团队进行开发和维护，服务间采用轻量级通信机制，独立自动部署，可以采用不同的技术进行开发和使用独立的存储空间</p>
+<h2 id="微服务的特点"><a href="#微服务的特点" class="headerlink" title="微服务的特点"></a>微服务的特点</h2><ul>
+<li>每个微服务仅对单个业务负责，且为该业务的功能负责</li>
+<li>每个微服务独立进行部署，不需要依赖其他微服务及相关资源，如数据库缓存等</li>
+<li>服务可替代,每个微服务原则上都可以使用不同的语言、框架进行实现，且更换技术实现的微服务对整个业务系统不会造成影响</li>
+<li>每个微服务拥有单独的数据存储</li>
+<li>每个微服务由小团队进行维护，服务以业务来进行拆分后，每个微服务将有人数不多的团队对其进行维护</li>
 </ul>
-<p>那么这里我们可以提出几个问题</p>
-<h2 id="生产者是否成功地将消息投递到broker"><a href="#生产者是否成功地将消息投递到broker" class="headerlink" title="生产者是否成功地将消息投递到broker?"></a>生产者是否成功地将消息投递到broker?</h2><p>在默认情况下，rabbitmq 生产者发送完消息后，是不会给rabbitmq返回任何结果的，那很有可能消息发送到一半因为网络或其他原因，消息没有到达broker，消息直接丢失，这种情况是我们无法忍受的，当然rabbitmq也提供了两种方式解决这种问题，供我们自行选择。</p>
+<h1 id="为什么要用微服务？"><a href="#为什么要用微服务？" class="headerlink" title="为什么要用微服务？"></a>为什么要用微服务？</h1><p>为什么要用微服务，实际上就是每一种架构它的实际的使用场景是怎样的，或者说微服务架构它是为了解决哪些问题而诞生的呢？要聊这个内容实际上就要从单体应用开始讲</p>
+<p>什么是单体应用呢?</p>
+<p>单体应用就是将应用的所有功能都打包成一个独立的单元，最终以一个WAR或jar存在。</p>
+<p>那么单体应用有哪些优点和缺点呢？</p>
+<p>单体应用的优点:</p>
 <ul>
-<li>事务消息模式</li>
-<li>发送方确认模式</li>
+<li>便于开发 只需借助IDE的开发调试功能即可完成</li>
+<li>易于测试 通过单元测试或者浏览器即可测试</li>
+<li>易于部署 打包成单一jar包或者war包，执行jar即可部署</li>
 </ul>
-<h2 id="生产者的消息到达broker后，在broker中是否会丢失？"><a href="#生产者的消息到达broker后，在broker中是否会丢失？" class="headerlink" title="生产者的消息到达broker后，在broker中是否会丢失？"></a>生产者的消息到达broker后，在broker中是否会丢失？</h2><p>消息到达broker后，很有可能因为一些原因导致broker重启或者退出，因为rabbitmq的消息默认都是在内存里面的，发生重启会导致消息丢失，这也是我们无法忍受的，这里用到了rabbitmq中的持久化机制，需要我们同时保证3个条件，才能保证消息的持久化</p>
+<p>缺点:</p>
 <ul>
-<li>消息投递时开启了持久化</li>
-<li>目标交换机开启了持久化</li>
-<li>目标队列开启了持久化</li>
+<li>复杂性高   随着业务的迭代，项目中的代码会急剧增多，项目模块也会随之增加，模块间的关系变得更加复杂，整个项目变得非常复杂，在</li>
+<li>可靠性差</li>
+<li>扩展性差</li>
+<li>部署或者启动时间变长</li>
 </ul>
-<ul>
-<li>消息是否被消费者成功消费呢？</li>
-</ul>
-<p>正常来讲如果消息投递成功了，并且在broker开启了持久化是不是就能保证消息可靠传输了呢？答案是否定的，消费者消费也可能出现问题，比如消费失败，或者消息压根就没有到达消费者(丢了)，这个时候又该如何处理呢？RabbitMQ这里提供了一个消费确认的机制，这种机制分为手动确认和自动确认</p>
-<ul>
-<li>manual ack 需要业务方根据消费情况手动确认消息消费情况</li>
-<li>auto ack 消息一经broker发出，就认为已经投递成功了</li>
-</ul>
-<p>很显然 autoack这种是有消息丢失风险的，我们很难保证业务方正确消费的情况，所以一般来说我们想要保证消费的可靠性需要开启手动ack模式，确保业务方正确消费后，再进行确认，下面就说一下手动确认在标准AMQP协议中定义的手动ack的接口方法</p>
-<ul>
-<li><p>basic.ack 如果业务方正确消费了消息，那么业务方需要给broker发送一个ack消息，代表消息已经正确处理, broker可以将这条消息删除了</p>
-</li>
-<li><p>basic.reject 如果业务方发生了异常或者因为某些原因导致无法消费消息，可以给broker发送拒绝消息，让这条消息重新入队，以便让别的消费者可以消费这条消息   对应标准AMQP0.9.1.1协议中的 basic.reject方法</p>
-</li>
-<li><p>basic.nack  在basic.reject的基础上提供批量拒绝消息的方法</p>
-</li>
-</ul>
-<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.rabbitmq.com/confirms.html" target="_blank" rel="noopener">rabbitmq官网#Consumer Acknowledgements and Publisher Confirms</a></p>
+<h1 id="微服务架构带来了哪些问题"><a href="#微服务架构带来了哪些问题" class="headerlink" title="微服务架构带来了哪些问题?"></a>微服务架构带来了哪些问题?</h1><h2 id="服务数量成倍增长-维护难度加大"><a href="#服务数量成倍增长-维护难度加大" class="headerlink" title="服务数量成倍增长 维护难度加大"></a>服务数量成倍增长 维护难度加大</h2><p>devOps</p>
+<h2 id="复杂性提高，学习成本提高"><a href="#复杂性提高，学习成本提高" class="headerlink" title="复杂性提高，学习成本提高"></a>复杂性提高，学习成本提高</h2><h2 id="请求链路长-问题排查成本较高"><a href="#请求链路长-问题排查成本较高" class="headerlink" title="请求链路长 问题排查成本较高"></a>请求链路长 问题排查成本较高</h2><p>## </p>
 
       
     </div>
@@ -406,16 +367,6 @@
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/blog/tags/中间件/" rel="tag"># 中间件</a>
-          
-            <a href="/blog/tags/rabbitmq/" rel="tag"># rabbitmq</a>
-          
-            <a href="/blog/tags/后端技术/" rel="tag"># 后端技术</a>
-          
-        </div>
-      
 
       
       
@@ -425,8 +376,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/blog/2020/04/16/how-to-guarantee-redis-high-availability/" rel="next" title="谈谈如何保障redis的高可用?">
-                <i class="fa fa-chevron-left"></i> 谈谈如何保障redis的高可用?
+              <a href="/blog/2020/05/11/about-lock-of-java/" rel="next" title="聊聊Java中的锁">
+                <i class="fa fa-chevron-left"></i> 聊聊Java中的锁
               </a>
             
           </div>
@@ -434,10 +385,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/blog/2020/04/20/about-redis-durability/" rel="prev" title="谈谈redis中的持久化机制">
-                谈谈redis中的持久化机制 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -576,7 +523,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息可靠性"><span class="nav-number">2.</span> <span class="nav-text">消息可靠性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rabbitmq-消息投递过程"><span class="nav-number">3.</span> <span class="nav-text">rabbitmq 消息投递过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#生产者是否成功地将消息投递到broker"><span class="nav-number">3.1.</span> <span class="nav-text">生产者是否成功地将消息投递到broker?</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#生产者的消息到达broker后，在broker中是否会丢失？"><span class="nav-number">3.2.</span> <span class="nav-text">生产者的消息到达broker后，在broker中是否会丢失？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">4.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是微服务？它有哪些特点？"><span class="nav-number">1.</span> <span class="nav-text">什么是微服务？它有哪些特点？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#微服务的特点"><span class="nav-number">1.1.</span> <span class="nav-text">微服务的特点</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#为什么要用微服务？"><span class="nav-number">2.</span> <span class="nav-text">为什么要用微服务？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#微服务架构带来了哪些问题"><span class="nav-number">3.</span> <span class="nav-text">微服务架构带来了哪些问题?</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#服务数量成倍增长-维护难度加大"><span class="nav-number">3.1.</span> <span class="nav-text">服务数量成倍增长 维护难度加大</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#复杂性提高，学习成本提高"><span class="nav-number">3.2.</span> <span class="nav-text">复杂性提高，学习成本提高</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#请求链路长-问题排查成本较高"><span class="nav-number">3.3.</span> <span class="nav-text">请求链路长 问题排查成本较高</span></a></li></ol></li></ol></div>
             
 
           </div>
@@ -789,7 +736,7 @@
         repo: 'blog-comment',
         owner: 'kyo7701',
         admin: ['kyo7701'],
-        id:'gitalk_20200417215646',
+        id:'gitalk_20200518151937',
         labels: 'gitalk'.split(',').filter(l => l),
         perPage: 10,
         pagerDirection: 'last',
