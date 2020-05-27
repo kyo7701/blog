@@ -359,7 +359,7 @@
 <h2 id="set-集合"><a href="#set-集合" class="headerlink" title="set 集合"></a>set 集合</h2><p>set就是一个集合，一堆不重复值得集合，利用redis提供的set可以存储一些集合性的数据，比如微博中一个人关注的人，粉丝等等，redis还对set提供了一系列的函数可以实现对集合的并、交、差，这就可以非常方便的实现共同好友、共同关注、二度好友等功能</p>
 <p>常用指令 sadd(向一个集合中添加一个或多个元素) spop(移除一个随机元素) srem(移除一个或多个指定元素) smembers(获取集合所有成员) sunion(求并集)</p>
 <h2 id="zset有序集合-内部实现为skip-list跳跃表"><a href="#zset有序集合-内部实现为skip-list跳跃表" class="headerlink" title="zset有序集合 内部实现为skip list跳跃表"></a>zset有序集合 内部实现为skip list跳跃表</h2><p>zset(又称sorted set),有序集合，比set增加了一个score(权重)的概念，使得集合中的元素可以按照score进行排序，这一特性特别适合做排行榜</p>
-<h2 id="hash-字典"><a href="#hash-字典" class="headerlink" title="hash 字典"></a>hash 字典</h2><p>hash几乎可以等价于java中的hashmap,底层采用数组+链表的结构，常用于存储对象<br>常用指令 hget,hset,hgetall</p>
+<h2 id="hash-字典"><a href="#hash-字典" class="headerlink" title="hash 字典"></a>hash 字典</h2><p>hash几乎可以等价于java中的hashmap,底层采用数组+链表的结构，常用于存储对象(因为)<br>常用指令 hget,hset,hgetall</p>
 <h1 id="redis常见的使用场景"><a href="#redis常见的使用场景" class="headerlink" title="redis常见的使用场景"></a>redis常见的使用场景</h1><ul>
 <li>缓存</li>
 <li>单线程模型可做分布式锁</li>
@@ -368,6 +368,24 @@
 <li>分布式会话</li>
 <li>社交网络 共同关注/共同好友 redis提供的hash和集合(交并差)</li>
 </ul>
+<h1 id="redis中的内存淘汰策略"><a href="#redis中的内存淘汰策略" class="headerlink" title="redis中的内存淘汰策略"></a>redis中的内存淘汰策略</h1><p>redis中数据的存取是纯内存操作的，内存是很昂贵的资源，而redis在64位操作系统时是不做内存容量限制的，那么当数据量很大的时候，可想而知，如果不对redis中的数据进行淘汰，很有可能导致操作系统因为内存耗尽而进入假死状态，一般而言 我们会用两种机制(过期策略+内存淘汰机制)配合从而对一些不需要的数据进行删除用来节约空间。</p>
+<h2 id="过期策略"><a href="#过期策略" class="headerlink" title="过期策略"></a>过期策略</h2><p>通常情况下，我们设置一个key的时候，可以对这个key的过期时间进行设置，当key过期后，redis通过</p>
+<h3 id="定时删除"><a href="#定时删除" class="headerlink" title="定时删除"></a>定时删除</h3><p>定时删除是指每隔一段时间，随机抽取一些设置了过期时间的key，检测是否过期，过期了就将其删掉</p>
+<p>key可能很多，扫描所有的key值可能会很消耗性能，这样的话有一些key可能会删不掉，这时候就需要惰性删除的配合进行删除。</p>
+<h3 id="惰性删除"><a href="#惰性删除" class="headerlink" title="惰性删除"></a>惰性删除</h3><p>当redis中的key过期后，redis并不会主动去删除它，而是等到客户端访问某个key的时候，判断key是否过期，如果没过期则直接返回，如果过期，redis会将这个key删除并且不会返回给客户端，这样的话可以解决一些已经过期了，但没有被定期删除扫到的key，但是又引入了另一个问题，已经过期的key并且永远不会访问到，这样既不会被定时删除所处理，也不会被惰性删除所处理，这时就要引入内存淘汰的机制了</p>
+<h3 id="内存淘汰机制"><a href="#内存淘汰机制" class="headerlink" title="内存淘汰机制"></a>内存淘汰机制</h3><p>redis在使用内存超过某个阈值(通过配置文件进行配置 maxmemory)的时候，会触发内存淘汰机制，选取一些key进行删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">maxmemory</span><br><span class="line">maxmemory-policy</span><br></pre></td></tr></table></figure>
+
+<p>配置文件这里的maxmemory-policy 就是可以配置的策略，其中可配置的策略有以下几种</p>
+<ul>
+<li>noeviction 默认策略 不淘汰，内存不足时候，新的写入会报错</li>
+<li>allkeys-lru 当内存不足的时候，在所有的键空间中移除最近最少使用的key</li>
+<li>allkeys-random 在所有键中，随机移除key</li>
+<li>volatile-lru 在设置了过期时间的键空间中，找最近最少使用的key进行删除</li>
+<li>volatile-random 在设置了过期时间的键空间中，随机移除key</li>
+<li>volatile-ttl 在设置了过期时间的键空间中，有更早过期时间的key将会被删除</li>
+</ul>
+<p>一般来说 如果只是用来缓存数据的话，用allkeys-lru就可以了，如果既需要缓存又要保证数据安全性进行持久化的话，出于性能考虑推荐用volatile-lru</p>
 <h1 id="redis-分布式锁"><a href="#redis-分布式锁" class="headerlink" title="redis 分布式锁"></a>redis 分布式锁</h1><h2 id="单节点分布式锁"><a href="#单节点分布式锁" class="headerlink" title="单节点分布式锁"></a>单节点分布式锁</h2><p>单节点的分布式锁(只有一个master节点)往往是不可靠的，虽然实现起来很简单，但是如果主节点宕机或者没有来得及同步数据，给从节点导致从节点选举为master时候锁丢失，这种方案很明显是不可靠的</p>
 <h3 id="setnx-del"><a href="#setnx-del" class="headerlink" title="setnx + del"></a>setnx + del</h3><p>执行业务前通过 setnx 获取锁，执行完业务删除锁，表面上看起来没什么问题，但是如果业务的执行出现了异常，再或者服务宕机没有来得及删除该锁，导致这个业务再次执行的时候再也获取不到这个锁,从而导致死锁，这样是行不通的</p>
 <h3 id="setnx-expire"><a href="#setnx-expire" class="headerlink" title="setnx + expire"></a>setnx + expire</h3><p>业务先通过set nx获取锁，然后再通过expire命令为锁设置过期时间，这种情况实际上跟先加锁后删除的效果是一样的，如果业务执行出现了异常，expire没有被执行，业务还是无法获取这个锁，出现这样的问题的根本原因实际上就是因为 setnx + del || expire是两条指令，并非一个原子性操作，两个指令如果能同时执行就可以避免这样的问题 </p>

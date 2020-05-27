@@ -1318,9 +1318,15 @@
 <li>SpringBoot内嵌了tomcat容器，不用再使用独立的web容器</li>
 <li>SpringBoot相对于Spring来说，使用约定由于配置的原则，不在通过以前那种大量的xml配置和引入一大堆依赖，大大简化了开发人员的工作</li>
 <li>可以实现自动装配</li>
+<li>通过一系列的starter，简化maven或gradle中的配置</li>
 </ul>
+<h1 id="SpringMVC工作流程"><a href="#SpringMVC工作流程" class="headerlink" title="SpringMVC工作流程"></a>SpringMVC工作流程</h1><p>请求发送至DispatcherServlet,遍历所有的handlermapping，通过请求url找到,找到对应的HandlerExecutionChain，并看是否有前置拦截器，有的话则执行，通过handlermapping执行对应controller方法返回modelAndView给DispatcherServlet，最终返回给客户端</p>
+<p>AbstractHandlerMethodMapping#mappingRegistry#mappingLookUp是一个hashMap，存放了url到 类全名+方法名的映射，当请求到达的时候会通过url去这个找到对应的Controller中对应的方法</p>
 <h1 id="Spring-Cloud中用过哪些组件"><a href="#Spring-Cloud中用过哪些组件" class="headerlink" title="Spring Cloud中用过哪些组件"></a>Spring Cloud中用过哪些组件</h1><p>注册中心  配置中心  网关 </p>
-<h1 id="eureka、zookeeper做注册中心有什么区别"><a href="#eureka、zookeeper做注册中心有什么区别" class="headerlink" title="eureka、zookeeper做注册中心有什么区别"></a>eureka、zookeeper做注册中心有什么区别</h1><h1 id="feign是如何保证负载均衡和熔断策略的"><a href="#feign是如何保证负载均衡和熔断策略的" class="headerlink" title="feign是如何保证负载均衡和熔断策略的"></a>feign是如何保证负载均衡和熔断策略的</h1>
+<h1 id="eureka、zookeeper做注册中心有什么区别"><a href="#eureka、zookeeper做注册中心有什么区别" class="headerlink" title="eureka、zookeeper做注册中心有什么区别"></a>eureka、zookeeper做注册中心有什么区别</h1><h1 id="feign是如何保证负载均衡和熔断策略的"><a href="#feign是如何保证负载均衡和熔断策略的" class="headerlink" title="feign是如何保证负载均衡和熔断策略的"></a>feign是如何保证负载均衡和熔断策略的</h1><h1 id="常用负载均衡策略"><a href="#常用负载均衡策略" class="headerlink" title="常用负载均衡策略"></a>常用负载均衡策略</h1><p>Round Robin轮询 将请求依次分配给后端服务，实现简单，请求均匀分配<br>Weight Round Robin加权轮询 一种改进的轮询算法 在服务上自行设置权值，按比例进行分配请求数的比例<br>Random 将请求随机分配给后端服务<br>Hash  根据ip、url或其他信息计算hash值或md5，然后按照服务器数量取模</p>
+<h1 id="Docker-swarm-负载均衡是怎么处理的"><a href="#Docker-swarm-负载均衡是怎么处理的" class="headerlink" title="Docker swarm 负载均衡是怎么处理的"></a>Docker swarm 负载均衡是怎么处理的</h1><p>docker swarm它是有路由网格 service mesh提供的一个负载均衡的功能，在docker内部是通过linux 的ipvs(内核级的4层负载均衡)来实现的</p>
+<h1 id="Docker-swarm的服务发现"><a href="#Docker-swarm的服务发现" class="headerlink" title="Docker swarm的服务发现"></a>Docker swarm的服务发现</h1><p>在部署一个docker服务时，会在docker内置的DNS服务器中注册服务名+VIP(虚拟IP),我们在通过服务名去请求某一个服务的时候，会去docker的DNS服务器中解析并返回目标容器的虚拟IP,然后再docker网络内部进行路由，最终请求被发送到目标服务</p>
+
           
         
       
