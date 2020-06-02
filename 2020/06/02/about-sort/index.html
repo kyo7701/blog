@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/blog/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/blog/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言在平时的编程中，可能会遇到对一组数据进行排序，这个时候我们通常就是调用jdk提供的Arrays.sort()方法来帮助我们进行处理排序，往往并不清楚里面到底做了什么，其实Arrays.sort方法是用了排序算法中的一种，快速排序，那么什么是快速排序？有没有其他类型的排序算法呢？ 什么是排序在了解排序算法之前，我们先来了解下什么是排序在计算机科学中，一个排序算法是一种能将一串数据按照制定排序方式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="聊聊排序算法">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/06/02/about-sort/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="前言在平时的编程中，可能会遇到对一组数据进行排序，这个时候我们通常就是调用jdk提供的Arrays.sort()方法来帮助我们进行处理排序，往往并不清楚里面到底做了什么，其实Arrays.sort方法是用了排序算法中的一种，快速排序，那么什么是快速排序？有没有其他类型的排序算法呢？ 什么是排序在了解排序算法之前，我们先来了解下什么是排序在计算机科学中，一个排序算法是一种能将一串数据按照制定排序方式">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-06-02T16:12:47.273Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="聊聊排序算法">
+<meta name="twitter:description" content="前言在平时的编程中，可能会遇到对一组数据进行排序，这个时候我们通常就是调用jdk提供的Arrays.sort()方法来帮助我们进行处理排序，往往并不清楚里面到底做了什么，其实Arrays.sort方法是用了排序算法中的一种，快速排序，那么什么是快速排序？有没有其他类型的排序算法呢？ 什么是排序在了解排序算法之前，我们先来了解下什么是排序在计算机科学中，一个排序算法是一种能将一串数据按照制定排序方式">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/06/02/about-sort/">
+
+
+
+
+
+  <title>聊聊排序算法 | cris's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">cris's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/06/02/about-sort/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">聊聊排序算法</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-02T14:04:05+08:00">
+                2020-06-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在平时的编程中，可能会遇到对一组数据进行排序，这个时候我们通常就是调用jdk提供的Arrays.sort()方法来帮助我们进行处理排序，往往并不清楚里面到底做了什么，其实Arrays.sort方法是用了排序算法中的一种，快速排序，那么什么是快速排序？有没有其他类型的排序算法呢？</p>
+<h1 id="什么是排序"><a href="#什么是排序" class="headerlink" title="什么是排序"></a>什么是排序</h1><p>在了解排序算法之前，我们先来了解下什么是排序<br>在计算机科学中，一个排序算法是一种能将一串数据按照制定排序方式进行排列的一种算法</p>
+<h1 id="排序算法"><a href="#排序算法" class="headerlink" title="排序算法"></a>排序算法</h1><p>在了解上文提到的快速排序之前，我们先看看有哪些排序算法</p>
+<h2 id="冒泡排序"><a href="#冒泡排序" class="headerlink" title="冒泡排序"></a>冒泡排序</h2><h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>冒泡排序是一种简单的排序算法，它重复的走访要排序的数列，每次比较两个元素，如果他们顺序错误，则进行交换，走访队列的工作就是重复的进行比较知道没有再需要交换的数据，也就是该数列已经排序完成，这个算法的命名是因为越小的元素会经过交换而慢慢的浮到数列的顶端.<br>冒泡排序对于n个元素的排序需要进行O(n^2)的比较次数，并且可以原地排序</p>
+<h3 id="整体工作流程"><a href="#整体工作流程" class="headerlink" title="整体工作流程"></a>整体工作流程</h3><ol>
+<li>比较相邻的两个元素，如果第一个比第二个大，就交换他们两个</li>
+<li>对每一对相邻元素进行同样的操作，从开始的那一对一直比较到结尾的最后一对，这步完成后最后的元素，将是最大元素</li>
+<li>针对所有元素重复以上步骤，除去最后一个元素</li>
+<li>每次持续对越来越少的元素执行上述步骤，直到没有任何一对数字需要比较</li>
+</ol>
+<h3 id="时间复杂度"><a href="#时间复杂度" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>时间复杂度为O(n^2)</p>
+<h3 id="空间复杂度"><a href="#空间复杂度" class="headerlink" title="空间复杂度"></a>空间复杂度</h3><p>O(n) 辅助空间O(1)</p>
+<h3 id="最优时间复杂度"><a href="#最优时间复杂度" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>正序有序数列<br>O(n^2)</p>
+<h3 id="最差时间复杂度"><a href="#最差时间复杂度" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>逆序有序数列<br>O(n^2)</p>
+<h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><p>数组</p>
+<h3 id="是否稳定"><a href="#是否稳定" class="headerlink" title="是否稳定"></a>是否稳定</h3><p>是</p>
+<h3 id="一些可以优化的点"><a href="#一些可以优化的点" class="headerlink" title="一些可以优化的点"></a>一些可以优化的点</h3><p>如果冒泡排序在对一个有序队列进行排序的话，那么在一趟排序下来必定没有发生任何一次交换，反过来说也成立，如果一趟排序中没有发生任何一次交换，则说明队列就是有序的，那么这时候我们只需要引入一个标志，如果一趟排序没有交换发生，我们就可以退出循环，不再需要执行后续的循环了，这样可以使得冒泡排序在最优场景正序有序的数据场景，时间复杂度降为O(n)</p>
+<h2 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h2><h3 id="概述-1"><a href="#概述-1" class="headerlink" title="概述"></a>概述</h3><p>插入排序是一种简单直观的排序算法，它的工作原理是构建有序队列，对于未排序的数据，会在已排序的队列中从后向前进行反向扫描，找到相应的位置并进行插入，插入排序在实现上只需用O(1)的额外空间，因此在从后向前的扫描的过程中，需要反复将已排序元素逐步向后挪位，从而为新元素提供插入空间。<br>这个过程和我们平时打扑克的时候，将牌进行一步步排序的过程比较相似，拿到一张牌的时候，我们先认为手中的牌堆是有序的，然后新抓的牌在牌堆里面找到合适的位置并进行插入，反复抓牌并重复该过程，直至牌抓完，手中的牌也就成了有序的</p>
+<h3 id="整体工作流程-1"><a href="#整体工作流程-1" class="headerlink" title="整体工作流程"></a>整体工作流程</h3><ol>
+<li>从第一个元素开始，该元素被认定为已经有序</li>
+<li>取出下一个元素，在已经排序的元素中从后向前进行扫描</li>
+<li>如果该已排序的元素大于刚才取出的元素，则将该元素进行后移</li>
+<li>重复步骤3，直到找到已排序的元素中小于或等于新元素的位置</li>
+<li>将新元素插入到该位置</li>
+<li>重复步骤2-5</li>
+</ol>
+<h3 id="时间复杂度-1"><a href="#时间复杂度-1" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>O(n^2)</p>
+<h3 id="最优时间复杂度-1"><a href="#最优时间复杂度-1" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>正序有序<br>O(n)</p>
+<h3 id="最差时间复杂度-1"><a href="#最差时间复杂度-1" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>逆序有序<br>O(n^2)</p>
+<h3 id="数据结构-1"><a href="#数据结构-1" class="headerlink" title="数据结构"></a>数据结构</h3><p>数组</p>
+<h3 id="空间复杂度-1"><a href="#空间复杂度-1" class="headerlink" title="空间复杂度"></a>空间复杂度</h3><p>O(n) 辅助空间 O(1)</p>
+<h3 id="是否稳定-1"><a href="#是否稳定-1" class="headerlink" title="是否稳定"></a>是否稳定</h3><p>是</p>
+<h3 id="一些可以优化的点-1"><a href="#一些可以优化的点-1" class="headerlink" title="一些可以优化的点"></a>一些可以优化的点</h3><p>由于插入排序在已排序队列中找自己的位置的时候是逐次比较的，由于该队列是有序的，那么这里其实可以简单的进行一个优化，在找位置的时候可以通过二分查找法来进行减少比较次数，但是由于交换次数不变，算法的时间复杂度依旧是O(n^2)</p>
+<h2 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h2><h3 id="概述-2"><a href="#概述-2" class="headerlink" title="概述"></a>概述</h3><p>选择排序是一种简单直观的排序算法，它的工作原理大致如下，首先在未排序的数据中找最大或者最小的元素，存放到排序队列的起始位置，然后再从剩余未排序的元素中寻找最大或者最小元素，然后放在已排序队列的队尾，以此类推，直到所有的元素均排序完毕</p>
+<p>选择排序的优点主要跟数据移动有关，如果某个数据已经位于正确的位置上面，则它不会进行移动，选择排序每次交换一对元素，它们之中至少有一个将被移到其最终位置上面，因此对n个元素的表进行排序的话，只会涉及到至多n-1次交换，在所有完全依靠交换去移动元素的排序方法中，选择排序属于非常好的一种。</p>
+<p>交换操作比比较所需要的CPU较少，而选择排序比冒泡排序交换次数要少，所以当空间复杂度要求较高的时候，可以考虑选择排序，实际适用的场景相当罕见</p>
+<h3 id="时间复杂度-2"><a href="#时间复杂度-2" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>O(n^2)</p>
+<h3 id="最优时间复杂度-2"><a href="#最优时间复杂度-2" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>正序有序<br>O(n^2)</p>
+<h3 id="最差时间复杂度-2"><a href="#最差时间复杂度-2" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>逆序有序<br>O(n^2)</p>
+<h3 id="数据结构-2"><a href="#数据结构-2" class="headerlink" title="数据结构"></a>数据结构</h3><p>数组</p>
+<h3 id="空间复杂度-2"><a href="#空间复杂度-2" class="headerlink" title="空间复杂度"></a>空间复杂度</h3><p>O(n) + 辅助空间O(1)</p>
+<h3 id="是否稳定-2"><a href="#是否稳定-2" class="headerlink" title="是否稳定"></a>是否稳定</h3><h2 id="快速排序"><a href="#快速排序" class="headerlink" title="快速排序"></a>快速排序</h2><h3 id="概述-3"><a href="#概述-3" class="headerlink" title="概述"></a>概述</h3><p>快速排序，又称分区交换排序，简称快排，在需要对n个元素进行排序的时候需要O(nlogn)次比较，最坏的时候需要O(n^2)次比较，但这并不常见</p>
+<h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><ol>
+<li>从数列中挑选一个基准值(通常会选定起始元素)</li>
+<li>对数列进行分割，将所有小于基准值的放在基准值左侧，大于基准值的元素放在基准值右侧</li>
+<li>递归地对基准值两侧的队列重复1,2步骤</li>
+</ol>
+<h3 id="伪代码"><a href="#伪代码" class="headerlink" title="伪代码"></a>伪代码</h3><ol>
+<li>将数列第一位设为标准值</li>
+</ol>
+<p>递归的终止条件是数列的大小是0或者1，代表数列已经有序</p>
+<h3 id="时间复杂度-3"><a href="#时间复杂度-3" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>O(nlogn)</p>
+<h3 id="最优时间复杂度-3"><a href="#最优时间复杂度-3" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>O(nlogn)</p>
+<h3 id="最差时间复杂度-3"><a href="#最差时间复杂度-3" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>O(n^2)</p>
+<h3 id="是否稳定-3"><a href="#是否稳定-3" class="headerlink" title="是否稳定"></a>是否稳定</h3><p>否</p>
+<p>未完待续——</p>
+<h2 id="希尔排序"><a href="#希尔排序" class="headerlink" title="希尔排序"></a>希尔排序</h2><h3 id="概述-4"><a href="#概述-4" class="headerlink" title="概述"></a>概述</h3><h3 id="时间复杂度-4"><a href="#时间复杂度-4" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><h3 id="是否稳定-4"><a href="#是否稳定-4" class="headerlink" title="是否稳定"></a>是否稳定</h3><h2 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h2><h3 id="概述-5"><a href="#概述-5" class="headerlink" title="概述"></a>概述</h3><h3 id="时间复杂度-5"><a href="#时间复杂度-5" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><h3 id="是否稳定-5"><a href="#是否稳定-5" class="headerlink" title="是否稳定"></a>是否稳定</h3><h2 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h2><h3 id="概述-6"><a href="#概述-6" class="headerlink" title="概述"></a>概述</h3><h3 id="时间复杂度-6"><a href="#时间复杂度-6" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><h3 id="是否稳定-6"><a href="#是否稳定-6" class="headerlink" title="是否稳定"></a>是否稳定</h3>
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2020/05/18/about-micro-services/" rel="next" title="聊聊微服务">
+                <i class="fa fa-chevron-left"></i> 聊聊微服务
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+       <div id="gitalk-container"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/blog/images/avatar.jpg" alt="mr_cris">
+            
+              <p class="site-author-name" itemprop="name">mr_cris</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/blog/archives/">
+              
+                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/blog/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/blog/tags/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是排序"><span class="nav-number">2.</span> <span class="nav-text">什么是排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#排序算法"><span class="nav-number">3.</span> <span class="nav-text">排序算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#冒泡排序"><span class="nav-number">3.1.</span> <span class="nav-text">冒泡排序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述"><span class="nav-number">3.1.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#整体工作流程"><span class="nav-number">3.1.2.</span> <span class="nav-text">整体工作流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间复杂度"><span class="nav-number">3.1.3.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#空间复杂度"><span class="nav-number">3.1.4.</span> <span class="nav-text">空间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最优时间复杂度"><span class="nav-number">3.1.5.</span> <span class="nav-text">最优时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最差时间复杂度"><span class="nav-number">3.1.6.</span> <span class="nav-text">最差时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据结构"><span class="nav-number">3.1.7.</span> <span class="nav-text">数据结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#是否稳定"><span class="nav-number">3.1.8.</span> <span class="nav-text">是否稳定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些可以优化的点"><span class="nav-number">3.1.9.</span> <span class="nav-text">一些可以优化的点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#插入排序"><span class="nav-number">3.2.</span> <span class="nav-text">插入排序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述-1"><span class="nav-number">3.2.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#整体工作流程-1"><span class="nav-number">3.2.2.</span> <span class="nav-text">整体工作流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间复杂度-1"><span class="nav-number">3.2.3.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最优时间复杂度-1"><span class="nav-number">3.2.4.</span> <span class="nav-text">最优时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最差时间复杂度-1"><span class="nav-number">3.2.5.</span> <span class="nav-text">最差时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据结构-1"><span class="nav-number">3.2.6.</span> <span class="nav-text">数据结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#空间复杂度-1"><span class="nav-number">3.2.7.</span> <span class="nav-text">空间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#是否稳定-1"><span class="nav-number">3.2.8.</span> <span class="nav-text">是否稳定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些可以优化的点-1"><span class="nav-number">3.2.9.</span> <span class="nav-text">一些可以优化的点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#选择排序"><span class="nav-number">3.3.</span> <span class="nav-text">选择排序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述-2"><span class="nav-number">3.3.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间复杂度-2"><span class="nav-number">3.3.2.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最优时间复杂度-2"><span class="nav-number">3.3.3.</span> <span class="nav-text">最优时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最差时间复杂度-2"><span class="nav-number">3.3.4.</span> <span class="nav-text">最差时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据结构-2"><span class="nav-number">3.3.5.</span> <span class="nav-text">数据结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#空间复杂度-2"><span class="nav-number">3.3.6.</span> <span class="nav-text">空间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#是否稳定-2"><span class="nav-number">3.3.7.</span> <span class="nav-text">是否稳定</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#快速排序"><span class="nav-number">3.4.</span> <span class="nav-text">快速排序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述-3"><span class="nav-number">3.4.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#工作流程"><span class="nav-number">3.4.2.</span> <span class="nav-text">工作流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#伪代码"><span class="nav-number">3.4.3.</span> <span class="nav-text">伪代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间复杂度-3"><span class="nav-number">3.4.4.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最优时间复杂度-3"><span class="nav-number">3.4.5.</span> <span class="nav-text">最优时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最差时间复杂度-3"><span class="nav-number">3.4.6.</span> <span class="nav-text">最差时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#是否稳定-3"><span class="nav-number">3.4.7.</span> <span class="nav-text">是否稳定</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#希尔排序"><span class="nav-number">3.5.</span> <span class="nav-text">希尔排序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述-4"><span class="nav-number">3.5.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间复杂度-4"><span class="nav-number">3.5.2.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#是否稳定-4"><span class="nav-number">3.5.3.</span> <span class="nav-text">是否稳定</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#堆排序"><span class="nav-number">3.6.</span> <span class="nav-text">堆排序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述-5"><span class="nav-number">3.6.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间复杂度-5"><span class="nav-number">3.6.2.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#是否稳定-5"><span class="nav-number">3.6.3.</span> <span class="nav-text">是否稳定</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#归并排序"><span class="nav-number">3.7.</span> <span class="nav-text">归并排序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概述-6"><span class="nav-number">3.7.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间复杂度-6"><span class="nav-number">3.7.2.</span> <span class="nav-text">时间复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#是否稳定-6"><span class="nav-number">3.7.3.</span> <span class="nav-text">是否稳定</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mr_cris</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问人数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>  总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: 'd7ac612bb7b78584fa57',
+        clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+        repo: 'blog-comment',
+        owner: 'kyo7701',
+        admin: ['kyo7701'],
+        id:'gitalk_20200602140405',
+        labels: 'gitalk'.split(',').filter(l => l),
+        perPage: 10,
+        pagerDirection: 'last',
+        createIssueManually: false,
+        distractionFreeMode: true
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
