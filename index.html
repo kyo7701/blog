@@ -327,8 +327,15 @@
 <p><strong>使用场景</strong></p>
 <p>有可能在创建后使用的对象，也可能不使用，所以这里基于内存的考虑会使用软引用，常见于缓存方面的使用</p>
 <h2 id="弱引用"><a href="#弱引用" class="headerlink" title="弱引用"></a>弱引用</h2><p>弱引用就是用来描述非必需对象的，但是他的强度比软引用更弱一些，被弱引用关联的对象只能生存到下一次垃圾收集发生之前。当垃圾收集器工作的时候，无论当前内存是否足够，都会回收掉只被弱引用所关联的对象，jdk1.2之后，提供了WeakRefrence类来实现弱引用</p>
-<p><strong>使用场景</strong><br>弱引用作用于生命周期更短的，对内存更为敏感的场景当中，比如占用内存较大的Map，java api中提供了WeakHashMap</p>
-<h2 id="虚引用"><a href="#虚引用" class="headerlink" title="虚引用"></a>虚引用</h2><p>虚引用也被称为幽灵引用或者幻影引用，它是最弱的一种引用关系，一个对象是否有虚引用的存在，完全不会对其生存时间构成影响，也无法通过虚引用来取得一个对象实例。为一个对象设置虚引用关联的唯一目的就是能在这个对象被收集器回收时收到一个系统通知。在jdk1.2之后，提供了PhantomReference类来实现虚引用</p>
+<p><strong>使用场景</strong><br>弱引用作用于生命周期更短的，对内存更为敏感的场景当中,只要一发生内存回收就会回收掉这部分内存，比如占用内存较大的Map，WeakHashMap,ThreadLocal中的ThreadLocalMap中的key都是弱引用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">String str = &quot;hello weak reference&quot;;</span><br><span class="line">WeakReference&lt;String&gt; weakReference = new WeakReference&lt;String&gt;(str);</span><br></pre></td></tr></table></figure>
+
+<h2 id="虚引用"><a href="#虚引用" class="headerlink" title="虚引用"></a>虚引用</h2><p>虚引用也被称为幽灵引用或者幻影引用，它是最弱的一种引用关系，一个对象是否有虚引用的存在，完全不会对其生存时间构成影响，也无法通过虚引用来取得一个对象实例。为一个对象设置虚引用关联的唯一目的就是能在这个对象被收集器回收时收到一个系统通知。也就是在虚引用锁描述的对象被回收之前，会被JVM放入ReferenceQueue中(其他引用是在引用的对象被销毁之后才被传入ReferenceQueue中)，由于这个机制的存在，虚引用大多数被用于引用销毁前的处理工作，另外，虚引用在创建的时候必须带有ReferenceQueue</p>
+<p>在jdk1.2之后，提供了PhantomReference类来实现虚引用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PhantomReference&lt;String&gt; pref = new PhantomReference&lt;String&gt;(new String(&quot;str&quot;),new ReferenceQueue());</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用场景</strong></p>
+<p>对象销毁前的一些操作，比如资源释放等</p>
 
           
         
