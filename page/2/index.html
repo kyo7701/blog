@@ -249,6 +249,198 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/20/about-cache/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/04/20/about-cache/" itemprop="url">谈谈缓存</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-20T12:08:54+08:00">
+                2020-04-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>之前文章提到过，redis的常见使用场景之一就是缓存，那么既然聊到缓存，那么肯定会聊到缓存和数据库双写一致性的问题，今天就来聊聊缓存跟数据库双写一致性的问题</p>
+<h1 id="缓存双写一致性问题"><a href="#缓存双写一致性问题" class="headerlink" title="缓存双写一致性问题"></a>缓存双写一致性问题</h1><p>只要系统用缓存，就可能涉及到缓存和数据库双写，只要设计到双写，就可能存在一致性问题</p>
+<h2 id="缓存更新的策略"><a href="#缓存更新的策略" class="headerlink" title="缓存更新的策略"></a>缓存更新的策略</h2><h3 id="先删除缓存，再更新数据库"><a href="#先删除缓存，再更新数据库" class="headerlink" title="先删除缓存，再更新数据库"></a>先删除缓存，再更新数据库</h3><h4 id="为什么是删除缓存而不是更新缓存？"><a href="#为什么是删除缓存而不是更新缓存？" class="headerlink" title="为什么是删除缓存而不是更新缓存？"></a>为什么是删除缓存而不是更新缓存？</h4><ul>
+<li><p><strong>缓存更新的代价可能比较高，数据更新如果不是热点数据存在资源浪费</strong><br>写多读少的场景，缓存根本没有被读到，反而进行了大量的更新，浪费性能<br>写入数据库的值不是直接写入缓存，而是还需要进行一些计算，每次写完数据库再进行一些计算，浪费性能，相比之下，删除缓存反而比较适合</p>
+</li>
+<li><p>存在脏数据问题,并发更新缓存<br>A,B同时更新一条缓存，B先更新完的，A再执行就把B更新过来的数据给覆盖掉了</p>
+</li>
+</ul>
+<p>再回到先删除缓存再更新数据库这里，也存在数据不一致的情况</p>
+<p>场景：请求A进行更新操作，请求B进行查询操作</p>
+<p>1） 请求A进行写操作，删除缓存<br>2）请求B进行读操作,查询缓存发现缓存不存在<br>3）请求B查询数据库，将数据库中的旧值<br>4）请求B将旧值写入缓存<br>5) 请求A将新值写入数据库</p>
+<p>如果不设置过期时间，请求B写入的脏数据就会一直存在，这种问题如何解决呢？<br>可以通过延时双删策略,如下述所示</p>
+<p>1）删除缓存<br>2）更新数据库<br>3）延时等待(等待刚才的读请求完成操作)<br>4）再次删除缓存</p>
+<p>这个延时的时间需要自行评估自己项目中读请求B的操作时间，并在读请求B的耗时上+几百毫秒来确保读请求结束</p>
+<p>这种延时会降低吞吐量，怎么办？<br>将第二次删除改为异步删除，写请求更新完数据库直接返回，不必再延时等待了</p>
+<p>如果第二次删除失败了，怎么办？</p>
+<p>提供保障机制:删除重试策略</p>
+<h3 id="先更新数据库，再删除缓存"><a href="#先更新数据库，再删除缓存" class="headerlink" title="先更新数据库，再删除缓存"></a>先更新数据库，再删除缓存</h3><p>这种方案又名为《cache-aside pattern》</p>
+<ul>
+<li>读的时候，先读缓存，缓存中如果没有再读数据库，然后取出后放入缓存，同时返回响应</li>
+<li>更新的时候，先更新数据库，再删除缓存</li>
+</ul>
+<p>这里实际上是应用了一种懒加载的思路，什么时候用，什么时候再去计算缓存</p>
+<h4 id="存在的问题"><a href="#存在的问题" class="headerlink" title="存在的问题"></a>存在的问题</h4><p>有可能存在脏数据问题</p>
+<ul>
+<li>并发读写</li>
+</ul>
+<ol>
+<li>缓存刚好失效</li>
+<li>请求A过来查询缓存，发现没有查询数据库得到一个旧值</li>
+<li>请求B更新数据库</li>
+<li>请求B删除缓存</li>
+<li>请求A将查到的旧值更新到缓存中</li>
+</ol>
+<p>这种情况要求3中写操作比2中读操作要快，才有可能导致4比5要快，但是一般来说数据库读的远快于数据库的写操作，因此这一情形比较难出现，但不是不会出现，那么如果出现了这种问题要如何解决呢？</p>
+<ul>
+<li>设置缓存的有效期</li>
+<li>在请求B更新完数据库后，采用异步延时删除的策略，并确保此时没有操作这一缓存的读请求后再删除缓存</li>
+</ul>
+<hr>
+<ul>
+<li>删除缓存失败导致脏数据</li>
+</ul>
+<p>一个写操作将新值写入数据库，然后删除缓存时失败，(无论先删缓存还是后删缓存都会存在这个问题)导致缓存数据库数据不一致</p>
+<p>解决方案: 提供一个保障重试的机制即可，确保最终缓存被清除</p>
+<h1 id="缓存雪崩问题"><a href="#缓存雪崩问题" class="headerlink" title="缓存雪崩问题"></a>缓存雪崩问题</h1><p> 简介
+Redis服务重启或者宕机，或者大量缓存在同一时刻失效，此时大量的请求全部打到DB上，DB有可能扛不住从而导致宕机
+</p>
+
+<p>解决方案: </p>
+<ul>
+<li>给每个缓存设置不同的失效时间(比如用当前时间+随机时间段)，避免大量缓存在同一时间失效</li>
+<li>如果是集群部署，将热点数据均匀分布在不同的redis节点上也能避免全部失效的问题，或者热点数据压根就不设置过期时间</li>
+</ul>
+<h1 id="缓存穿透"><a href="#缓存穿透" class="headerlink" title="缓存穿透"></a>缓存穿透</h1><p>简介
+要查询的数据在缓存和数据库内都不存在，用户不断用这样的数据发起请求，导致数据库压力激增，严重时候可能拖垮数据库
+</p>
+
+<p>解决方案: </p>
+<ol>
+<li>接口层增加校验，用户添加鉴权，接口参数做校验，不合法参数直接返回，缓存和数据库中都取不到的数据，也可以将对应的key value(置为null)缓存起来，过期时间设置短一点，这样可以保证同一个用户无法反复用一个数据暴力攻击</li>
+<li>可以使用布隆过滤器</li>
+</ol>
+<h1 id="缓存击穿"><a href="#缓存击穿" class="headerlink" title="缓存击穿"></a>缓存击穿</h1><p>
+缓存击穿其实跟缓存雪崩有点类似，只不过缓存击穿是指单个key值非常热点，在不停的接收并发，当这个key失效的瞬间持续的并发将缓存击穿，流量直接打到DB上面
+</p>
+
+<p>解决方案:</p>
+<ul>
+<li>设置热点数据永不过期</li>
+<li>查缓存时候没有拿到去数据库查询，更新缓存的这一步加上互斥锁，拿不到的读请求需要进行一个自旋，等一会儿再去拿数据，拿到互斥锁的请求将数据更新到缓存后，后续的请求全都自旋完毕后直接从缓存中拿数据了，相当于给缓存“续了个费”</li>
+</ul>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cnblogs.com/rjzheng/p/9041659.html" target="_blank" rel="noopener">分布式之数据库和缓存双写一致性方案解析</a><br><a href="https://juejin.im/post/5dbef8306fb9a0203f6fa3e2" target="_blank" rel="noopener">《我们一起进大厂》系列-缓存雪崩、击穿、穿透</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/20/about-redis-durability/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2411,148 +2603,6 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2019/08/04/test-comment/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="mr_cris">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/blog/images/avatar.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="cris's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/blog/2019/08/04/test-comment/" itemprop="url">test comment</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T23:05:05+08:00">
-                2019-08-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/其他/" itemprop="url" rel="index">
-                    <span itemprop="name">其他</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>用来测试评论的test post</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2605,7 +2655,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-count">22</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -2627,7 +2677,7 @@ RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)�
               
               <div class="site-state-item site-state-tags">
                 <a href="/blog/tags/index.html">
-                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-count">14</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>

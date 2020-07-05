@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT">
+  <meta name="keywords" content="redis,中间件,">
 
 
 
@@ -80,6 +80,7 @@
 
 
 <meta name="description" content="前言每当我们聊到redis的数据结构的时候，我们总会想到string,hash,set,zet,list,但是我们有没有想过这些数据结构又是怎么实现的呢？今天就来聊一下这些常见的数据结构在底层是怎么实现的 SDS(Simple Dynamic String) 简单动态字符串基本结构在redis中每个sds.h/sdshdr代表一个SDS值 123456789struct sdshdr &amp;#123;">
+<meta name="keywords" content="redis,中间件">
 <meta property="og:type" content="article">
 <meta property="og:title" content="聊聊redis的底层数据结构">
 <meta property="og:url" content="https://kyo7701.github.io/blog/2020/06/04/about-redis-data-structure/index.html">
@@ -87,7 +88,7 @@
 <meta property="og:description" content="前言每当我们聊到redis的数据结构的时候，我们总会想到string,hash,set,zet,list,但是我们有没有想过这些数据结构又是怎么实现的呢？今天就来聊一下这些常见的数据结构在底层是怎么实现的 SDS(Simple Dynamic String) 简单动态字符串基本结构在redis中每个sds.h/sdshdr代表一个SDS值 123456789struct sdshdr &amp;#123;">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://s1.ax1x.com/2020/06/04/t0K2fs.png">
-<meta property="og:updated_time" content="2020-06-04T08:10:18.514Z">
+<meta property="og:updated_time" content="2020-06-18T07:16:24.122Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="聊聊redis的底层数据结构">
 <meta name="twitter:description" content="前言每当我们聊到redis的数据结构的时候，我们总会想到string,hash,set,zet,list,但是我们有没有想过这些数据结构又是怎么实现的呢？今天就来聊一下这些常见的数据结构在底层是怎么实现的 SDS(Simple Dynamic String) 简单动态字符串基本结构在redis中每个sds.h/sdshdr代表一个SDS值 123456789struct sdshdr &amp;#123;">
@@ -354,7 +355,8 @@
 <li>双端五环链表</li>
 <li>每个链表用一个list结构来表示，这个结构带有头尾指针和长度</li>
 </ul>
-<h1 id="字典"><a href="#字典" class="headerlink" title="字典"></a>字典</h1>
+<h1 id="字典"><a href="#字典" class="headerlink" title="字典"></a>字典</h1><p>未完待续<del>~</del></p>
+
       
     </div>
     
@@ -368,6 +370,14 @@
     
 
     <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/blog/tags/redis/" rel="tag"># redis</a>
+          
+            <a href="/blog/tags/中间件/" rel="tag"># 中间件</a>
+          
+        </div>
       
 
       
@@ -474,7 +484,7 @@
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-count">22</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -496,7 +506,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/blog/tags/index.html">
-                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-count">14</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
