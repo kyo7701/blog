@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/blog/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/blog/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/blog/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/blog/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="浅淡MySQL中的隐式类型转换问题的提出最近在工作当中，无意发现varchar类型的字段，如果与数字进行等值比较，得出来的结果跟预期不一致。当时很是好奇，于是工作之余将此问题原因查明，并作为记录 举例说明这里就不再取公司的业务数据作为例子，而是直接找到了mysql官网中的例子如下所示 1SELECT &amp;apos;9223372036854775807&amp;apos; = 922337203685477">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cris&#39;s blog">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2021/06/13/about-mysql-implicitly-type-convertion/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="浅淡MySQL中的隐式类型转换问题的提出最近在工作当中，无意发现varchar类型的字段，如果与数字进行等值比较，得出来的结果跟预期不一致。当时很是好奇，于是工作之余将此问题原因查明，并作为记录 举例说明这里就不再取公司的业务数据作为例子，而是直接找到了mysql官网中的例子如下所示 1SELECT &amp;apos;9223372036854775807&amp;apos; = 922337203685477">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2021-06-13T16:18:06.506Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="cris&#39;s blog">
+<meta name="twitter:description" content="浅淡MySQL中的隐式类型转换问题的提出最近在工作当中，无意发现varchar类型的字段，如果与数字进行等值比较，得出来的结果跟预期不一致。当时很是好奇，于是工作之余将此问题原因查明，并作为记录 举例说明这里就不再取公司的业务数据作为例子，而是直接找到了mysql官网中的例子如下所示 1SELECT &amp;apos;9223372036854775807&amp;apos; = 922337203685477">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/blog/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2021/06/13/about-mysql-implicitly-type-convertion/">
+
+
+
+
+
+  <title> | cris's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/blog/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">cris's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2021/06/13/about-mysql-implicitly-type-convertion/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline"></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-13T22:58:07+08:00">
+                2021-06-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="浅淡MySQL中的隐式类型转换"><a href="#浅淡MySQL中的隐式类型转换" class="headerlink" title="浅淡MySQL中的隐式类型转换"></a>浅淡MySQL中的隐式类型转换</h1><h2 id="问题的提出"><a href="#问题的提出" class="headerlink" title="问题的提出"></a>问题的提出</h2><p>最近在工作当中，无意发现varchar类型的字段，如果与数字进行等值比较，得出来的结果跟预期不一致。当时很是好奇，于是工作之余将此问题原因查明，并作为记录</p>
+<h2 id="举例说明"><a href="#举例说明" class="headerlink" title="举例说明"></a>举例说明</h2><p>这里就不再取公司的业务数据作为例子，而是直接找到了<a href="https://dev.mysql.com/doc/refman/5.7/en/type-conversion.html" target="_blank" rel="noopener">mysql官网中的例子</a>如下所示</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &apos;9223372036854775807&apos; = 9223372036854775807;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>-&gt; 1</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &apos;9223372036854775807&apos; = 9223372036854775806;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>-&gt; 1</p>
+</blockquote>
+<p>我们可以清晰的看到两个等式左侧的字符串的值是相等的,但右侧的数字却不相等，如果我们用这种方式(varchar列与数值进行比较运算)来做等值比较，那么产生的结果很可能不是我们预期的内容</p>
+<h2 id="官网解释"><a href="#官网解释" class="headerlink" title="官网解释"></a>官网解释</h2><blockquote>
+<p>Comparisons between floating-point numbers and large values of INTEGER type are approximate because the integer is converted to double-precision floating point before comparison, which is not capable of representing all 64-bit integers exactly. For example, the integer value 2^53 + 1 is not representable as a float, and is rounded to 2^53 or 2^53 + 2 before a float comparison, depending on the platform.</p>
+</blockquote>
+<p>我理解这里的大致意思是说，在浮点数和大的Integer类型的数值发生比较的时候，得到的结果是一个近似的结果。<br>在integer数值与浮点数进行比较之前会被转化为双精度浮点数,这就导致转换后的结果不能精确的表示所有64位整数，举例来说，整型的2^53 + 1是不能被浮点数表示的，发生浮点整数比较时会被近似为2^53或2^53 +2,具体结果视平台不同而不同</p>
+<p>看到这里可能会比较疑惑，我明明用的是一个字符串列与数值进行比较，怎么就跟浮点数和整数扯上关系了？我们继续读官方文档</p>
+<p>这里在官方文档前面其实描述了,我在这里就直接给出我的理解了，官网的具体链接放于文章末尾，感兴趣的同学可以自行去阅读</p>
+<p>当发生比较运算时，以下规则描述了类型转换是如何发生的:</p>
+<ul>
+<li>如果运算符两侧的操作数有一个或一个以上为NULL，比较结果则为NULL(如果是NULL-safe运算符&lt;=&gt;则不会出现上述结果,select NULL &lt;=&gt; NULL;结果为1,并且不会发生类型转换);</li>
+<li>如果运算符两侧的操作数都是字符串，它们会被当作字符串比较;</li>
+<li>运算符两侧都是integer,它们会被当作integer来比较;</li>
+<li>16进制的value如果不与数字发生比较会被当作二进制串处理;</li>
+<li>如果其中一个操作数是timestamp或者datetime并且另外一个操作数是常量，常量会被先行转换为时间戳在进行比较，这么做是为了对ODBC更为友好 但这种操作并不支持in()查询,为了安全起见，在这种比较的时候，请尽量使用完整的datetime、date或者是time的字符串来进行比较。举例来说:在date或者是time数据间进行比较的时候,如果想达到最好的比较效果，请尽量使用显示的类型转换(cast )来将两个操作数转换成想要比较的数据类型;</li>
+<li>一个单行的子查询将不被被当做constant来处理，举例来讲,一个datetime类型的数值和一个返回一个integer类型的子查询,会被当作两个integer数来进行比较，这个integer数将不会被转化为临时变量，如果想要当作datetime类型进行比较 请使用cast进行显示的类型转换;</li>
+<li>如果操作数中有decimal，这种比较运算将根据另一个操作数的类型来决定。另一个操作数如果是decimal或者integer,则比较会被当作decimal类型进行比较,另一个操作数如果是float类型，则会被当作float类型进行比较;</li>
+<li>所有其他情况，均会被当做浮点数进行比较，举个例子来讲,一个字符串和一个数字进行比较会被当作浮点数来进行比较</li>
+</ul>
+<p>那么通过上述规则,我们不难看出，在用varchar列与数字进行比较的时候则会被当作浮点数进行比较，那么这种情况发生的时候，它们每次并不一定是同一结果，integer操作数会被CPU转换为浮点型，而string的转换会以浮点数的按位乘法的方式进行转换，此外，操作结果还会受到计算机架构、编译器版本、编译器优化等因素的影响。<br>要想避免这种情况，其中的一种办法就是避免这种浮点数的隐式转换发生，比如我们最开头的例子:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">CAST</span>(<span class="string">'9223372036854775807'</span> <span class="keyword">AS</span> <span class="keyword">UNSIGNED</span>) = <span class="number">9223372036854775806</span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>其实我之前之所以没遇到这种问题,完全是因为我自己在写查询语句的时候，使的SQL语句的语义尽量地准确，比如varchar类型的列，我就只使用字符串与之进行比较运算，这就完全规避掉了这种隐式转换的发生,这里其实并不是说楼主水平有多么好或者吹嘘自己，而是想说保持一个良好的编码习惯会为自己避免很多问题的发生，节省很多时间，但是辩证地来看，若经常保持不良好的编码习惯，也能经常收获一些意想不到的问题，这个时候如果肯下点功夫，虽然花费了大量精力去处理问题，但却能收获到一些良好编程习惯接触不到的知识。但无论是采用哪种编码习惯,遇到问题的时候一定要下功夫去查明真相，如果当时没有精力去查明这种问题，工作之余一定要将问题查明原因，否则任你工作经验再多，积累的无非只是”工作年份”而并非”工作经验”</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog/2021/03/19/about-thread-pool/" rel="next" title="聊聊线程池">
+                <i class="fa fa-chevron-left"></i> 聊聊线程池
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+       <div id="gitalk-container"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/blog/images/avatar.jpg" alt="mr_cris">
+            
+              <p class="site-author-name" itemprop="name">mr_cris</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/blog/archives/">
+              
+                  <span class="site-state-item-count">25</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/blog/categories/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/blog/tags/index.html">
+                  <span class="site-state-item-count">18</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#浅淡MySQL中的隐式类型转换"><span class="nav-number">1.</span> <span class="nav-text">浅淡MySQL中的隐式类型转换</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#问题的提出"><span class="nav-number">1.1.</span> <span class="nav-text">问题的提出</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#举例说明"><span class="nav-number">1.2.</span> <span class="nav-text">举例说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#官网解释"><span class="nav-number">1.3.</span> <span class="nav-text">官网解释</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#小结"><span class="nav-number">1.4.</span> <span class="nav-text">小结</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">mr_cris</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问人数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>  总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/blog/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/blog/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/blog/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/blog/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/blog/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: 'd7ac612bb7b78584fa57',
+        clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+        repo: 'blog-comment',
+        owner: 'kyo7701',
+        admin: ['kyo7701'],
+        id:'gitalk_20210613225807',
+        labels: 'gitalk'.split(',').filter(l => l),
+        perPage: 10,
+        pagerDirection: 'last',
+        createIssueManually: false,
+        distractionFreeMode: true
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

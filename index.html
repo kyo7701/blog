@@ -249,6 +249,472 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2021/06/13/about-mysql-implicitly-type-convertion/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2021/06/13/about-mysql-implicitly-type-convertion/" itemprop="url">未命名</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-06-13T22:58:07+08:00">
+                2021-06-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="浅淡MySQL中的隐式类型转换"><a href="#浅淡MySQL中的隐式类型转换" class="headerlink" title="浅淡MySQL中的隐式类型转换"></a>浅淡MySQL中的隐式类型转换</h1><h2 id="问题的提出"><a href="#问题的提出" class="headerlink" title="问题的提出"></a>问题的提出</h2><p>最近在工作当中，无意发现varchar类型的字段，如果与数字进行等值比较，得出来的结果跟预期不一致。当时很是好奇，于是工作之余将此问题原因查明，并作为记录</p>
+<h2 id="举例说明"><a href="#举例说明" class="headerlink" title="举例说明"></a>举例说明</h2><p>这里就不再取公司的业务数据作为例子，而是直接找到了<a href="https://dev.mysql.com/doc/refman/5.7/en/type-conversion.html" target="_blank" rel="noopener">mysql官网中的例子</a>如下所示</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &apos;9223372036854775807&apos; = 9223372036854775807;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>-&gt; 1</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT &apos;9223372036854775807&apos; = 9223372036854775806;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>-&gt; 1</p>
+</blockquote>
+<p>我们可以清晰的看到两个等式左侧的字符串的值是相等的,但右侧的数字却不相等，如果我们用这种方式(varchar列与数值进行比较运算)来做等值比较，那么产生的结果很可能不是我们预期的内容</p>
+<h2 id="官网解释"><a href="#官网解释" class="headerlink" title="官网解释"></a>官网解释</h2><blockquote>
+<p>Comparisons between floating-point numbers and large values of INTEGER type are approximate because the integer is converted to double-precision floating point before comparison, which is not capable of representing all 64-bit integers exactly. For example, the integer value 2^53 + 1 is not representable as a float, and is rounded to 2^53 or 2^53 + 2 before a float comparison, depending on the platform.</p>
+</blockquote>
+<p>我理解这里的大致意思是说，在浮点数和大的Integer类型的数值发生比较的时候，得到的结果是一个近似的结果。<br>在integer数值与浮点数进行比较之前会被转化为双精度浮点数,这就导致转换后的结果不能精确的表示所有64位整数，举例来说，整型的2^53 + 1是不能被浮点数表示的，发生浮点整数比较时会被近似为2^53或2^53 +2,具体结果视平台不同而不同</p>
+<p>看到这里可能会比较疑惑，我明明用的是一个字符串列与数值进行比较，怎么就跟浮点数和整数扯上关系了？我们继续读官方文档</p>
+<p>这里在官方文档前面其实描述了,我在这里就直接给出我的理解了，官网的具体链接放于文章末尾，感兴趣的同学可以自行去阅读</p>
+<p>当发生比较运算时，以下规则描述了类型转换是如何发生的:</p>
+<ul>
+<li>如果运算符两侧的操作数有一个或一个以上为NULL，比较结果则为NULL(如果是NULL-safe运算符&lt;=&gt;则不会出现上述结果,select NULL &lt;=&gt; NULL;结果为1,并且不会发生类型转换);</li>
+<li>如果运算符两侧的操作数都是字符串，它们会被当作字符串比较;</li>
+<li>运算符两侧都是integer,它们会被当作integer来比较;</li>
+<li>16进制的value如果不与数字发生比较会被当作二进制串处理;</li>
+<li>如果其中一个操作数是timestamp或者datetime并且另外一个操作数是常量，常量会被先行转换为时间戳在进行比较，这么做是为了对ODBC更为友好 但这种操作并不支持in()查询,为了安全起见，在这种比较的时候，请尽量使用完整的datetime、date或者是time的字符串来进行比较。举例来说:在date或者是time数据间进行比较的时候,如果想达到最好的比较效果，请尽量使用显示的类型转换(cast )来将两个操作数转换成想要比较的数据类型;</li>
+<li>一个单行的子查询将不被被当做constant来处理，举例来讲,一个datetime类型的数值和一个返回一个integer类型的子查询,会被当作两个integer数来进行比较，这个integer数将不会被转化为临时变量，如果想要当作datetime类型进行比较 请使用cast进行显示的类型转换;</li>
+<li>如果操作数中有decimal，这种比较运算将根据另一个操作数的类型来决定。另一个操作数如果是decimal或者integer,则比较会被当作decimal类型进行比较,另一个操作数如果是float类型，则会被当作float类型进行比较;</li>
+<li>所有其他情况，均会被当做浮点数进行比较，举个例子来讲,一个字符串和一个数字进行比较会被当作浮点数来进行比较</li>
+</ul>
+<p>那么通过上述规则,我们不难看出，在用varchar列与数字进行比较的时候则会被当作浮点数进行比较，那么这种情况发生的时候，它们每次并不一定是同一结果，integer操作数会被CPU转换为浮点型，而string的转换会以浮点数的按位乘法的方式进行转换，此外，操作结果还会受到计算机架构、编译器版本、编译器优化等因素的影响。<br>要想避免这种情况，其中的一种办法就是避免这种浮点数的隐式转换发生，比如我们最开头的例子:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">CAST</span>(<span class="string">'9223372036854775807'</span> <span class="keyword">AS</span> <span class="keyword">UNSIGNED</span>) = <span class="number">9223372036854775806</span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>其实我之前之所以没遇到这种问题,完全是因为我自己在写查询语句的时候，使的SQL语句的语义尽量地准确，比如varchar类型的列，我就只使用字符串与之进行比较运算，这就完全规避掉了这种隐式转换的发生,这里其实并不是说楼主水平有多么好或者吹嘘自己，而是想说保持一个良好的编码习惯会为自己避免很多问题的发生，节省很多时间，但是辩证地来看，若经常保持不良好的编码习惯，也能经常收获一些意想不到的问题，这个时候如果肯下点功夫，虽然花费了大量精力去处理问题，但却能收获到一些良好编程习惯接触不到的知识。但无论是采用哪种编码习惯,遇到问题的时候一定要下功夫去查明真相，如果当时没有精力去查明这种问题，工作之余一定要将问题查明原因，否则任你工作经验再多，积累的无非只是”工作年份”而并非”工作经验”</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2021/03/19/about-thread-pool/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2021/03/19/about-thread-pool/" itemprop="url">聊聊线程池</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-03-19T14:49:26+08:00">
+                2021-03-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在开始做这期博客之前，作者提出了几个问题，文章将通过这几个问题穿插着了解线程池</p>
+<ol>
+<li><p>线程池是什么？</p>
+</li>
+<li><p>为什么要用线程池？他解决了哪些问题？</p>
+</li>
+<li><p>有哪些默认的线程池？他们有没有什么问题?</p>
+</li>
+<li><p>线程池工作流程？</p>
+</li>
+<li><p>work工作流程?</p>
+</li>
+<li><p>线程池的参数有哪些？生产环境该如何根据业务调整这些参数？</p>
+</li>
+</ol>
+<hr>
+<p>进入正题</p>
+<h1 id="1-什么是线程池"><a href="#1-什么是线程池" class="headerlink" title="1. 什么是线程池"></a>1. <strong>什么是线程池</strong></h1><p><strong><a href="https://en.wikipedia.org/wiki/Thread_pool" target="_blank" rel="noopener">wikipedia</a></strong></p>
+<blockquote>
+<p>计算机科学中,线程池是一种为了取得应用程序并发度的软件设计模式。它也被成为replicated workers or<br>work-crew model,一个线程池在其内部维护这一组为了等待执行并发任务的线程，通过对这一组线程的维护，<br>这种模式提高了性能并且避免了短任务频繁创建及销毁的执行延迟。</p>
+</blockquote>
+<p><strong><a href="https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html" target="_blank" rel="noopener">美团技术团队</a></strong></p>
+<blockquote>
+<p>线程池是一种基于池化思想管理线程的工具，经常出现在多线程服务器中，比如MySQL。   </p>
+</blockquote>
+<p><strong>池化思想</strong><br>顾名思义，将资源统一在一起管理解决资源分配的问题，最大化收益并最小化风险。</p>
+<p>池化思想不仅可以用在计算机领域，也可以用于人力管理、工作管理设备、金融管理(例如将RD认为是一种资源，将所有RD统一放入池子里统一管理，分配开发任务等等)，其他几种使用场景包括以下:</p>
+<ul>
+<li>内存池(Memory Pooling) : 预先申请内存，提高内存申请速度，减少内存碎片</li>
+<li>连接池(Connection Pooling) : 预先申请连接信息，提升申请连接的速度，降低系统的开销</li>
+<li>实例池(Object Pooling) : 循环使用对象，减少资源在初始化和释放时的昂贵损耗。</li>
+</ul>
+<h1 id="2-为什么要用线程池？-线程池有什么好处？"><a href="#2-为什么要用线程池？-线程池有什么好处？" class="headerlink" title="2. 为什么要用线程池？ 线程池有什么好处？"></a>2. 为什么要用线程池？ 线程池有什么好处？</h1><ul>
+<li>降低资源损耗 通过池化技术重复利用已经创建的线程，    降低线程创建和销毁带来的损耗。</li>
+<li>提高响应速度 任务到达时，无需等待线程创建即可立即执行</li>
+<li>提高对线程的管理性，线程是稀缺资源，无限制的创建不仅会消耗系统的资源，并且还会因为资源分配不合理导致调度失衡，降低系统的稳定性。使用线程池可以进行统一的分配、调优和监控</li>
+<li>提供更多可以调控的功能，线程池具备可拓展性，允许开发人员向其中添加更多的功能。比如延迟队列，允许任务延期执行</li>
+</ul>
+<h1 id="3-有哪些默认的线程池"><a href="#3-有哪些默认的线程池" class="headerlink" title="3.有哪些默认的线程池"></a>3.有哪些默认的线程池</h1><p>在Java当中，主要通过类Executors提供的几个工厂方法来创建默认的线程池，其中JDK1.8中主要提供以下6种默认的实现</p>
+<ul>
+<li>newSingleThreadExecutor</li>
+<li>newFixedThreadPool</li>
+<li>newWorkStealingPool</li>
+<li>newSingleThreadScheduledExecutor</li>
+<li>newScheduledThreadPool</li>
+<li>newCachedThreadPool</li>
+</ul>
+<p>这些工厂方法都是通过ThreadPoolExecutor实现的，只是不同的方法构造参数不尽相同</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/07/26/about-mybatis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/07/26/about-mybatis/" itemprop="url">聊聊ORM框架之mybatis</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-26T00:19:58+08:00">
+                2020-07-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>周五本来想着跑个步就打算睡觉来着，没想到还能跟前同事大佬在一起交流一波技术(其实是单方面的吊锤我，哈哈)，大佬带我系统的分析了几个常见框架的源码，今天正好趁热，赶紧把已经了解的内容记录下来，便于以后进行查阅</p>
+<h1 id="ORM"><a href="#ORM" class="headerlink" title="ORM"></a>ORM</h1><p>在正式了解mybatis之前，其实需要先了解一些概念，比如什么是ORM(Object Relational Mapping,简称ORM)</p>
+<p> wikipedia</p>
+<blockquote>
+<p>对象关系映射（英语：Object Relational Mapping，简称ORM，或O/RM，或O/R mapping），是一种程序设计技术，用于实现面向对象编程语言里不同类型系统的数据之间的转换。从效果上说，它其实是创建了一个可在编程语言里使用的“虚拟对象数据库”。 </p>
+</blockquote>
+<p>阮一峰的网络日志《ORM实例教程》</p>
+<blockquote>
+<p>在面向对象编程语言当中，所有的实体都可以被视作对象，而关系数据库当中，则是通过实体与实体间的关系来连接数据，很早就有人提出，关系也可以用对象来表达，这样的话，就可以通过面向对象的思想来操作关系型数据库。    </p>
+</blockquote>
+<p><img src="https://s1.ax1x.com/2020/07/26/apPO54.png" alt></p>
+<p>也就是说，ORM是通过实例对象的语法，来完成关系型数据库操作的技术。</p>
+<ul>
+<li>数据库中的表      —》 类</li>
+<li>数据库中的一行记录 —》 对象</li>
+<li>字段             —》 对象的属性</li>
+</ul>
+<p>在Java编程语言中，常用的ORM框架无非两种，一种是Hibernate，一种是Mybatis,前一种是拥抱面向对象的，它能够维护Object—&gt; Relation和 Relation —&gt; Object的映射，是完整的ORM框架，而Mybatis则不是这样，mybatis只实现了Relation—&gt; Object这一部分内容，它是拥抱SQL的，所以说Hibernate是完整的ORM框架，而Mybatis是不完整的ORM框架，Hibernate这种接近面向对象的操作方式也使得它拥有一系列的优点(HQL语言)，但是由于经常使用HQL语言容易使得对底层SQL的细节忽略，从而导致一些SQL在出现性能问题后优化会非常困难，由于本节只讲mybatis，所以hibernate和mybatis的对比区别这里就不再过多赘述了。</p>
+<h1 id="mybatis框架的工作流程"><a href="#mybatis框架的工作流程" class="headerlink" title="mybatis框架的工作流程"></a>mybatis框架的工作流程</h1><p>由于现阶段用springboot比较多，我们现在就拿集成已经非常方便的mybatis-spring-boot-starter来进行本文的讲解，代码版本</p>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.mybatis.spring.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;mybatis-spring-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;2.1.3&lt;/version&gt;
+&lt;/dependency&gt;</code></pre><p>其实一聊到springboot，想到的第一件事就应该是自动装配，那就需要看一下mybatis是不是有mybatisAutoConfigration，果然这里有自动配置类-》org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration</p>
+<p>MybatisAutoConfiguration配置类在当前环境下如果发现DataSource类加载后，会进行自动装配，默认会加载SQLSessionFactory和SqlSessionTemplate，<br>SqlSessionFactory是生产SqlSession的工厂，可以创建Sqlsession(mybatis核心接口，通过这个接口可以执行命令，获取mapper或者是管理事务)<br>SqlsessionTemplate则实现了Sqlsession、DisposableBean接口,在构造方法内创建了一个代理SqlSessionInterceptor，通过该代理类代理执行statement</p>
+<p><strong>sqlsession提供的接口方法</strong><br><img src="https://s1.ax1x.com/2020/07/26/apR0x0.png" alt></p>
+<p><strong>sqlsessionTemplate类图</strong><br><img src="https://s1.ax1x.com/2020/07/26/apWDfA.png" alt></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/07/05/about-seeking-a-job/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1436,595 +1902,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/05/07/about-knowledge-tree/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="mr_cris">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/blog/images/avatar.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="cris's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/blog/2020/05/07/about-knowledge-tree/" itemprop="url">知识树的建立</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-07T19:03:10+08:00">
-                2020-05-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天花了点时间把这段时间需要学习的内容列了一个思维导图，感觉之前的学习方式方法有问题，我们先对需要学习的内容列一个整体的知识体系，对自己有一个整体的把控之后，这时候再去某个细枝末节不断的去探索，去钻研，不至于学习漫无目的，毫无章法可言，以至于“东一榔头，西一棒槌”。</p>
-<p><img src="https://s1.ax1x.com/2020/05/08/YmLbSx.png" alt></p>
-<p>这个知识树会在后续的学习中不断的去扩充，复习的时候会对某一个节点进行系统的展开，持续更新中…</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/30/about-jvm/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="mr_cris">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/blog/images/avatar.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="cris's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/blog/2020/04/30/about-jvm/" itemprop="url">聊聊JVM</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-30T11:07:09+08:00">
-                2020-04-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在讲以下内容之前，我们先通过一个思维导图了解一下本文的大致内容</p>
-<p>该图片引用自<a href="https://blog.csdn.net/sheep_3/article/details/51457116" target="_blank" rel="noopener">深入理解Java虚拟机总结-思维导图</a></p>
-<p>————————————————<br><img src="https://s1.ax1x.com/2020/05/06/YAMRkq.png" alt></p>
-<p><img src="https://s1.ax1x.com/2020/05/06/YAMdtP.png" alt></p>
-<h2 id="内存区域划分"><a href="#内存区域划分" class="headerlink" title="内存区域划分"></a>内存区域划分</h2><p>这一部分我们主要来详细了解一下运行时数据区的内容</p>
-<h3 id="Java虚拟机栈"><a href="#Java虚拟机栈" class="headerlink" title="Java虚拟机栈"></a>Java虚拟机栈</h3><p><strong>特点</strong><br>线程私有区域，生命周期与线程相同</p>
-<p><strong>作用</strong><br>Java虚拟机栈是描述的Java中方法执行的内存模型: 每个方法在执行的同时会创建一个栈帧(stack frame),用于存储<strong>局部变量表</strong>、<strong>操作数栈</strong>、<strong>动态链接</strong>、<strong>方法出口</strong>等信息。每一个方法调用至执行完成的时候，都对应着一个栈帧在虚拟机栈中从入栈到出栈的过程</p>
-<p><strong>局部变量表</strong>存放了各种编译器可知的基本数据类型、引用数据类型和returnAddress指令(指向了下一条字节码指令的地址)，我们平时常说的栈指的就是Java虚拟机栈里面的局部变量表的内容</p>
-<h3 id="程序计数器"><a href="#程序计数器" class="headerlink" title="程序计数器"></a>程序计数器</h3><p><strong>特点</strong><br>线程私有区域<br><strong>概述</strong><br>程序计数器是一块较小的内存空间，可以看作是当前线程执行的字节码的行号指示器。在虚拟机的概念模型里，字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令，分支、循环、跳转、异常处理、线程恢复等功能都需要依赖这个计数器来完成</p>
-<h3 id="本地方法栈"><a href="#本地方法栈" class="headerlink" title="本地方法栈"></a>本地方法栈</h3><p>本地方法栈跟Java虚拟机栈的作用是类似的，他们的区别是Java虚拟机栈执行的是Java方法，而本地方法栈执行的是虚拟机用到的Native方法</p>
-<h3 id="Java堆"><a href="#Java堆" class="headerlink" title="Java堆"></a>Java堆</h3><p><strong>特点</strong><br>所有线程共享区域，开发人员关注的核心区域，垃圾收集器管理的主要区域，Java虚拟机中内存最大的一块<br><strong>概述</strong><br>该内存区块是Java虚拟机中最大的一块内存区域，在虚拟机启动时创建，几乎所有的对象实例都会在这里进行分配，根据内存回收的角度来看，现在的大多数收集器大多采用分代收集算法，所以Java堆还可以进行进一步的细分:新生代和老年代，新生代再细致一点可分为Eden空间，from survivor空间，to survivor空间。</p>
-<h3 id="方法区"><a href="#方法区" class="headerlink" title="方法区"></a>方法区</h3><p><strong>特点</strong><br>所有线程共享区域<br><strong>概述</strong><br>方法区与Java堆一样，是各个线程共享的内存区域，用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码数据等，平时说的常量池就位于该区域。虽然虚拟机规范把方法区作为堆的一个逻辑部分，但他还有另外的一个别名叫非堆，目的就是和Java堆进行区分</p>
-<h4 id="运行时常量池"><a href="#运行时常量池" class="headerlink" title="运行时常量池"></a>运行时常量池</h4><p><strong>概述</strong><br>运行时常量池是方法区中的一部分，Class文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是常量池，用于存放编译期生成的各种字面量和符号引用，这部分内容在类加载后进入方法区中的运行时常量池中存放</p>
-<h3 id="直接内存"><a href="#直接内存" class="headerlink" title="直接内存"></a>直接内存</h3><p>直接内存并不是虚拟机运行时数据区的一部分，也不是Java虚拟机规范中定义的内存区域，但是这部分内存也被频繁的使用，也可能导致OOM异常，在JDK1.4中新加入了NIO,引入了一种基于Channel与Buffer的I/O方式，它可以通过native函数库直接分配堆外内存，然后通过一个存储在Java堆中的DirectByteBuffer对象作为这块内存的引用进行操作，在一些场景中能显著提升性能，因为避免了再Java堆和native堆上来回复制数据</p>
-<h2 id="如何判断对象已死？"><a href="#如何判断对象已死？" class="headerlink" title="如何判断对象已死？"></a>如何判断对象已死？</h2><p>在Java堆里面几乎存放着Java世界中所有的对象实例，垃圾收集器在进行垃圾回收前，第一件事情就是需要判断哪些对象还“存活”着，哪些对象已经“死去”</p>
-<h3 id="引用计数算法"><a href="#引用计数算法" class="headerlink" title="引用计数算法"></a>引用计数算法</h3><p>给对象添加一个引用计数器，每当有一个地方引用它时，计数器就+1，引用失效时，计数器就-1，任何时刻计数器为0的对象即不再使用的对象，即可以理解为这个对象已经“死去”了，在下次进行垃圾回收的时候，就可以将这些对象收集。引用计数实现简单，判定效率也很高，但是他很难解决对象之间的相互循环引用的问题</p>
-<h3 id="根搜索算法-可达性分析算法"><a href="#根搜索算法-可达性分析算法" class="headerlink" title="根搜索算法(可达性分析算法)"></a>根搜索算法(可达性分析算法)</h3><p>通过一系列的被称为<strong>GC Roots</strong>的对象作为起始点，从这些节点开始向下进行搜索，搜索所走过的路径为引用链，当一个对象到GC Roots没有任何引用链相连的话，则证明是对象不可用的。</p>
-<p>哪些对象可以用来当做GC ROOTS呢？</p>
-<ul>
-<li>虚拟机栈中局部变量表中引用的对象</li>
-<li>方法区中类静态属性引用的对象</li>
-<li>方法区中常量引用的对象</li>
-<li>本地方法栈中JNI引用的对象</li>
-</ul>
-<h2 id="垃圾收集算法"><a href="#垃圾收集算法" class="headerlink" title="垃圾收集算法"></a>垃圾收集算法</h2><h3 id="复制收集算法"><a href="#复制收集算法" class="headerlink" title="复制收集算法"></a>复制收集算法</h3><p><strong>缺点</strong></p>
-<ul>
-<li>可用内存大小变为原来的一半</li>
-<li>如果对象存活率较高，会出现大量复制，效率会降低</li>
-</ul>
-<p>将可用内存按容量分为大小相等的两块，每次可使用其中的一块，当一块中的内存耗尽时，对这块内存区域进行垃圾收集，将这块内存中所有还存活的对象复制到另一块，再把这块的内存区域一次性清理掉，这样每次只对整个半区进行内存回收，分配的时候就不用了考虑内存碎片的问题了</p>
-<h3 id="标记清除算法"><a href="#标记清除算法" class="headerlink" title="标记清除算法"></a>标记清除算法</h3><p><strong>缺点</strong></p>
-<ul>
-<li>先标记，后清除，两阶段效率都不高</li>
-<li>产生大量内存碎片</li>
-</ul>
-<p>先标记出所有需要回收的对象，标记完成后统一进行回收，后续的垃圾收集算法都是基于这种算法进行改进而得到的，缺点是标记和清除效率都不高，并且标记清除后会有大量的不连续的内存碎片</p>
-<h3 id="标记-整理算法"><a href="#标记-整理算法" class="headerlink" title="标记-整理算法"></a>标记-整理算法</h3><p>与标记清除算法类似，但是不是直接清除，而是将所有可存活的对象向一端移动，然后直接清理掉边界外的内存。</p>
-<h3 id="新生代对象特点"><a href="#新生代对象特点" class="headerlink" title="新生代对象特点"></a>新生代对象特点</h3><p>大部分情况都是朝生夕死</p>
-<h3 id="老年代对象特点"><a href="#老年代对象特点" class="headerlink" title="老年代对象特点"></a>老年代对象特点</h3><p>对象存活率较高，没有额外空间进行分配担保</p>
-<h2 id="垃圾收集器"><a href="#垃圾收集器" class="headerlink" title="垃圾收集器"></a>垃圾收集器</h2><p>如果说垃圾收集算法是内存回收的方法论，那么垃圾收集器就是内存回收的具体表现。</p>
-<h3 id="Serial垃圾收集器"><a href="#Serial垃圾收集器" class="headerlink" title="Serial垃圾收集器"></a>Serial垃圾收集器</h3><p><strong>特点</strong></p>
-<ul>
-<li>单线程收集</li>
-<li>新生代收集器</li>
-<li>收集时停止所有工作线程的工作(STOP THE WORLD)</li>
-<li>跟其他垃圾收集器相比简单而高效(单个CPU环境下，不存在线程上下文切换的开销，可以获得最高的单线程收集效率)</li>
-<li>client模式下新生代默认垃圾收集器</li>
-</ul>
-<p>Serial收集器是最基本发展最悠久的垃圾收集器，曾经(JDK1.3.1之前)是虚拟机新生代的收集的唯一选择，看名字就可以看出来，这个收集器是一个单线程的收集器，但他的单线程不仅仅体现在它只会使用一个垃圾回收线程去完成垃圾回收工作，更重要的是，在进行垃圾回收的时候必须暂停其他所有的工作线程，直至收集结束。这项工作实际上是虚拟机在后台自动发起和自动完成的，在用户不可见的情况下把用户正常工作的线程全部停掉，这对很多应用来说都是难以接受的。</p>
-<p><img src="https://pic.yupoo.com/crowhawk/6b90388c/6c281cf0.png" alt><br>Serial/Serial Old垃圾收集器运行示意图</p>
-<h3 id="ParNew收集器"><a href="#ParNew收集器" class="headerlink" title="ParNew收集器"></a>ParNew收集器</h3><p><strong>特点</strong></p>
-<ul>
-<li>新生代收集器</li>
-<li>Serial收集器的多线程版本</li>
-<li>许多运行在server模式下的虚拟机中首选的新生代收集器</li>
-</ul>
-<p>ParNew收集器实际上就是Serial收集器的多线程版本，除了使用多条线程进行垃圾手机外，其余的控制参数、垃圾收集算法，Stop The World、对象分配规则、回收策略都跟Serial垃圾收集器完全一样。许多运行在server模式下的虚拟机中首选的新生代收集器，除了Serial外，只有Parnew能配合CMS垃圾收集器工作，单CPU场景下，不会比Serial收集器有更好的效果(存在线程切换的开销)，</p>
-<p><img src="https://pic.yupoo.com/crowhawk/605f57b5/75122b84.png" alt><br>ParNew 收集器运行示意图</p>
-<h3 id="Parallel-Scavenge收集器"><a href="#Parallel-Scavenge收集器" class="headerlink" title="Parallel Scavenge收集器"></a>Parallel Scavenge收集器</h3><p><strong>特点</strong></p>
-<ul>
-<li>新生代收集器</li>
-<li>使用复制算法，多线程收集</li>
-<li>关注点与其他收集器不同，关注的是达到一个可控制的吞吐量</li>
-</ul>
-<p>Parallel Scavenge收集器的特点是他关注的是可控制的吞吐量，即CPU运行用户代码的时间/(CPU运行用户代码时间+ 垃圾收集时间)，举例来说，虚拟机运行100分钟，垃圾收集时间为1分钟，那吞吐量就是99%，该收集器提供了两个参数用于精准控制吞吐量，分别是控制最大垃圾收集时间的-XX:MaxGCPauseMillis参数以及直接设置吞吐量大小的-XX:GCTimeRatio参数</p>
-<p>MaxGCPauseMillis 是一个大于0的毫秒数，当然并不是设置的越小越好，GC停顿时间的缩短是以牺牲吞吐量和新生代空间来换取的: 比如把新生代调小，收集300M的新生代肯定比500M要快，这会导致垃圾收集会变得比之前更频繁, 举个例子 原来10秒收集一次，每次停顿100毫秒，现在每5秒收集一次，每次停顿70毫秒，停顿时间是缩小了，但是吞吐量也下来了</p>
-<p>吞吐量 = CPU运行用户代码的时间/(CPU运行用户代码时间+ 垃圾收集时间)<br>GCTimeRatio 相当于 1 / 吞吐量</p>
-<h3 id="Serial-Old-收集器"><a href="#Serial-Old-收集器" class="headerlink" title="Serial-Old 收集器"></a>Serial-Old 收集器</h3><p><strong>特点</strong></p>
-<ul>
-<li>老年代收集器</li>
-<li>单线程，回收时暂停所有用户线程</li>
-<li>使用标记-整理算法</li>
-</ul>
-<h3 id="Parallel-Old收集器"><a href="#Parallel-Old收集器" class="headerlink" title="Parallel Old收集器"></a>Parallel Old收集器</h3><p><strong>特点</strong></p>
-<ul>
-<li>老年代收集器</li>
-<li>Parallel Scanvenge的老年代版本，使用多线程</li>
-<li>使用标记-整理算法</li>
-</ul>
-<h3 id="CMS垃圾收集器"><a href="#CMS垃圾收集器" class="headerlink" title="CMS垃圾收集器"></a>CMS垃圾收集器</h3><p><strong>特点</strong></p>
-<ul>
-<li>老年代收集器</li>
-<li>采用标记-清除算法</li>
-<li>并发收集，低停顿</li>
-<li>CMS MinorGC时会暂停所有的用户线程，并以多线程的方式进行垃圾回收。FullGC时不再暂停应用线程，而是使用若干个后台进程定期的对老年代空间进行扫描，及时回收不再使用的对象</li>
-</ul>
-<p>CMS(Concurrent Mark Sweep)收集器是一种以获取最短回收停顿时间为目标的垃圾收集器,很大一部分Java应用集中在互联网网站和B/S系统的服务端上，这类应用重视服务的响应速度，希望系统停顿时间较短，CMS就比较符合这类应用的需求</p>
-<h4 id="垃圾收集过程"><a href="#垃圾收集过程" class="headerlink" title="垃圾收集过程"></a>垃圾收集过程</h4><ul>
-<li>初始标记 标记GCRoots 能直接关联的对象，速度很快 暂停所有用户线程 </li>
-<li>并发标记  进行GCRoots Tracing的过程</li>
-<li>重新标记  修正并发标记期间 因用户程序继续工作导致标记产生变动的那一部分对象的标记记录，停顿时间比初始标记时间稍长一些，远比并发标记时间短 暂停所有用户线程</li>
-<li>并发清除</li>
-</ul>
-<p><strong>缺点</strong></p>
-<ul>
-<li>因为使用标记-清除算法，易产生大量内存碎片，内存碎片较多时，将会给分配大对象带来很大麻烦 可以通过开启FullGC时候进行内存整理，但是会延长停顿时间</li>
-<li>CMS收集器无法处理浮动垃圾，可能出现Concurrent Mode Failure而导致另一次的FullGC产生</li>
-<li>对CPU资源敏感</li>
-</ul>
-<p>浮动垃圾: 并发清除阶段，垃圾收集线程和用户线程并行执行，伴随着程序的运行，就会不断有垃圾产生，这些新产生的垃圾在标记过程之后产生，CMS无法在当次垃圾收集进行</p>
-<p><img src="https://pic.yupoo.com/crowhawk/fffcf9a2/f60599b2.png" alt><br>CMS收集器运行示意图</p>
-<h3 id="G1垃圾收集器"><a href="#G1垃圾收集器" class="headerlink" title="G1垃圾收集器"></a>G1垃圾收集器</h3><p>G1的主要关注点在于达到可控的停顿时间，在这个基础上尽可能提高吞吐量，G1被设计用来长期取代CMS垃圾收集器，和CMS的相同点在于都属于并发收集器，大部分收集阶段都不需要挂起应用程序。区别在于G1没有CMS的碎片化问题，同时提供更加可控的停顿时间</p>
-<p>G1将整个堆划分为一个个大小相等的小块，每一块的内存是连续的。和分代算法一样，G1中每个块也会充当Eden,Survivor,Old角色，但是他们不是固定的，这使得内存使用更加灵活</p>
-<h4 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h4><ul>
-<li>引入分区概念</li>
-<li>合理利用垃圾收集各个周期的资源，解决了CMS及其他收集器的缺陷</li>
-<li>使用标记-整理算法</li>
-</ul>
-<h4 id="对比CMS"><a href="#对比CMS" class="headerlink" title="对比CMS"></a>对比CMS</h4><ul>
-<li>不再基于标记-清除算法，不会产生内存碎片</li>
-<li>停顿时间可控 G1可以通过设置预期停顿时间来控制垃圾收集时间来避免应用雪崩现象</li>
-<li>并行与并发 G1 能够充分的利用CPU，多核环境下的硬件优势来缩短STW的停顿时间</li>
-</ul>
-<h4 id="垃圾大致收集过程"><a href="#垃圾大致收集过程" class="headerlink" title="垃圾大致收集过程"></a>垃圾大致收集过程</h4><ul>
-<li>新生代垃圾收集</li>
-<li>并发收集，和用户线程同时执行</li>
-<li>混合垃圾收集</li>
-<li>必要的时候FullGC</li>
-</ul>
-<h5 id="G1的堆结构"><a href="#G1的堆结构" class="headerlink" title="G1的堆结构"></a>G1的堆结构</h5><p>传统的GC收集器将内存空间划分为新生代老年代和永久代(JDK1.8去除了永久代，引入了元空间metaspace)，这种划分的特点是各代的存储地址是连续的，而在G1收集器中则引入了分区的概念，弱化了分代的概念。</p>
-<ol>
-<li>整个堆默认分为2048份均分，每块大小是一致的(1M-32M)</li>
-<li>逻辑上，也会分为Eden,Survivor,Old区，但是各个区的大小是不固定的</li>
-<li>未分配区域可以为任何一个代使用</li>
-</ol>
-<h4 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h4><ul>
-<li>服务器多核CPU,JVM所占内存较大的情况(至少大于4G)</li>
-<li>应用在运行过程中会产生大量内存碎片，需要经常压缩空间</li>
-<li>想要更可控，可预期的GC停顿周期，防止高并发下应用雪崩现象</li>
-</ul>
-<h2 id="内存分配与垃圾回收策略"><a href="#内存分配与垃圾回收策略" class="headerlink" title="内存分配与垃圾回收策略"></a>内存分配与垃圾回收策略</h2><p>TODO </p>
-<h2 id="虚拟机类加载机制"><a href="#虚拟机类加载机制" class="headerlink" title="虚拟机类加载机制"></a>虚拟机类加载机制</h2><p>在了解类加载过程之前，我们其实需要了解一下什么是类加载，Java虚拟机把类的描述数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。Class文件由类加载器加载后，在JVM中形成一份描述Class结构的元信息对象，通过该元信息对象可以知晓Class文件的结构信息：如构造函数，属性和方法等，Java允许用户借由这个Class相关的元信息对象间接调用Class对象的功能，这里就是我们经常能见到的Class类</p>
-<h3 id="类加载的过程"><a href="#类加载的过程" class="headerlink" title="类加载的过程"></a>类加载的过程</h3><p><img src="https://s1.ax1x.com/2020/05/28/tZ0y5D.png" alt></p>
-<p>从图中我们可以看到类加载的过程分为加载、连接和初始化这么几个过程</p>
-<ul>
-<li><strong>加载</strong> 查找并导入class文件</li>
-<li><strong>连接</strong> 把类的二进制数据合并至jre中<ul>
-<li><strong>验证</strong> 检查载入class文件数据的正确性</li>
-<li><strong>准备</strong> 给类的静态变量分配存储空间</li>
-<li><strong>解析</strong> 将符号引用转成直接引用</li>
-</ul>
-</li>
-<li><strong>初始化</strong> 对类的静态变量，静态代码块执行初始化操作</li>
-</ul>
-<h4 id="类的加载"><a href="#类的加载" class="headerlink" title="类的加载"></a>类的加载</h4><p>加载这一步是指将类的.class文件中的二进制数据读入到内存中，将其放在运行时数据区中的方法区内，然后在堆区创建一个java.lang.Class对象，用来封装类在方法区中的数据结构。类加载的最终产物是位于堆区的Class对象，向开发者提供了访问方法区中数据结构的接口</p>
-<p>加载.class文件的方式有以下几种</p>
-<ul>
-<li><strong>本地系统直接加载</strong></li>
-<li><strong>通过网络下载.class文件</strong></li>
-<li><strong>从zip,jar等归档文件中加载.class文件</strong></li>
-<li><strong>从专有数据库中提取.class文件</strong></li>
-<li><strong>将java文件编译为.class文件</strong></li>
-</ul>
-<p>JVM需要通过以下步骤完成对类的加载</p>
-<ul>
-<li>通过类的全名获取该类的二进制字节流</li>
-<li>将这个字节流代表的静态存储结构转化为方法区的运行时数据结构</li>
-<li>在JVM堆区域生成一个代表这个类的java.lang.Class对象，作为方法区这些数据的访问入口</li>
-</ul>
-<h4 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h4><p>验证主要是为了确保class中的字节流中包含的信息符合当前虚拟机的要求，并且不会危害虚拟机自身的安全。大致会经历以下四个阶段的验证</p>
-<ul>
-<li><strong>文件格式验证</strong>  验证字节流是否符合Class文件格式的规范，并且能被当前版本的虚拟机所处理，该验证的主要目的就是保证输入的字节流能正确的解析并存储与方法区内，只有经过该阶段的验证，字节流才会进入内存中的方法区进行存储</li>
-<li><strong>元数据验证</strong> 对类的元数据信息进行语义校验,保证不存在不符合java语言规范的元数据信息</li>
-<li><strong>字节码验证</strong> 该阶段主要工作是进行数据流和控制流分析，对类的方法进行校验分析，以保证被验证的类的方法在运行时不会做危害虚拟机安全的行为</li>
-<li><strong>符号引用验证</strong> 最后一阶段的验证 发生在虚拟机将符号引用转变为直接引用的时候，主要是对类以外的信息进行匹配性校验(常量池中的各种符号引用)</li>
-</ul>
-<h4 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h4><h4 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h4><h3 id="什么是双亲委派机制？"><a href="#什么是双亲委派机制？" class="headerlink" title="什么是双亲委派机制？"></a>什么是双亲委派机制？</h3><p>双亲委派机制就是说，当类加载器收到类加载请求的时候，该类加载器并不会去加载该类，而是将请求委派给父加载器，如果父加载器上层还有父加载器的话，还会将请求委派给更上层的父加载器，最终会将传送到最顶层的类加载器，只有当父加载器范围内找不到所需的类的时候，会将结果返回给子类加载器，然后由子类加载器尝试自己加载</p>
-<h3 id="为什么要使用双亲委派机制？"><a href="#为什么要使用双亲委派机制？" class="headerlink" title="为什么要使用双亲委派机制？"></a>为什么要使用双亲委派机制？</h3><p>如果不用双亲委派机制的话，有可能出现同一个类被不同的加载器加载多次的情况，如果发生这种情况，那么同一份字节码可能会在内存中出现多份，并且不同由不同类加载器加载的字节码对象又各不相同，从而导致一些意想不到的结果(相同的类通过不同的classLoader加载后生成的实例，通过instanceof发现不是同一个类)，所以为了安全性考虑，这里采用了双亲委派机制，如果一个类已经被父类加载器加载过了，那么就直接返回，子类加载器不做任何事情。</p>
-<h3 id="那么为什么又要破坏双亲委派机制呢？"><a href="#那么为什么又要破坏双亲委派机制呢？" class="headerlink" title="那么为什么又要破坏双亲委派机制呢？"></a>那么为什么又要破坏双亲委派机制呢？</h3><p>因为父类的类加载器范围是有限的，有些情况需要委托子类加载器去加载class文件，比如说java.sql.Driver接口是jdk提供的接口，而实现是需要各个厂商来自行实现的，这个时候根本就没有必要用父类加载器去加载了，因为父类加载器是肯定没有该类的(父类加载器只能加载JAVA_HOME/lib下的jar中的class文件)，所以这个时候就需要委托子类加载器去自行加载厂商的driver实现了，从而破坏了默认的双亲委派机制</p>
-<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p>《深入理解Java虚拟机》 第2版</p>
-<p><a href="https://juejin.im/post/5a810b0e5188257a5c606a85" target="_blank" rel="noopener">Java类加载机制</a><br><a href="https://blog.csdn.net/u012129558/article/details/81540804" target="_blank" rel="noopener">【JVM】浅谈双亲委派和破坏双亲委派</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/23/about-spring/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="mr_cris">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/blog/images/avatar.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="cris's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/blog/2020/04/23/about-spring/" itemprop="url">聊聊Spring框架</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-23T14:05:34+08:00">
-                2020-04-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在工作和面试中，Spring作为一个高频出现的框架，不能只是会用，还要对他有一定深入的了解，这样出现问题或者别人跟你交流起Spring的内容的时候，不至于哑口无言，今天我们就来聊聊Spring中我们必须要知道或者掌握的内容</p>
-<h1 id="IOC-和AOP"><a href="#IOC-和AOP" class="headerlink" title="IOC 和AOP"></a>IOC 和AOP</h1><p>可以说IOC和AOP是Spring的灵魂，我们无时无刻不在用这两个特性，下面就来讲讲IOC和AOP分别都是什么</p>
-<h2 id="什么是IOC"><a href="#什么是IOC" class="headerlink" title="什么是IOC"></a>什么是IOC</h2><p>IOC(Inversion of Controll)控制反转，什么是控制反转呢？原来需要开发者手动创建对象，现在这个过程交给Spring容器，Spring预先把对象创建好，你需要的时候声明一个属性直接给注入进来，这样把原来创建对象的控制权给反转过来，就叫控制反转，那在这里我们反转的是什么内容呢？实际上这里我们反转的是获取依赖对象的过程，这样其实IOC其实还有另外一个名字，叫依赖注入，这实际上就是Spring来实现IOC的方式，通过提供一个IOC容器，在容器运行期间，利用依赖关系动态地将某种依赖关系注入到对象中。这样的好处就是最大的程度实现对象之间的解耦合。</p>
-<p>比如我有一块业务，分别交给了三个人来实现这一块业务中的三个部分，那么只有这三个人的功能组合到一起才能实现这一块业务，那么每个人都必须要清楚自己的那部分业务什么时候要依赖对方的那一部分的业务，什么时候产生交互，这样沟通成本就很高，每个人都要做一次业务串线的操作，而不是专心于自己的业务，那这个时候，假如我们能引入第4个人，由第4个人来负责怎么样组合起这3个人的业务，什么时候交互，那么这三个人就完全不用处理和其他人之间的业务对接，完全专心于自己那一部分的业务开发了，这其实跟SpringIOC容器的思想就是类似的。</p>
-<h2 id="什么是AOP"><a href="#什么是AOP" class="headerlink" title="什么是AOP"></a>什么是AOP</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">面向切面的程序设计是计算机科学中的一种程序设计思想，旨在将横切关注点与业务主体进行进一步分离，  </span><br><span class="line">以提高代码模块化的程度。通过在现有代码基础上增加额外的通知机制，能够对被声明为切点(pointcut)  </span><br><span class="line">的代码进行统一的管理和装饰，如对所有‘set*’开头的方法都加上后台日志。该思想能够使得开发人员能够将  </span><br><span class="line">与代码核心业务并不是那么密切相关的功能添加至程序中，同时又不降低业务代码的可读性，面向切面的程序  </span><br><span class="line">设计是面向切面开发的基础   ---摘自WIKIPEDIA</span><br></pre></td></tr></table></figure>
-
-<p>看了维基百科上面的这么长的一段话，想必头都大了，那么到底AOP是什么呢，其实这是一种思想，一种将核心逻辑与边缘逻辑拆分的思想，我们把我们的一块业务进行拆分，把业务强相关的逻辑称为核心逻辑，将不是特别相关的业务逻辑称为边缘逻辑，那么AOP就是把核心逻辑作为关注点，将非核心逻辑也就是边缘逻辑从原有代码剥离出来，形成一个个的切面，在我们的关注点(核心逻辑)前后的连接点插入一系列的切面，将核心逻辑和边缘逻辑通过这种方式编织起来的过程就叫做AOP。这样的好处就是有一些重复的工作像事务管理、日志管理、权限控制等功能封装起来，减少重复代码，并降低模块间的耦合度，有利于系统的拓展性和可维护性。</p>
-<h2 id="AOP中的几个重要概念"><a href="#AOP中的几个重要概念" class="headerlink" title="AOP中的几个重要概念"></a>AOP中的几个重要概念</h2><h3 id="Advice"><a href="#Advice" class="headerlink" title="Advice"></a>Advice</h3><p>切面的工作被称为通知，通知定义了切面是什么以及何时使用，除了描述切面的工作外，通知还解决了何时执行这个工作</p>
-<h3 id="JoinPoint-连接点"><a href="#JoinPoint-连接点" class="headerlink" title="JoinPoint 连接点"></a>JoinPoint 连接点</h3><p>连接点是指应用执行过程中可以插入切面的一个点</p>
-<h3 id="PointCut-切点"><a href="#PointCut-切点" class="headerlink" title="PointCut 切点"></a>PointCut 切点</h3><p>一个切面并不需要通知应用所有的连接点，切点有助于缩小切面通知的连接点范围，通知中定义了切面的“什么”和“何时”，而切点则定义了“何处”</p>
-<h3 id="Aspect-切面"><a href="#Aspect-切面" class="headerlink" title="Aspect 切面"></a>Aspect 切面</h3><p>切面是通知和切点的集合，通知和切点定义了切面的全部内容，它们是什么，在何时何处完成其功能</p>
-<h3 id="Introduction-引入"><a href="#Introduction-引入" class="headerlink" title="Introduction 引入"></a>Introduction 引入</h3><p>Introduction允许我们向现有的类添加新方法和属性</p>
-<h3 id="weaving-织入"><a href="#weaving-织入" class="headerlink" title="weaving 织入"></a>weaving 织入</h3><p>织入是将切面应用到目标对象并创建新的代理对象的过程，切面在指定的连接点被织入到目标对象中。在目标对象的生命周期中有很多个点进行织入</p>
-<ul>
-<li>编译期 切面在目标类编译时被织入。这种方式需要特殊的编译器，AspectJ的织入编译器就是以这种方式织入切面的</li>
-<li>类加载期 切面在目标类加载到JVM时候被织入，这种方式需要特殊的类加载器，它可以在目标类被引入到应用程序之前，增强该目标类的字节码。AspectJ 5就支持这种方式织入切面</li>
-<li>运行期 切面在应用运行的某个时刻被织入。一般情况下，在织入切面时候AOP容器会为目标对象动态的创建一个代理对象。SpringAOP就是以这种方式织入切面的。</li>
-</ul>
-<h2 id="Spring-AOP原理"><a href="#Spring-AOP原理" class="headerlink" title="Spring AOP原理"></a>Spring AOP原理</h2><p>Spring是在运行时通知对象，通过在代理类中包裹切面，Spring在运行期间把切面织入到Spring管理的Bean中。如下图所示，代理类封装了目标类，并拦被通知方法的调用，再把调用转发给真正的目标bean.当代理拦截到方法调用的时候，在调用bean方法之前，会执行切面逻辑。</p>
-<p>Spring在运行时创建代理对象，代理勒种包裹了切面和目标对象，并拦截被通知方法的调用，在执行bean方法之前或之后执行切面逻辑，之后再将请求转发给目标对象</p>
-<p><img src="https://img-blog.csdn.net/20160505123413155" alt><br>图片引用自<a href="https://blog.csdn.net/github_34889651/article/details/51321499" target="_blank" rel="noopener">Spring AOP 之 通知、连接点、切点、切面</a><br>直到应用需要用到被代理的bean时，spring才会创建代理对象，如果是ApplicationContext的话，在ApplicationContext从BeanFactory中加载所有bean的时候，Spring才会创建被代理的对象。因为Spring运行时才创建代理对象，所以我们不需要特殊的编译器就能织入AOP切面</p>
-<h1 id="Spring-IOC怎么实现的？"><a href="#Spring-IOC怎么实现的？" class="headerlink" title="Spring IOC怎么实现的？"></a>Spring IOC怎么实现的？</h1><p>IOC实际上是通过在Spring内部持有一个beanfactory 在Spring容器启动的时候将被加上注解的类加载到容器中，当你在使用bean的时候去管Spring的容器拿的一个过程</p>
-<h1 id="动态代理和静态代理"><a href="#动态代理和静态代理" class="headerlink" title="动态代理和静态代理"></a>动态代理和静态代理</h1><p>要讲动态代理和静态代理，实际上要先从代理模式说起，什么是代理模式呢？代理模式提供了对目标对象的额外访问方式，即通过代理对象访问目标对象这样可以在不修改目标对象的前提下、提供额外的功能操作，扩展目标对象的功能。说完了什么是代理模式，那么静态代理和动态代理分别是什么呢？其实静态代理还是动态代理是从代理类创建的时间节点来看的，静态代理是在程序运行期前，代理类已经存在了(通过developer由ide编写源代码后，对其编译)，而动态代理是在程序运行期间才会创建相应的代理类，也就是每需要使用静态代理来对目标对象进行增强的时候，就需要创建一个目标对象的代理类，这样就可能带来很多的代理类</p>
-<p>静态代理中的角色</p>
-<ol>
-<li>subject抽象主题类，定义了代理对象和真实对象共同的接口方法，既可以是接口又可以是抽象类</li>
-<li>real subject 真实主题类，也就是被委托类或被代理类，该类定义了代理对象表示的真实对象，实现了subject接口，client通过代理对象间接地调用真实主题类中的方法，由real subject来执行真正的业务逻辑</li>
-<li>proxy subject 代理类，该类也被称为委托类或代理类，该类中持有一个真实主题类的引用，实现了subject接口，在其实现的接口方法中调用真实主题类中对应的接口方法，起到代理的作用</li>
-<li>client 客户端，使用代理</li>
-</ol>
-<h1 id="spring中bean的生命周期"><a href="#spring中bean的生命周期" class="headerlink" title="spring中bean的生命周期"></a>spring中bean的生命周期</h1><ol>
-<li>实例化bean实例及</li>
-<li>按照spring上下文对实例化的bean设置对象属性(也就是进行IOC注入)</li>
-<li>如果这个bean实现了BeanNameAware接口，会调用它实现的setBeanName方法，此处传递的就是spring配置文件中id的值</li>
-<li>BeanPostProcessor前置处理</li>
-<li>是否实现InitialBean接口</li>
-<li>是否配置自定义的init-method</li>
-<li>BeanPostProcessor后置处理</li>
-<li>注册</li>
-</ol>
-<p><img src="https://images0.cnblogs.com/i/580631/201405/181453414212066.png" alt><br><img src="https://images0.cnblogs.com/i/580631/201405/181454040628981.png" alt></p>
-<h1 id="Spring的启动流程"><a href="#Spring的启动流程" class="headerlink" title="Spring的启动流程"></a>Spring的启动流程</h1><h2 id="applicationContext继承体系"><a href="#applicationContext继承体系" class="headerlink" title="applicationContext继承体系"></a>applicationContext继承体系</h2><p><img src="https://s1.ax1x.com/2020/04/25/JsJCgH.png" alt></p>
-<h2 id="通过SpringApplication-run启动主类"><a href="#通过SpringApplication-run启动主类" class="headerlink" title="通过SpringApplication.run启动主类"></a>通过SpringApplication.run启动主类</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//启动一个计时器,记录应用启动花费的时间()</span></span><br><span class="line">      StopWatch stopWatch = <span class="keyword">new</span> StopWatch();</span><br><span class="line">stopWatch.start();</span><br><span class="line">ConfigurableApplicationContext context = <span class="keyword">null</span>;</span><br><span class="line">FailureAnalyzers analyzers = <span class="keyword">null</span>;</span><br><span class="line">configureHeadlessProperty();</span><br><span class="line"><span class="comment">//</span></span><br><span class="line">SpringApplicationRunListeners listeners = getRunListeners(args);</span><br><span class="line">listeners.starting();</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">	<span class="comment">//封装命令行启动应用时的参数</span></span><br><span class="line">	ApplicationArguments applicationArguments = <span class="keyword">new</span> DefaultApplicationArguments(</span><br><span class="line">			args);</span><br><span class="line">	<span class="comment">//1.准备应用运行时环境，</span></span><br><span class="line">	<span class="comment">//2.加载外部配置文件(发布ApplicationEnvironmentPreparedEvent，SpringApplicationRunListeners监听到后，分发给下面的listeners,ConfigFileApplicationListener收到事件后去各个目录扫配置文件(xml,yaml,properties))</span></span><br><span class="line">	<span class="comment">//3.发布ApplicationEnvironmentPreparedEvent </span></span><br><span class="line">	ConfigurableEnvironment environment = prepareEnvironment(listeners,</span><br><span class="line">			applicationArguments);</span><br><span class="line">	<span class="comment">//打印启动banner图</span></span><br><span class="line">	Banner printedBanner = printBanner(environment);</span><br><span class="line">	<span class="comment">//创建ConfigurableEnvironment的实例(反射)，即创建IOC容器</span></span><br><span class="line">	context = createApplicationContext();</span><br><span class="line">	analyzers = <span class="keyword">new</span> FailureAnalyzers(context);</span><br><span class="line">	<span class="comment">//容器刷新前调用，允许对容器做进一步的设置和处理</span></span><br><span class="line">	prepareContext(context, environment, listeners, applicationArguments,</span><br><span class="line">			printedBanner);</span><br><span class="line">	refreshContext(context);</span><br><span class="line">	afterRefresh(context, applicationArguments);</span><br><span class="line">	<span class="comment">//容器启动完成，通知关注的listeners(发布ApplicationReadyEvent)</span></span><br><span class="line">	listeners.finished(context, <span class="keyword">null</span>);</span><br><span class="line">	<span class="comment">//计时器停止计时，打印启动所花费的时间</span></span><br><span class="line">	stopWatch.stop();</span><br><span class="line">	<span class="keyword">if</span> (<span class="keyword">this</span>.logStartupInfo) &#123;</span><br><span class="line">		<span class="keyword">new</span> StartupInfoLogger(<span class="keyword">this</span>.mainApplicationClass)</span><br><span class="line">				.logStarted(getApplicationLog(), stopWatch);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> context;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">	handleRunFailure(context, listeners, analyzers, ex);</span><br><span class="line">	<span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(ex);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="refreshContext"><a href="#refreshContext" class="headerlink" title="refreshContext"></a>refreshContext</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//设置启动时间，启动标志，移除所有类元数据缓存，准备刷新时的应用上下文</span></span><br><span class="line">prepareRefresh();</span><br><span class="line"><span class="comment">//告子类刷新内部beanFactory</span></span><br><span class="line"><span class="comment">// Tell the subclass to refresh the internal bean factory.</span></span><br><span class="line">ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();</span><br><span class="line"></span><br><span class="line"><span class="comment">// Prepare the bean factory for use in this context.</span></span><br><span class="line"><span class="comment">//准备在此上下文中使用的beanfatory(设置classloader和postProcessors,注册环境以及系统变量bean)</span></span><br><span class="line">prepareBeanFactory(beanFactory);</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">	<span class="comment">// Allows post-processing of the bean factory in context subclasses.</span></span><br><span class="line">	postProcessBeanFactory(beanFactory);</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Invoke factory processors registered as beans in the context.</span></span><br><span class="line">	invokeBeanFactoryPostProcessors(beanFactory);</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Register bean processors that intercept bean creation.</span></span><br><span class="line">	<span class="comment">//注册bean后置处理器</span></span><br><span class="line">	registerBeanPostProcessors(beanFactory);</span><br><span class="line">	<span class="comment">//做国际化处理i18n</span></span><br><span class="line">	<span class="comment">// Initialize message source for this context.</span></span><br><span class="line">	initMessageSource();</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Initialize event multicaster for this context.</span></span><br><span class="line">	initApplicationEventMulticaster();</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Initialize other special beans in specific context subclasses.</span></span><br><span class="line">	onRefresh();</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Check for listener beans and register them.</span></span><br><span class="line">	registerListeners();</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Instantiate all remaining (non-lazy-init) singletons.</span></span><br><span class="line">	<span class="comment">//初始化剩余的所有单例bean</span></span><br><span class="line">	finishBeanFactoryInitialization(beanFactory);</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Last step: publish corresponding event.</span></span><br><span class="line">	<span class="comment">//完成容器初始化，发布容器刷新完成事件</span></span><br><span class="line">	finishRefresh();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h1 id="Spring和SpringBoot的区别"><a href="#Spring和SpringBoot的区别" class="headerlink" title="Spring和SpringBoot的区别"></a>Spring和SpringBoot的区别</h1><ul>
-<li>SpringBoot内嵌了tomcat容器，不用再使用独立的web容器</li>
-<li>SpringBoot相对于Spring来说，使用约定由于配置的原则，不在通过以前那种大量的xml配置和引入一大堆依赖，大大简化了开发人员的工作</li>
-<li>可以实现自动装配</li>
-<li>通过一系列的starter，简化maven或gradle中的配置</li>
-</ul>
-<h1 id="SpringMVC工作流程"><a href="#SpringMVC工作流程" class="headerlink" title="SpringMVC工作流程"></a>SpringMVC工作流程</h1><p>请求发送至DispatcherServlet,遍历所有的handlermapping，通过请求url找到,找到对应的HandlerExecutionChain，并看是否有前置拦截器，有的话则执行，通过handlermapping执行对应controller方法返回modelAndView给DispatcherServlet，最终返回给客户端</p>
-<p>AbstractHandlerMethodMapping#mappingRegistry#mappingLookUp是一个hashMap，存放了url到 类全名+方法名的映射，当请求到达的时候会通过url去这个找到对应的Controller中对应的方法</p>
-<h1 id="Spring-Cloud中用过哪些组件"><a href="#Spring-Cloud中用过哪些组件" class="headerlink" title="Spring Cloud中用过哪些组件"></a>Spring Cloud中用过哪些组件</h1><p>注册中心  配置中心  网关 </p>
-<h1 id="eureka、zookeeper做注册中心有什么区别"><a href="#eureka、zookeeper做注册中心有什么区别" class="headerlink" title="eureka、zookeeper做注册中心有什么区别"></a>eureka、zookeeper做注册中心有什么区别</h1><h1 id="feign是如何保证负载均衡和熔断策略的"><a href="#feign是如何保证负载均衡和熔断策略的" class="headerlink" title="feign是如何保证负载均衡和熔断策略的"></a>feign是如何保证负载均衡和熔断策略的</h1><h1 id="常用负载均衡策略"><a href="#常用负载均衡策略" class="headerlink" title="常用负载均衡策略"></a>常用负载均衡策略</h1><p>Round Robin轮询 将请求依次分配给后端服务，实现简单，请求均匀分配<br>Weight Round Robin加权轮询 一种改进的轮询算法 在服务上自行设置权值，按比例进行分配请求数的比例<br>Random 将请求随机分配给后端服务<br>Hash  根据ip、url或其他信息计算hash值或md5，然后按照服务器数量取模</p>
-<h1 id="Docker-swarm-负载均衡是怎么处理的"><a href="#Docker-swarm-负载均衡是怎么处理的" class="headerlink" title="Docker swarm 负载均衡是怎么处理的"></a>Docker swarm 负载均衡是怎么处理的</h1><p>docker swarm它是有路由网格 service mesh提供的一个负载均衡的功能，在docker内部是通过linux 的ipvs(内核级的4层负载均衡)来实现的</p>
-<h1 id="Docker-swarm的服务发现"><a href="#Docker-swarm的服务发现" class="headerlink" title="Docker swarm的服务发现"></a>Docker swarm的服务发现</h1><p>在部署一个docker服务时，会在docker内置的DNS服务器中注册服务名+VIP(虚拟IP),我们在通过服务名去请求某一个服务的时候，会去docker的DNS服务器中解析并返回目标容器的虚拟IP,然后再docker网络内部进行路由，最终请求被发送到目标服务</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2077,7 +1954,7 @@
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-count">25</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -2099,7 +1976,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/blog/tags/index.html">
-                  <span class="site-state-item-count">14</span>
+                  <span class="site-state-item-count">18</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
@@ -2136,7 +2013,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
