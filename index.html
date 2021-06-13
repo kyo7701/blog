@@ -354,6 +354,7 @@
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">CAST</span>(<span class="string">'9223372036854775807'</span> <span class="keyword">AS</span> <span class="keyword">UNSIGNED</span>) = <span class="number">9223372036854775806</span>;</span><br></pre></td></tr></table></figure>
 
 <h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>其实我之前之所以没遇到这种问题,完全是因为我自己在写查询语句的时候，使的SQL语句的语义尽量地准确，比如varchar类型的列，我就只使用字符串与之进行比较运算，这就完全规避掉了这种隐式转换的发生,这里其实并不是说楼主水平有多么好或者吹嘘自己，而是想说保持一个良好的编码习惯会为自己避免很多问题的发生，节省很多时间，但是辩证地来看，若经常保持不良好的编码习惯，也能经常收获一些意想不到的问题，这个时候如果肯下点功夫，虽然花费了大量精力去处理问题，但却能收获到一些良好编程习惯接触不到的知识。但无论是采用哪种编码习惯,遇到问题的时候一定要下功夫去查明真相，如果当时没有精力去查明这种问题，工作之余一定要将问题查明原因，否则任你工作经验再多，积累的无非只是”工作年份”而并非”工作经验”</p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a href="https://dev.mysql.com/doc/refman/5.7/en/type-conversion.html" target="_blank" rel="noopener">MySQL5.7官方文档/type-conversion</a></p>
 
           
         
