@@ -332,7 +332,7 @@
 <blockquote>
 <p>-&gt; 1</p>
 </blockquote>
-<p>我们可以清晰的看到两个等式左侧的字符串的值是相等的,但右侧的数字却不相等，如果我们用这种方式(varchar列与数值进行比较运算)来做等值比较，那么产生的结果很可能不是我们预期的内容</p>
+<p>我们可以清晰的看到两个等式左侧的字符串的值是相等的,但右侧的数字却不相等，但是两个等式比较结果确是相同的，如果我们用这种方式(varchar列与数值进行比较运算)来做等值比较，那么产生的结果很可能不是我们预期的内容</p>
 <h2 id="官网解释"><a href="#官网解释" class="headerlink" title="官网解释"></a>官网解释</h2><blockquote>
 <p>Comparisons between floating-point numbers and large values of INTEGER type are approximate because the integer is converted to double-precision floating point before comparison, which is not capable of representing all 64-bit integers exactly. For example, the integer value 2^53 + 1 is not representable as a float, and is rounded to 2^53 or 2^53 + 2 before a float comparison, depending on the platform.</p>
 </blockquote>
