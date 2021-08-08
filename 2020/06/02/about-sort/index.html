@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>聊聊排序算法 | Hexo</title>
+  <meta name="description" content="前言在平时的编程中，可能会遇到对一组数据进行排序，这个时候我们通常就是调用jdk提供的Arrays.sort()方法来帮助我们进行处理排序，往往并不清楚里面到底做了什么，其实Arrays.sort方法是用了排序算法中的一种，快速排序，那么什么是快速排序？有没有其他类型的排序算法呢？ 什么是排序在了解排序算法之前，我们先来了解下什么是排序在计算机科学中，一个排序算法是一种能将一串数据按照制定排序方式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="聊聊排序算法">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/06/02/about-sort/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="前言在平时的编程中，可能会遇到对一组数据进行排序，这个时候我们通常就是调用jdk提供的Arrays.sort()方法来帮助我们进行处理排序，往往并不清楚里面到底做了什么，其实Arrays.sort方法是用了排序算法中的一种，快速排序，那么什么是快速排序？有没有其他类型的排序算法呢？ 什么是排序在了解排序算法之前，我们先来了解下什么是排序在计算机科学中，一个排序算法是一种能将一串数据按照制定排序方式">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-06-02T06:04:05.000Z">
+<meta property="article:modified_time" content="2020-06-03T08:50:38.000Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/06/02/about-sort/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/blog/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">mr_cris</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Backend Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">Categories</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/blog/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">Repository</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/blog/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/cofess" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/mysql/">mysql</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/No-SQL/" rel="tag">No-SQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/rabbitmq/" rel="tag">rabbitmq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redis/" rel="tag">redis</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%85%B6%E4%BB%96/" rel="tag">其他</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" rel="tag">后端技术</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" rel="tag">工作感悟</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" rel="tag">持久化机制</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" rel="tag">未完成</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag">消息队列</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag">索引</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/blog/tags/No-SQL/" style="font-size: 13px;">No-SQL</a> <a href="/blog/tags/java/" style="font-size: 13px;">java</a> <a href="/blog/tags/mysql/" style="font-size: 13.75px;">mysql</a> <a href="/blog/tags/rabbitmq/" style="font-size: 13px;">rabbitmq</a> <a href="/blog/tags/redis/" style="font-size: 13.75px;">redis</a> <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 14px;">中间件</a> <a href="/blog/tags/%E5%85%B6%E4%BB%96/" style="font-size: 13.25px;">其他</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" style="font-size: 13.25px;">后端</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" style="font-size: 13.25px;">后端技术</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" style="font-size: 13px;">工作感悟</a> <a href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" style="font-size: 13px;">持久化机制</a> <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13.5px;">数据库</a> <a href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" style="font-size: 13px;">未完成</a> <a href="/blog/tags/%E6%9D%82%E8%B0%88/" style="font-size: 13px;">杂谈</a> <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">框架</a> <a href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 13.25px;">消息队列</a> <a href="/blog/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13px;">源码</a> <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 13px;">索引</a> <a href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 13px;">线程池</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/06/">June 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/03/">March 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/05/">May 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/04/">April 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/12/">December 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/08/">August 2019</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2021/06/14/about-mysql-implicitly-type-convertion/" class="title">浅淡MySQL中的隐式类型转换</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-13T16:22:10.000Z" itemprop="datePublished">2021-06-14</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2021/03/19/about-thread-pool/" class="title">聊聊线程池</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-03-19T06:49:26.000Z" itemprop="datePublished">2021-03-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/07/26/about-mybatis/" class="title">聊聊ORM框架之mybatis</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-25T16:19:58.000Z" itemprop="datePublished">2020-07-26</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/07/05/about-seeking-a-job/" class="title">谈谈找工作的那些事儿</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-05T05:28:00.000Z" itemprop="datePublished">2020-07-05</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/06/12/about-reference/" class="title">谈谈引用</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-06-12T03:05:12.000Z" itemprop="datePublished">2020-06-12</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-about-sort" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      聊聊排序算法
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/blog/2020/06/02/about-sort/" class="article-date">
+	  <time datetime="2020-06-02T06:04:05.000Z" itemprop="datePublished">2020-06-02</time>
+	</a>
+</span>
+        
+        
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2020/06/02/about-sort/#comments" class="article-comment-link">Comments</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在平时的编程中，可能会遇到对一组数据进行排序，这个时候我们通常就是调用jdk提供的Arrays.sort()方法来帮助我们进行处理排序，往往并不清楚里面到底做了什么，其实Arrays.sort方法是用了排序算法中的一种，快速排序，那么什么是快速排序？有没有其他类型的排序算法呢？</p>
+<h1 id="什么是排序"><a href="#什么是排序" class="headerlink" title="什么是排序"></a>什么是排序</h1><p>在了解排序算法之前，我们先来了解下什么是排序<br>在计算机科学中，一个排序算法是一种能将一串数据按照制定排序方式进行排列的一种算法</p>
+<h1 id="排序算法"><a href="#排序算法" class="headerlink" title="排序算法"></a>排序算法</h1><p>在了解上文提到的快速排序之前，我们先看看有哪些排序算法</p>
+<h2 id="冒泡排序"><a href="#冒泡排序" class="headerlink" title="冒泡排序"></a>冒泡排序</h2><h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>冒泡排序是一种简单的排序算法，它重复的走访要排序的数列，每次比较两个元素，如果他们顺序错误，则进行交换，走访队列的工作就是重复的进行比较知道没有再需要交换的数据，也就是该数列已经排序完成，这个算法的命名是因为越小的元素会经过交换而慢慢的浮到数列的顶端.<br>冒泡排序对于n个元素的排序需要进行O(n^2)的比较次数，并且可以原地排序</p>
+<h3 id="整体工作流程"><a href="#整体工作流程" class="headerlink" title="整体工作流程"></a>整体工作流程</h3><ol>
+<li>比较相邻的两个元素，如果第一个比第二个大，就交换他们两个</li>
+<li>对每一对相邻元素进行同样的操作，从开始的那一对一直比较到结尾的最后一对，这步完成后最后的元素，将是最大元素</li>
+<li>针对所有元素重复以上步骤，除去最后一个元素</li>
+<li>每次持续对越来越少的元素执行上述步骤，直到没有任何一对数字需要比较</li>
+</ol>
+<h3 id="时间复杂度"><a href="#时间复杂度" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>时间复杂度为O(n^2)</p>
+<h3 id="空间复杂度"><a href="#空间复杂度" class="headerlink" title="空间复杂度"></a>空间复杂度</h3><p>O(n) 辅助空间O(1)</p>
+<h3 id="最优时间复杂度"><a href="#最优时间复杂度" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>正序有序数列<br>O(n^2)</p>
+<h3 id="最差时间复杂度"><a href="#最差时间复杂度" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>逆序有序数列<br>O(n^2)</p>
+<h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><p>数组</p>
+<h3 id="是否稳定"><a href="#是否稳定" class="headerlink" title="是否稳定"></a>是否稳定</h3><p>是</p>
+<h3 id="一些可以优化的点"><a href="#一些可以优化的点" class="headerlink" title="一些可以优化的点"></a>一些可以优化的点</h3><p>如果冒泡排序在对一个有序队列进行排序的话，那么在一趟排序下来必定没有发生任何一次交换，反过来说也成立，如果一趟排序中没有发生任何一次交换，则说明队列就是有序的，那么这时候我们只需要引入一个标志，如果一趟排序没有交换发生，我们就可以退出循环，不再需要执行后续的循环了，这样可以使得冒泡排序在最优场景正序有序的数据场景，时间复杂度降为O(n)</p>
+<h2 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h2><h3 id="概述-1"><a href="#概述-1" class="headerlink" title="概述"></a>概述</h3><p>插入排序是一种简单直观的排序算法，它的工作原理是构建有序队列，对于未排序的数据，会在已排序的队列中从后向前进行反向扫描，找到相应的位置并进行插入，插入排序在实现上只需用O(1)的额外空间，因此在从后向前的扫描的过程中，需要反复将已排序元素逐步向后挪位，从而为新元素提供插入空间。<br>这个过程和我们平时打扑克的时候，将牌进行一步步排序的过程比较相似，拿到一张牌的时候，我们先认为手中的牌堆是有序的，然后新抓的牌在牌堆里面找到合适的位置并进行插入，反复抓牌并重复该过程，直至牌抓完，手中的牌也就成了有序的</p>
+<h3 id="整体工作流程-1"><a href="#整体工作流程-1" class="headerlink" title="整体工作流程"></a>整体工作流程</h3><ol>
+<li>从第一个元素开始，该元素被认定为已经有序</li>
+<li>取出下一个元素，在已经排序的元素中从后向前进行扫描</li>
+<li>如果该已排序的元素大于刚才取出的元素，则将该元素进行后移</li>
+<li>重复步骤3，直到找到已排序的元素中小于或等于新元素的位置</li>
+<li>将新元素插入到该位置</li>
+<li>重复步骤2-5</li>
+</ol>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sort</span><span class="params">(<span class="keyword">int</span>[] data)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//选定第一位为已排序数列，从下一个元素开始排序,并逐个对新加入元素(数组后面元素)进行插入排序</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; data.length; i++) &#123;</span><br><span class="line">            <span class="keyword">int</span> newElement = data[i];</span><br><span class="line">            <span class="keyword">int</span> j = i - <span class="number">1</span>;</span><br><span class="line">            <span class="comment">//从后向前扫描,如果新插入的元素比已排序队列的待比较元素要小，则后移该元素</span></span><br><span class="line">            <span class="comment">//若新插入的元素比带比较元素大，则证明已经找到该元素的位置</span></span><br><span class="line">            <span class="keyword">while</span> (j &gt;= <span class="number">0</span> &amp;&amp; newElement &lt; data[j]) &#123;</span><br><span class="line">                data[j + <span class="number">1</span>] = data[j];</span><br><span class="line">                j--;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//将该元素插入到该位置</span></span><br><span class="line">            data[j + <span class="number">1</span>] = newElement;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="时间复杂度-1"><a href="#时间复杂度-1" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>O(n^2)</p>
+<h3 id="最优时间复杂度-1"><a href="#最优时间复杂度-1" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>正序有序<br>O(n)</p>
+<h3 id="最差时间复杂度-1"><a href="#最差时间复杂度-1" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>逆序有序<br>O(n^2)</p>
+<h3 id="数据结构-1"><a href="#数据结构-1" class="headerlink" title="数据结构"></a>数据结构</h3><p>数组</p>
+<h3 id="空间复杂度-1"><a href="#空间复杂度-1" class="headerlink" title="空间复杂度"></a>空间复杂度</h3><p>O(n) 辅助空间 O(1)</p>
+<h3 id="是否稳定-1"><a href="#是否稳定-1" class="headerlink" title="是否稳定"></a>是否稳定</h3><p>是</p>
+<h3 id="一些可以优化的点-1"><a href="#一些可以优化的点-1" class="headerlink" title="一些可以优化的点"></a>一些可以优化的点</h3><p>由于插入排序在已排序队列中找自己的位置的时候是逐次比较的，由于该队列是有序的，那么这里其实可以简单的进行一个优化，在找位置的时候可以通过二分查找法来进行减少比较次数，但是由于交换次数不变，算法的时间复杂度依旧是O(n^2)</p>
+<h2 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h2><h3 id="概述-2"><a href="#概述-2" class="headerlink" title="概述"></a>概述</h3><p>选择排序是一种简单直观的排序算法，它的工作原理大致如下，首先在未排序的数据中找最大或者最小的元素，存放到排序队列的起始位置，然后再从剩余未排序的元素中寻找最大或者最小元素，然后放在已排序队列的队尾，以此类推，直到所有的元素均排序完毕</p>
+<p>选择排序的优点主要跟数据移动有关，如果某个数据已经位于正确的位置上面，则它不会进行移动，选择排序每次交换一对元素，它们之中至少有一个将被移到其最终位置上面，因此对n个元素的表进行排序的话，只会涉及到至多n-1次交换，在所有完全依靠交换去移动元素的排序方法中，选择排序属于非常好的一种。</p>
+<p>交换操作比比较所需要的CPU较少，而选择排序比冒泡排序交换次数要少，所以当空间复杂度要求较高的时候，可以考虑选择排序，实际适用的场景相当罕见</p>
+<h3 id="时间复杂度-2"><a href="#时间复杂度-2" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>O(n^2)</p>
+<h3 id="最优时间复杂度-2"><a href="#最优时间复杂度-2" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>正序有序<br>O(n^2)</p>
+<h3 id="最差时间复杂度-2"><a href="#最差时间复杂度-2" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>逆序有序<br>O(n^2)</p>
+<h3 id="数据结构-2"><a href="#数据结构-2" class="headerlink" title="数据结构"></a>数据结构</h3><p>数组</p>
+<h3 id="空间复杂度-2"><a href="#空间复杂度-2" class="headerlink" title="空间复杂度"></a>空间复杂度</h3><p>O(n) + 辅助空间O(1)</p>
+<h3 id="是否稳定-2"><a href="#是否稳定-2" class="headerlink" title="是否稳定"></a>是否稳定</h3><p>不稳定</p>
+<h2 id="快速排序"><a href="#快速排序" class="headerlink" title="快速排序"></a>快速排序</h2><h3 id="概述-3"><a href="#概述-3" class="headerlink" title="概述"></a>概述</h3><p>快速排序，又称分区交换排序，简称快排，在需要对n个元素进行排序的时候需要O(nlogn)次比较，最坏的时候需要O(n^2)次比较，但这并不常见</p>
+<h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><ol>
+<li>从数列中挑选一个基准值(通常会选定起始元素)</li>
+<li>对数列进行分割，将所有小于基准值的放在基准值左侧，大于基准值的元素放在基准值右侧</li>
+<li>递归地对基准值两侧的队列重复1,2步骤</li>
+</ol>
+<h3 id="代码实现-1"><a href="#代码实现-1" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sort</span><span class="params">(<span class="keyword">int</span>[] data, <span class="keyword">int</span> head, <span class="keyword">int</span> tail)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> startIndex = head;</span><br><span class="line">        <span class="keyword">int</span> endIndex = tail;</span><br><span class="line">        <span class="comment">//递归终止条件，如果分区中元素只有 0 或1 个则已经有序</span></span><br><span class="line">        <span class="keyword">if</span> (tail - head &lt;= <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> selectedElement = data[startIndex];</span><br><span class="line">        <span class="keyword">if</span> (head &lt; tail) &#123;</span><br><span class="line">            <span class="comment">//按基准值进行分区,左面的分区都小于等于基准值,右面的分区都大于基准值</span></span><br><span class="line">            <span class="keyword">while</span> (head &lt; tail) &#123;</span><br><span class="line">                <span class="comment">//从右向左找第一个小于等于基准值的元素</span></span><br><span class="line">                <span class="keyword">if</span> (data[tail] &lt;= selectedElement) &#123;</span><br><span class="line">                    <span class="comment">//找到后，再从左至右找第一个大于基准值的元素，并交换它们</span></span><br><span class="line">                    <span class="keyword">if</span> (data[head] &gt; selectedElement) &#123;</span><br><span class="line">                        swap(data, head, tail);</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        head++;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    tail--;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//head和tail指针重合,此时说明除了指针处所有元素已经交换完毕,则交换基准值和head指针处元素</span></span><br><span class="line">            swap(data, startIndex, head);</span><br><span class="line">            <span class="comment">//分区后对左右两个子分区进行递归，重复上述操作</span></span><br><span class="line">            sort(data, startIndex, head - <span class="number">1</span>);</span><br><span class="line">            sort(data, head + <span class="number">1</span>, endIndex);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">swap</span><span class="params">(<span class="keyword">int</span>[] data, <span class="keyword">int</span> head, <span class="keyword">int</span> tail)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (data[head] &gt; data[tail]) &#123;</span><br><span class="line">            <span class="comment">//对两个元素进行交换</span></span><br><span class="line">            data[head] = data[head] + data[tail];</span><br><span class="line">            data[tail] = data[head] - data[tail];</span><br><span class="line">            data[head] = data[head] - data[tail];</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="时间复杂度-3"><a href="#时间复杂度-3" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><p>O(nlogn)</p>
+<h3 id="最优时间复杂度-3"><a href="#最优时间复杂度-3" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>O(nlogn)</p>
+<h3 id="最差时间复杂度-3"><a href="#最差时间复杂度-3" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>O(n^2)</p>
+<h3 id="空间复杂度-3"><a href="#空间复杂度-3" class="headerlink" title="空间复杂度"></a>空间复杂度</h3><p>快速排序所使用的空间，需要依照使用的版本决定。使用原地分割的快速排序版本，在任何递归调用前都会使用固定的额外空间，如果需要产生O(logn)次嵌套递归调用，则需要O(logn)的空间</p>
+<h3 id="是否稳定-3"><a href="#是否稳定-3" class="headerlink" title="是否稳定"></a>是否稳定</h3><p>否</p>
+<h3 id="一些可以优化的点-2"><a href="#一些可以优化的点-2" class="headerlink" title="一些可以优化的点"></a>一些可以优化的点</h3><p>基准值选定问题，如果待排序数据是乱序的，基准值是第一个或者最后一个都没问题，但是如果是已经排好序的数据，如果选定第一个或者最后一个为基准值，分区的时候就会出现基准值分区后，只有一个分区有元素</p>
+<h2 id="希尔排序"><a href="#希尔排序" class="headerlink" title="希尔排序"></a>希尔排序</h2><h3 id="概述-4"><a href="#概述-4" class="headerlink" title="概述"></a>概述</h3><p>希尔排序，可以称为递减增量的排序算法，是插入排序的一种高效的改进版本<br>希尔排序是基于插入排序以下两点性质提出改进方法的：</p>
+<ol>
+<li>插入排序在对几乎已经排好序(正序有序)的数据操作时，操作效率高，可以达到线性排序的效率(O(n))</li>
+<li>插入排序一般来说是低效的，因为插入排序每次只能向前移动一位</li>
+</ol>
+<p>希尔排序实际上是一个分组排序的过程，每一次通过一个步长对整个数列进行分组，对每个分组内的数据进行插入排序，然后缩小步长，再对每个分组内的数据进行插入排序，直到最后每个分组内的元素只有一个的时候，对该数列的排序演变为普通的插入排序，此时的数列经过方才的过程已经几乎接近有序队列，这时候再使用插入排序效率几乎能达到插入排序的最优时间复杂度即线性排序</p>
+<p>在数量较少的时候，希尔排序甚至比堆排序和快速排序要快，但是涉及到大量数据的时候希尔排序还是要比快速排序要慢</p>
+<h3 id="工作流程-1"><a href="#工作流程-1" class="headerlink" title="工作流程"></a>工作流程</h3><ol>
+<li>选定步长，并建立分组</li>
+<li>对每一个分组进行插入排序操作</li>
+<li>将步长按照一定的规则进行处理，这里步长规则选为每次除以2</li>
+<li>重复步骤1 2 直至步长变为最小步长1</li>
+<li>步长变为1时 对数列的排序演变为普通插入排序，此时数列接近有序，通过最后一遍普通插入排序后所得数列即变为有序队列</li>
+</ol>
+<h3 id="代码实现-2"><a href="#代码实现-2" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">public void sort(int[] data) &#123;</span><br><span class="line">        //对数列按照gap进行分组,当gap&gt;=1时,对每组元素进行插入排序</span><br><span class="line">        for (int gap = data.length /2; gap &gt;= 1; gap/=2) &#123;</span><br><span class="line">            //分组遍历处理</span><br><span class="line">            int groups = data.length / gap;</span><br><span class="line">            for (int i = 0; i &lt;= groups; i++) &#123;</span><br><span class="line">                //对每一组中的元素进行插入排序</span><br><span class="line">                insertSortAlgorithm.sort(data,i,gap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">-------------------------------------------------------------------</span><br><span class="line">//insertSortAlgorithm.sort()</span><br><span class="line">public void sort(int[] data,int start, int gap) &#123;</span><br><span class="line">        for (int i = start + gap; i &lt; data.length; i += gap) &#123;</span><br><span class="line">            int newElement = data[i];</span><br><span class="line">            int j = i - gap;</span><br><span class="line">            while (j &gt;= 0 &amp;&amp; newElement &lt; data[j]) &#123;</span><br><span class="line">                data[j + gap] = data[j];</span><br><span class="line">                j -= gap;</span><br><span class="line">            &#125;</span><br><span class="line">            data[j+gap] = newElement;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h3 id="平均时间复杂度"><a href="#平均时间复杂度" class="headerlink" title="平均时间复杂度"></a>平均时间复杂度</h3><p>根据步长序列选定规则决定 </p>
+<h3 id="最优时间复杂度-4"><a href="#最优时间复杂度-4" class="headerlink" title="最优时间复杂度"></a>最优时间复杂度</h3><p>O(n)</p>
+<h3 id="最差时间复杂度-4"><a href="#最差时间复杂度-4" class="headerlink" title="最差时间复杂度"></a>最差时间复杂度</h3><p>根据步长序列选定规则决定 </p>
+<table>
+<thead>
+<tr>
+<th>步长选定规则</th>
+<th>时间复杂度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>n /2^i</td>
+<td>O(n^2)</td>
+</tr>
+<tr>
+<td>2^k -1</td>
+<td>O(n^3/2)</td>
+</tr>
+<tr>
+<td>2^i * 3^j</td>
+<td>O(nlog^2n)</td>
+</tr>
+</tbody></table>
+<h3 id="是否稳定-4"><a href="#是否稳定-4" class="headerlink" title="是否稳定"></a>是否稳定</h3><p>不稳定</p>
+<p>未完待续——</p>
+<h2 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h2><h3 id="概述-5"><a href="#概述-5" class="headerlink" title="概述"></a>概述</h3><h3 id="时间复杂度-4"><a href="#时间复杂度-4" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><h3 id="是否稳定-5"><a href="#是否稳定-5" class="headerlink" title="是否稳定"></a>是否稳定</h3><h2 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h2><h3 id="概述-6"><a href="#概述-6" class="headerlink" title="概述"></a>概述</h3><h3 id="时间复杂度-5"><a href="#时间复杂度-5" class="headerlink" title="时间复杂度"></a>时间复杂度</h3><h3 id="是否稳定-6"><a href="#是否稳定-6" class="headerlink" title="是否稳定"></a>是否稳定</h3>
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://kyo7701.github.io/blog/2020/06/02/about-sort/" title="聊聊排序算法" target="_blank" rel="external">https://kyo7701.github.io/blog/2020/06/02/about-sort/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/blog/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">mr_cris</span><small class="ml-1x">Backend Developer</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/blog/2020/06/04/about-redis-data-structure/" title="聊聊redis的底层数据结构"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;Newer</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/blog/2020/05/18/about-micro-services/" title="聊聊微服务"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>$</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>Maybe you could buy me a cup of coffee.</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/alipayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open alipay app scan this qrcode, buy me a coffee!</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/wechatpayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open wechat app scan this qrcode, buy me a coffee!</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> alipay</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> wechat payment</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/cofess" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/blog/js/plugin.min.js"></script>
+
+
+<script src="/blog/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/blog/',
+        CONTENT_URL: '/blog/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/blog/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+
+
+
+
+
+
+</body>
+</html>

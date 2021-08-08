@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>谈谈mysql中的锁 | Hexo</title>
+  <meta name="description" content="前言今天又来写博客了，没错今天又被面试官锤了，这次被锤的问题是关于mysql中关于锁的问题，特此整理下有关锁的问题，避免今后对这种问题再次犯同样的错误(꒦_꒦)  什么是锁？为什么要加锁12345锁是计算机协调多个进程或纯线程并发访问某一资源的机制。在数据库中，除传统的计算资源(CPU,RAM,I&#x2F;O)  的争用外,数据也是一种供许多用户共享的资源。如果保证数据并发访问的一致性、有效性是所有数据库">
+<meta property="og:type" content="article">
+<meta property="og:title" content="谈谈mysql中的锁">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/14/db-lock/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="前言今天又来写博客了，没错今天又被面试官锤了，这次被锤的问题是关于mysql中关于锁的问题，特此整理下有关锁的问题，避免今后对这种问题再次犯同样的错误(꒦_꒦)  什么是锁？为什么要加锁12345锁是计算机协调多个进程或纯线程并发访问某一资源的机制。在数据库中，除传统的计算资源(CPU,RAM,I&#x2F;O)  的争用外,数据也是一种供许多用户共享的资源。如果保证数据并发访问的一致性、有效性是所有数据库">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://image-static.segmentfault.com/393/973/393973056-5ac1c82c4bc61_articlex">
+<meta property="article:published_time" content="2020-04-14T06:25:07.000Z">
+<meta property="article:modified_time" content="2020-04-17T14:14:50.000Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="中间件">
+<meta property="article:tag" content="后端">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image-static.segmentfault.com/393/973/393973056-5ac1c82c4bc61_articlex">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/04/14/db-lock/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/blog/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">mr_cris</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Backend Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">Categories</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/blog/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">Repository</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/blog/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/cofess" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/mysql/">mysql</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/No-SQL/" rel="tag">No-SQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/rabbitmq/" rel="tag">rabbitmq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redis/" rel="tag">redis</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%85%B6%E4%BB%96/" rel="tag">其他</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" rel="tag">后端技术</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" rel="tag">工作感悟</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" rel="tag">持久化机制</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" rel="tag">未完成</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag">消息队列</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag">索引</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/blog/tags/No-SQL/" style="font-size: 13px;">No-SQL</a> <a href="/blog/tags/java/" style="font-size: 13px;">java</a> <a href="/blog/tags/mysql/" style="font-size: 13.75px;">mysql</a> <a href="/blog/tags/rabbitmq/" style="font-size: 13px;">rabbitmq</a> <a href="/blog/tags/redis/" style="font-size: 13.75px;">redis</a> <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 14px;">中间件</a> <a href="/blog/tags/%E5%85%B6%E4%BB%96/" style="font-size: 13.25px;">其他</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" style="font-size: 13.25px;">后端</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" style="font-size: 13.25px;">后端技术</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" style="font-size: 13px;">工作感悟</a> <a href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" style="font-size: 13px;">持久化机制</a> <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13.5px;">数据库</a> <a href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" style="font-size: 13px;">未完成</a> <a href="/blog/tags/%E6%9D%82%E8%B0%88/" style="font-size: 13px;">杂谈</a> <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">框架</a> <a href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 13.25px;">消息队列</a> <a href="/blog/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13px;">源码</a> <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 13px;">索引</a> <a href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 13px;">线程池</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/06/">June 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/03/">March 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/05/">May 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/04/">April 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/12/">December 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/08/">August 2019</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2021/06/14/about-mysql-implicitly-type-convertion/" class="title">浅淡MySQL中的隐式类型转换</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-13T16:22:10.000Z" itemprop="datePublished">2021-06-14</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2021/03/19/about-thread-pool/" class="title">聊聊线程池</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-03-19T06:49:26.000Z" itemprop="datePublished">2021-03-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/07/26/about-mybatis/" class="title">聊聊ORM框架之mybatis</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-25T16:19:58.000Z" itemprop="datePublished">2020-07-26</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/07/05/about-seeking-a-job/" class="title">谈谈找工作的那些事儿</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-05T05:28:00.000Z" itemprop="datePublished">2020-07-05</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/06/12/about-reference/" class="title">谈谈引用</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-06-12T03:05:12.000Z" itemprop="datePublished">2020-06-12</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-db-lock" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      谈谈mysql中的锁
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/blog/2020/04/14/db-lock/" class="article-date">
+	  <time datetime="2020-04-14T06:25:07.000Z" itemprop="datePublished">2020-04-14</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/blog/categories/mysql/">mysql</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/blog/tags/mysql/" rel="tag">mysql</a>, <a class="article-tag-link-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a>, <a class="article-tag-link-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2020/04/14/db-lock/#comments" class="article-comment-link">Comments</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天又来写博客了，没错今天又被面试官锤了，这次被锤的问题是关于mysql中关于锁的问题，特此整理下有关锁的问题，避免今后对这种问题再次犯同样的错误(꒦_꒦) </p>
+<h1 id="什么是锁？为什么要加锁"><a href="#什么是锁？为什么要加锁" class="headerlink" title="什么是锁？为什么要加锁"></a>什么是锁？为什么要加锁</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">锁是计算机协调多个进程或纯线程并发访问某一资源的机制。在数据库中，除传统的计算资源(CPU,RAM,I/O)  </span><br><span class="line">的争用外,数据也是一种供许多用户共享的资源。如果保证数据并发访问的一致性、有效性是所有数据库必须解决  </span><br><span class="line">的一个问题，锁冲突也是影响数据库并发访问性能的一个因素，  </span><br><span class="line">从这个角度来看，锁对数据库而言显得尤为重要，也更加复杂。</span><br><span class="line">锁机制用于管理对共享资源的并发访问</span><br></pre></td></tr></table></figure>
+
+<h1 id="锁分类"><a href="#锁分类" class="headerlink" title="锁分类"></a>锁分类</h1><p><img src="https://image-static.segmentfault.com/393/973/393973056-5ac1c82c4bc61_articlex"><br>图片引用自参考文章<a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000014133576">MySQL InnoDB锁机制全面解析分享</a></p>
+<h2 id="按照加锁机制进行分类"><a href="#按照加锁机制进行分类" class="headerlink" title="按照加锁机制进行分类"></a>按照加锁机制进行分类</h2><ul>
+<li><strong>乐观锁</strong>  乐观锁乐观地假定大概率不会发生更新冲突，访问、处理数据的时候不加锁，只在更新数据的时候查看版本号是否有冲突，有则处理、无则提交事务</li>
+<li><strong>悲观锁</strong>  悲观锁悲观地假定大概率会发生更新冲突，访问或者处理数据前加排他锁，在整个数据处理过程中锁定数据，事务提交或者回滚后才释放锁</li>
+</ul>
+<h2 id="按照兼容性进行分类"><a href="#按照兼容性进行分类" class="headerlink" title="按照兼容性进行分类"></a>按照兼容性进行分类</h2><ul>
+<li><strong>共享锁</strong> 也就是读锁，读操作之间互相不冲突，但是读操作跟写操作互相冲突，也就是会阻塞写请求</li>
+<li><strong>排他锁</strong> 也就是写锁, 写操作之间互相冲突，写操作跟读操作互相冲突</li>
+</ul>
+<h2 id="按照锁的粒度进行分类"><a href="#按照锁的粒度进行分类" class="headerlink" title="按照锁的粒度进行分类"></a>按照锁的粒度进行分类</h2><ul>
+<li><strong>表级锁</strong> mysql中锁定粒度最大的一种锁，对整张表进行加锁，实现简单，资源消耗较少，加锁快，不会出现死锁。由于锁定粒度最大，触发锁冲突的概率最高，并发度最低，myisam和innodb引擎都支持表级锁</li>
+<li><strong>页级锁</strong> 开销和加锁时间介于表锁和行锁之间，会出现死锁，并发程度一般</li>
+<li><strong>行级锁</strong> 开销大，加锁慢，会出现死锁，锁定粒度最小，发生锁冲突的概率最低，并发程度也最高</li>
+</ul>
+<h2 id="按照锁模式进行分类"><a href="#按照锁模式进行分类" class="headerlink" title="按照锁模式进行分类"></a>按照锁模式进行分类</h2><ul>
+<li><strong>record lock</strong> 记录锁，对符合条件的行进行加锁，锁住索引项</li>
+<li><strong>gap lock</strong>   间隙锁，对符合条件的记录行之间的间隙进行加锁，不包含符合条件的索引项本身，只是锁定记录的范围，其他事务不能在锁范围内插入数据，这样就防止了别的数据新增幻影行(幻读)</li>
+<li><strong>next-key lock</strong> 锁定索引项本身和索引范围，即record lock + gap lock的结合 可解决幻读问题</li>
+<li><strong>意向锁</strong>  为了允许表锁和行锁共存，实现多粒度锁机制，innodb还有两种内部使用的意向锁(表级锁)分为<ul>
+<li><strong>意向共享锁(IS)</strong> 事务打算给数据行加共享锁，必须先取得该表的IS锁</li>
+<li><strong>意向排他锁(IX)</strong> 事务打算给数据行加排他锁，必须先取得该表的IX锁<br>意向锁是在给某一行进行加锁的时候，mysql会自动为这一行所处的表进行加意向锁，无需用户任何处理,意向锁的作用我们可以看下面一个例子</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>事务1</th>
+<th>事务2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td>更新table a中某一行数据</td>
+<td>do nothing</td>
+</tr>
+<tr>
+<td>t2</td>
+<td>do nothing</td>
+<td>更新table a全表数据,需要获取表锁</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>提交</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t4</td>
+<td>—</td>
+<td>提交</td>
+</tr>
+</tbody></table>
+<p>在上述例子中，事务1中在t1时刻对表中数据进行数据更新时，自动加该表的意向排他锁，这时事务2获取该表的写锁时会先判断是否和意向锁兼容，发现该表存在意向排他锁，锁类型不兼容，需要等待事务1提交后才能进行操作。<br>这样如果某张表存在行级锁，获取表锁的时候就不必遍历整张表判断是否存在行级锁，直接判断是否与表级的意向锁是否兼容就可以了，下面给出表级的意向锁和读写锁的兼容情况</p>
+<table>
+<thead>
+<tr>
+<th>—-</th>
+<th>IS</th>
+<th>IX</th>
+<th>S</th>
+<th>X</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IS</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>IX</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>冲突</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>S</td>
+<td>兼容</td>
+<td>冲突</td>
+<td>兼容</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>X</td>
+<td>冲突</td>
+<td>冲突</td>
+<td>冲突</td>
+<td>冲突</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>插入意向锁</strong> 插入意向锁是gap锁的一种，这种锁会在记录插入前设置。这种锁表示了多个事务在插入到相同的索引间隙的时候，只要他们不是插入到相同的位置上就不必彼此互相等待。在获取插入的排它锁之前，需要先获取插入意向锁</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/innodb-locking.html#innodb-insert-intention-locks">insert-intention-locks</a></p>
+<p>谈到这里其实可以聊聊今天被锤的一个面试问题,有关SQL优化相关的问题</p>
+<h1 id="面试中被面试官锤的问题"><a href="#面试中被面试官锤的问题" class="headerlink" title="面试中被面试官锤的问题"></a>面试中被面试官锤的问题</h1><p><strong>表级锁了解吗？什么时候会触发表级锁？update语句什么情况下会触发表级锁？</strong></p>
+<p>
+现在mysql默认存储引擎都是innodb,那么innodb存储引擎下什么情况会进行锁表呢？这就要从mysql的索引讲起了
+innodb中默认使用行级锁，这个行级锁锁的是索引记录，换句话说，如果你的SQL语句中如果没有索引，这时innodb会锁住谁呢？毫无疑问这个时候没有索引就会触发了表级锁,实际使用中我们要特别注意innodb行级锁的这个特性，不然会引起大量的锁冲突，从而影响并发性能, update语句中什么情况会触发表级锁可以看下面哪些情况会锁表
+</p>
+
+<p><strong>都有哪些情况innoDB会锁表呢</strong>？</p>
+<p>其实不管是读操作(select)还是写操作(update,delete,insert),只要涉及到带有筛选条件的语句，如果筛选条件中没有用到索引，就会触发全表扫描，区别是读操作可能加读锁(也有可能不加锁,mvcc中的快照读是通过版本号实现的，不加读锁，当前读需要加读锁)，写操作默认需要对影响的数据集隐式加写锁,那么如果发现影响的数据集没有用到索引或者是索引效果不好(区分度不够高,导致需要扫描表中大部分数据)再或者全表扫描的时候，就会锁住整张表，导致默认的行级锁升级为表级锁，因此我们总结下以下情况会导致锁表</p>
+<ul>
+<li>全表更新 事务需要更新大部分数据或全部数据，如果使用行级锁，会导致事务执行效率低，从而导致其他事务长时间等待锁和更多的锁冲突</li>
+<li>多表级联 事务涉及多张表，比较复杂的关联查询，很可能造成死锁，这种情况若能一次性锁住事务涉及的表，从而避免死锁，减少数据库事务回滚所带来的开销</li>
+<li>本应部分更新，但是因为筛选条件中未用到索引或者索引区分度程度不高(innodb认为全表扫描比走索引效率更高导致索引失效的情况)，导致全表扫描，这个时候就要通过explain去查看下查询计划，看下查询语句是否真的用到了索引</li>
+</ul>
+<h1 id="锁优化部分"><a href="#锁优化部分" class="headerlink" title="锁优化部分"></a>锁优化部分</h1><ul>
+<li>尽量让数据检索都通过索引来完成，避免无索引或者索引失效导致行级锁升级为表级锁</li>
+<li>合理设计索引，以缩小加锁范围，避免间隙锁造成不该锁定的键值被锁定</li>
+<li>尽量控制事务的大小，因为行级锁的复杂性会加大资源使用量以及锁定时间</li>
+</ul>
+<p>这里面实际上第三种情况是可以避免的，在做业务时，需要谨慎的加索引,在合适的列上创建索引，索引列区分程度是否高(主键索引和唯一索引不用说区分度百分百，如果能用到主键索引或者唯一索引就尽可能的使用这两种索引，如果不能使用，确保索引列区分程度够高)</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000014133576">MySQL InnoDB锁机制全面解析分享</a><br><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/29150809">MySQL锁总结</a><br><a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/innodb-locking.html#innodb-insert-intention-locks">mysql官方文档#insert-intention-locks</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://kyo7701.github.io/blog/2020/04/14/db-lock/" title="谈谈mysql中的锁" target="_blank" rel="external">https://kyo7701.github.io/blog/2020/04/14/db-lock/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/blog/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">mr_cris</span><small class="ml-1x">Backend Developer</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/blog/2020/04/16/about-redis/" title="聊聊中间件之redis"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;Newer</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/blog/2020/04/13/mq-Rabbit-MQ/" title="消息队列之RabbitMQ"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>$</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>Maybe you could buy me a cup of coffee.</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/alipayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open alipay app scan this qrcode, buy me a coffee!</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/wechatpayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open wechat app scan this qrcode, buy me a coffee!</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> alipay</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> wechat payment</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/cofess" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/blog/js/plugin.min.js"></script>
+
+
+<script src="/blog/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/blog/',
+        CONTENT_URL: '/blog/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/blog/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+
+
+
+
+
+
+</body>
+</html>

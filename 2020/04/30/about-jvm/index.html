@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>聊聊JVM | Hexo</title>
+  <meta name="description" content="前言在讲以下内容之前，我们先通过一个思维导图了解一下本文的大致内容 该图片引用自深入理解Java虚拟机总结-思维导图 ————————————————  内存区域划分这一部分我们主要来详细了解一下运行时数据区的内容 Java虚拟机栈特点线程私有区域，生命周期与线程相同 作用Java虚拟机栈是描述的Java中方法执行的内存模型: 每个方法在执行的同时会创建一个栈帧(stack frame),用于存储">
+<meta property="og:type" content="article">
+<meta property="og:title" content="聊聊JVM">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/30/about-jvm/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="前言在讲以下内容之前，我们先通过一个思维导图了解一下本文的大致内容 该图片引用自深入理解Java虚拟机总结-思维导图 ————————————————  内存区域划分这一部分我们主要来详细了解一下运行时数据区的内容 Java虚拟机栈特点线程私有区域，生命周期与线程相同 作用Java虚拟机栈是描述的Java中方法执行的内存模型: 每个方法在执行的同时会创建一个栈帧(stack frame),用于存储">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s1.ax1x.com/2020/05/06/YAMRkq.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/05/06/YAMdtP.png">
+<meta property="og:image" content="https://pic.yupoo.com/crowhawk/6b90388c/6c281cf0.png">
+<meta property="og:image" content="https://pic.yupoo.com/crowhawk/605f57b5/75122b84.png">
+<meta property="og:image" content="https://pic.yupoo.com/crowhawk/fffcf9a2/f60599b2.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/05/28/tZ0y5D.png">
+<meta property="article:published_time" content="2020-04-30T03:07:09.000Z">
+<meta property="article:modified_time" content="2020-08-20T02:48:20.000Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s1.ax1x.com/2020/05/06/YAMRkq.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2020/04/30/about-jvm/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/blog/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">mr_cris</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Backend Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">Categories</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/blog/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">Repository</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/blog/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/cofess" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/mysql/">mysql</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/No-SQL/" rel="tag">No-SQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/rabbitmq/" rel="tag">rabbitmq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redis/" rel="tag">redis</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%85%B6%E4%BB%96/" rel="tag">其他</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" rel="tag">后端技术</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" rel="tag">工作感悟</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" rel="tag">持久化机制</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" rel="tag">未完成</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag">消息队列</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag">索引</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/blog/tags/No-SQL/" style="font-size: 13px;">No-SQL</a> <a href="/blog/tags/java/" style="font-size: 13px;">java</a> <a href="/blog/tags/mysql/" style="font-size: 13.75px;">mysql</a> <a href="/blog/tags/rabbitmq/" style="font-size: 13px;">rabbitmq</a> <a href="/blog/tags/redis/" style="font-size: 13.75px;">redis</a> <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 14px;">中间件</a> <a href="/blog/tags/%E5%85%B6%E4%BB%96/" style="font-size: 13.25px;">其他</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" style="font-size: 13.25px;">后端</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" style="font-size: 13.25px;">后端技术</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" style="font-size: 13px;">工作感悟</a> <a href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" style="font-size: 13px;">持久化机制</a> <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13.5px;">数据库</a> <a href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" style="font-size: 13px;">未完成</a> <a href="/blog/tags/%E6%9D%82%E8%B0%88/" style="font-size: 13px;">杂谈</a> <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">框架</a> <a href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 13.25px;">消息队列</a> <a href="/blog/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13px;">源码</a> <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 13px;">索引</a> <a href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 13px;">线程池</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/06/">June 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/03/">March 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/05/">May 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/04/">April 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/12/">December 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/08/">August 2019</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2021/06/14/about-mysql-implicitly-type-convertion/" class="title">浅淡MySQL中的隐式类型转换</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-13T16:22:10.000Z" itemprop="datePublished">2021-06-14</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2021/03/19/about-thread-pool/" class="title">聊聊线程池</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-03-19T06:49:26.000Z" itemprop="datePublished">2021-03-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/07/26/about-mybatis/" class="title">聊聊ORM框架之mybatis</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-25T16:19:58.000Z" itemprop="datePublished">2020-07-26</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/07/05/about-seeking-a-job/" class="title">谈谈找工作的那些事儿</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-05T05:28:00.000Z" itemprop="datePublished">2020-07-05</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/06/12/about-reference/" class="title">谈谈引用</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-06-12T03:05:12.000Z" itemprop="datePublished">2020-06-12</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-about-jvm" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      聊聊JVM
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/blog/2020/04/30/about-jvm/" class="article-date">
+	  <time datetime="2020-04-30T03:07:09.000Z" itemprop="datePublished">2020-04-30</time>
+	</a>
+</span>
+        
+        
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2020/04/30/about-jvm/#comments" class="article-comment-link">Comments</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在讲以下内容之前，我们先通过一个思维导图了解一下本文的大致内容</p>
+<p>该图片引用自<a target="_blank" rel="noopener" href="https://blog.csdn.net/sheep_3/article/details/51457116">深入理解Java虚拟机总结-思维导图</a></p>
+<p>————————————————<br><img src="https://s1.ax1x.com/2020/05/06/YAMRkq.png"></p>
+<p><img src="https://s1.ax1x.com/2020/05/06/YAMdtP.png"></p>
+<h2 id="内存区域划分"><a href="#内存区域划分" class="headerlink" title="内存区域划分"></a>内存区域划分</h2><p>这一部分我们主要来详细了解一下运行时数据区的内容</p>
+<h3 id="Java虚拟机栈"><a href="#Java虚拟机栈" class="headerlink" title="Java虚拟机栈"></a>Java虚拟机栈</h3><p><strong>特点</strong><br>线程私有区域，生命周期与线程相同</p>
+<p><strong>作用</strong><br>Java虚拟机栈是描述的Java中方法执行的内存模型: 每个方法在执行的同时会创建一个栈帧(stack frame),用于存储<strong>局部变量表</strong>、<strong>操作数栈</strong>、<strong>动态链接</strong>、<strong>方法出口</strong>等信息。每一个方法调用至执行完成的时候，都对应着一个栈帧在虚拟机栈中从入栈到出栈的过程</p>
+<p><strong>局部变量表</strong>存放了各种编译器可知的基本数据类型、引用数据类型和returnAddress指令(指向了下一条字节码指令的地址)，我们平时常说的栈指的就是Java虚拟机栈里面的局部变量表的内容</p>
+<h3 id="程序计数器"><a href="#程序计数器" class="headerlink" title="程序计数器"></a>程序计数器</h3><p><strong>特点</strong><br>线程私有区域<br><strong>概述</strong><br>程序计数器是一块较小的内存空间，可以看作是当前线程执行的字节码的行号指示器。在虚拟机的概念模型里，字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令，分支、循环、跳转、异常处理、线程恢复等功能都需要依赖这个计数器来完成</p>
+<h3 id="本地方法栈"><a href="#本地方法栈" class="headerlink" title="本地方法栈"></a>本地方法栈</h3><p>本地方法栈跟Java虚拟机栈的作用是类似的，他们的区别是Java虚拟机栈执行的是Java方法，而本地方法栈执行的是虚拟机用到的Native方法</p>
+<h3 id="Java堆"><a href="#Java堆" class="headerlink" title="Java堆"></a>Java堆</h3><p><strong>特点</strong><br>所有线程共享区域，开发人员关注的核心区域，垃圾收集器管理的主要区域，Java虚拟机中内存最大的一块<br><strong>概述</strong><br>该内存区块是Java虚拟机中最大的一块内存区域，在虚拟机启动时创建，几乎所有的对象实例都会在这里进行分配，根据内存回收的角度来看，现在的大多数收集器大多采用分代收集算法，所以Java堆还可以进行进一步的细分:新生代和老年代，新生代再细致一点可分为Eden空间，from survivor空间，to survivor空间。</p>
+<h3 id="方法区"><a href="#方法区" class="headerlink" title="方法区"></a>方法区</h3><p><strong>特点</strong><br>所有线程共享区域<br><strong>概述</strong><br>方法区与Java堆一样，是各个线程共享的内存区域，用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码数据等，平时说的常量池就位于该区域。虽然虚拟机规范把方法区作为堆的一个逻辑部分，但他还有另外的一个别名叫非堆，目的就是和Java堆进行区分</p>
+<h4 id="运行时常量池"><a href="#运行时常量池" class="headerlink" title="运行时常量池"></a>运行时常量池</h4><p><strong>概述</strong><br>运行时常量池是方法区中的一部分，Class文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是常量池，用于存放编译期生成的各种字面量和符号引用，这部分内容在类加载后进入方法区中的运行时常量池中存放</p>
+<h3 id="直接内存"><a href="#直接内存" class="headerlink" title="直接内存"></a>直接内存</h3><p>直接内存并不是虚拟机运行时数据区的一部分，也不是Java虚拟机规范中定义的内存区域，但是这部分内存也被频繁的使用，也可能导致OOM异常，在JDK1.4中新加入了NIO,引入了一种基于Channel与Buffer的I/O方式，它可以通过native函数库直接分配堆外内存，然后通过一个存储在Java堆中的DirectByteBuffer对象作为这块内存的引用进行操作，在一些场景中能显著提升性能，因为避免了再Java堆和native堆上来回复制数据</p>
+<h2 id="如何判断对象已死？"><a href="#如何判断对象已死？" class="headerlink" title="如何判断对象已死？"></a>如何判断对象已死？</h2><p>在Java堆里面几乎存放着Java世界中所有的对象实例，垃圾收集器在进行垃圾回收前，第一件事情就是需要判断哪些对象还“存活”着，哪些对象已经“死去”</p>
+<h3 id="引用计数算法"><a href="#引用计数算法" class="headerlink" title="引用计数算法"></a>引用计数算法</h3><p>给对象添加一个引用计数器，每当有一个地方引用它时，计数器就+1，引用失效时，计数器就-1，任何时刻计数器为0的对象即不再使用的对象，即可以理解为这个对象已经“死去”了，在下次进行垃圾回收的时候，就可以将这些对象收集。引用计数实现简单，判定效率也很高，但是他很难解决对象之间的相互循环引用的问题</p>
+<h3 id="根搜索算法-可达性分析算法"><a href="#根搜索算法-可达性分析算法" class="headerlink" title="根搜索算法(可达性分析算法)"></a>根搜索算法(可达性分析算法)</h3><p>通过一系列的被称为<strong>GC Roots</strong>的对象作为起始点，从这些节点开始向下进行搜索，搜索所走过的路径为引用链，当一个对象到GC Roots没有任何引用链相连的话，则证明是对象不可用的。</p>
+<p>哪些对象可以用来当做GC ROOTS呢？</p>
+<ul>
+<li>虚拟机栈中局部变量表中引用的对象</li>
+<li>方法区中类静态属性引用的对象</li>
+<li>方法区中常量引用的对象</li>
+<li>本地方法栈中JNI引用的对象</li>
+</ul>
+<h2 id="垃圾收集算法"><a href="#垃圾收集算法" class="headerlink" title="垃圾收集算法"></a>垃圾收集算法</h2><h3 id="复制收集算法"><a href="#复制收集算法" class="headerlink" title="复制收集算法"></a>复制收集算法</h3><p><strong>缺点</strong></p>
+<ul>
+<li>可用内存大小变为原来的一半</li>
+<li>如果对象存活率较高，会出现大量复制，效率会降低</li>
+</ul>
+<p>将可用内存按容量分为大小相等的两块，每次可使用其中的一块，当一块中的内存耗尽时，对这块内存区域进行垃圾收集，将这块内存中所有还存活的对象复制到另一块，再把这块的内存区域一次性清理掉，这样每次只对整个半区进行内存回收，分配的时候就不用了考虑内存碎片的问题了</p>
+<h3 id="标记清除算法"><a href="#标记清除算法" class="headerlink" title="标记清除算法"></a>标记清除算法</h3><p><strong>缺点</strong></p>
+<ul>
+<li>先标记，后清除，两阶段效率都不高</li>
+<li>产生大量内存碎片</li>
+</ul>
+<p>先标记出所有需要回收的对象，标记完成后统一进行回收，后续的垃圾收集算法都是基于这种算法进行改进而得到的，缺点是标记和清除效率都不高，并且标记清除后会有大量的不连续的内存碎片</p>
+<h3 id="标记-整理算法"><a href="#标记-整理算法" class="headerlink" title="标记-整理算法"></a>标记-整理算法</h3><p>与标记清除算法类似，但是不是直接清除，而是将所有可存活的对象向一端移动，然后直接清理掉边界外的内存。</p>
+<h3 id="新生代对象特点"><a href="#新生代对象特点" class="headerlink" title="新生代对象特点"></a>新生代对象特点</h3><p>大部分情况都是朝生夕死</p>
+<h3 id="老年代对象特点"><a href="#老年代对象特点" class="headerlink" title="老年代对象特点"></a>老年代对象特点</h3><p>对象存活率较高，没有额外空间进行分配担保</p>
+<h2 id="垃圾收集器"><a href="#垃圾收集器" class="headerlink" title="垃圾收集器"></a>垃圾收集器</h2><p>如果说垃圾收集算法是内存回收的方法论，那么垃圾收集器就是内存回收的具体表现。</p>
+<h3 id="Serial垃圾收集器"><a href="#Serial垃圾收集器" class="headerlink" title="Serial垃圾收集器"></a>Serial垃圾收集器</h3><p><strong>特点</strong></p>
+<ul>
+<li>单线程收集</li>
+<li>新生代收集器</li>
+<li>收集时停止所有工作线程的工作(STOP THE WORLD)</li>
+<li>跟其他垃圾收集器相比简单而高效(单个CPU环境下，不存在线程上下文切换的开销，可以获得最高的单线程收集效率)</li>
+<li>client模式下新生代默认垃圾收集器</li>
+</ul>
+<p>Serial收集器是最基本发展最悠久的垃圾收集器，曾经(JDK1.3.1之前)是虚拟机新生代的收集的唯一选择，看名字就可以看出来，这个收集器是一个单线程的收集器，但他的单线程不仅仅体现在它只会使用一个垃圾回收线程去完成垃圾回收工作，更重要的是，在进行垃圾回收的时候必须暂停其他所有的工作线程，直至收集结束。这项工作实际上是虚拟机在后台自动发起和自动完成的，在用户不可见的情况下把用户正常工作的线程全部停掉，这对很多应用来说都是难以接受的。</p>
+<p><img src="https://pic.yupoo.com/crowhawk/6b90388c/6c281cf0.png"><br>Serial/Serial Old垃圾收集器运行示意图</p>
+<h3 id="ParNew收集器"><a href="#ParNew收集器" class="headerlink" title="ParNew收集器"></a>ParNew收集器</h3><p><strong>特点</strong></p>
+<ul>
+<li>新生代收集器</li>
+<li>Serial收集器的多线程版本</li>
+<li>许多运行在server模式下的虚拟机中首选的新生代收集器</li>
+</ul>
+<p>ParNew收集器实际上就是Serial收集器的多线程版本，除了使用多条线程进行垃圾手机外，其余的控制参数、垃圾收集算法，Stop The World、对象分配规则、回收策略都跟Serial垃圾收集器完全一样。许多运行在server模式下的虚拟机中首选的新生代收集器，除了Serial外，只有Parnew能配合CMS垃圾收集器工作，单CPU场景下，不会比Serial收集器有更好的效果(存在线程切换的开销)，</p>
+<p><img src="https://pic.yupoo.com/crowhawk/605f57b5/75122b84.png"><br>ParNew 收集器运行示意图</p>
+<h3 id="Parallel-Scavenge收集器"><a href="#Parallel-Scavenge收集器" class="headerlink" title="Parallel Scavenge收集器"></a>Parallel Scavenge收集器</h3><p><strong>特点</strong></p>
+<ul>
+<li>新生代收集器</li>
+<li>使用复制算法，多线程收集</li>
+<li>关注点与其他收集器不同，关注的是达到一个可控制的吞吐量</li>
+</ul>
+<p>Parallel Scavenge收集器的特点是他关注的是可控制的吞吐量，即CPU运行用户代码的时间/(CPU运行用户代码时间+ 垃圾收集时间)，举例来说，虚拟机运行100分钟，垃圾收集时间为1分钟，那吞吐量就是99%，该收集器提供了两个参数用于精准控制吞吐量，分别是控制最大垃圾收集时间的-XX:MaxGCPauseMillis参数以及直接设置吞吐量大小的-XX:GCTimeRatio参数</p>
+<p>MaxGCPauseMillis 是一个大于0的毫秒数，当然并不是设置的越小越好，GC停顿时间的缩短是以牺牲吞吐量和新生代空间来换取的: 比如把新生代调小，收集300M的新生代肯定比500M要快，这会导致垃圾收集会变得比之前更频繁, 举个例子 原来10秒收集一次，每次停顿100毫秒，现在每5秒收集一次，每次停顿70毫秒，停顿时间是缩小了，但是吞吐量也下来了</p>
+<p>吞吐量 = CPU运行用户代码的时间/(CPU运行用户代码时间+ 垃圾收集时间)<br>GCTimeRatio 相当于 1 / 吞吐量</p>
+<h3 id="Serial-Old-收集器"><a href="#Serial-Old-收集器" class="headerlink" title="Serial-Old 收集器"></a>Serial-Old 收集器</h3><p><strong>特点</strong></p>
+<ul>
+<li>老年代收集器</li>
+<li>单线程，回收时暂停所有用户线程</li>
+<li>使用标记-整理算法</li>
+</ul>
+<h3 id="Parallel-Old收集器"><a href="#Parallel-Old收集器" class="headerlink" title="Parallel Old收集器"></a>Parallel Old收集器</h3><p><strong>特点</strong></p>
+<ul>
+<li>老年代收集器</li>
+<li>Parallel Scanvenge的老年代版本，使用多线程</li>
+<li>使用标记-整理算法</li>
+</ul>
+<h3 id="CMS垃圾收集器"><a href="#CMS垃圾收集器" class="headerlink" title="CMS垃圾收集器"></a>CMS垃圾收集器</h3><p><strong>特点</strong></p>
+<ul>
+<li>老年代收集器</li>
+<li>采用标记-清除算法</li>
+<li>并发收集，低停顿</li>
+<li>CMS MinorGC时会暂停所有的用户线程，并以多线程的方式进行垃圾回收。FullGC时不再暂停应用线程，而是使用若干个后台进程定期的对老年代空间进行扫描，及时回收不再使用的对象</li>
+</ul>
+<p>CMS(Concurrent Mark Sweep)收集器是一种以获取最短回收停顿时间为目标的垃圾收集器,很大一部分Java应用集中在互联网网站和B/S系统的服务端上，这类应用重视服务的响应速度，希望系统停顿时间较短，CMS就比较符合这类应用的需求</p>
+<h4 id="垃圾收集过程"><a href="#垃圾收集过程" class="headerlink" title="垃圾收集过程"></a>垃圾收集过程</h4><ul>
+<li>初始标记 标记GCRoots 能直接关联的对象，速度很快 暂停所有用户线程 </li>
+<li>并发标记  进行GCRoots Tracing的过程</li>
+<li>重新标记  修正并发标记期间 因用户程序继续工作导致标记产生变动的那一部分对象的标记记录，停顿时间比初始标记时间稍长一些，远比并发标记时间短 暂停所有用户线程</li>
+<li>并发清除</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>因为使用标记-清除算法，易产生大量内存碎片，内存碎片较多时，将会给分配大对象带来很大麻烦 可以通过开启FullGC时候进行内存整理，但是会延长停顿时间</li>
+<li>CMS收集器无法处理浮动垃圾，可能出现Concurrent Mode Failure而导致另一次的FullGC产生</li>
+<li>对CPU资源敏感</li>
+</ul>
+<p>浮动垃圾: 并发清除阶段，垃圾收集线程和用户线程并行执行，伴随着程序的运行，就会不断有垃圾产生，这些新产生的垃圾在标记过程之后产生，CMS无法在当次垃圾收集进行</p>
+<p><img src="https://pic.yupoo.com/crowhawk/fffcf9a2/f60599b2.png"><br>CMS收集器运行示意图</p>
+<h3 id="G1垃圾收集器"><a href="#G1垃圾收集器" class="headerlink" title="G1垃圾收集器"></a>G1垃圾收集器</h3><p>G1的主要关注点在于达到可控的停顿时间，在这个基础上尽可能提高吞吐量，G1被设计用来长期取代CMS垃圾收集器，和CMS的相同点在于都属于并发收集器，大部分收集阶段都不需要挂起应用程序。区别在于G1没有CMS的碎片化问题，同时提供更加可控的停顿时间</p>
+<p>G1将整个堆划分为一个个大小相等的小块，每一块的内存是连续的。和分代算法一样，G1中每个块也会充当Eden,Survivor,Old角色，但是他们不是固定的，这使得内存使用更加灵活</p>
+<h4 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h4><ul>
+<li>引入分区概念</li>
+<li>合理利用垃圾收集各个周期的资源，解决了CMS及其他收集器的缺陷</li>
+<li>使用标记-整理算法</li>
+</ul>
+<h4 id="对比CMS"><a href="#对比CMS" class="headerlink" title="对比CMS"></a>对比CMS</h4><ul>
+<li>不再基于标记-清除算法，不会产生内存碎片</li>
+<li>停顿时间可控 G1可以通过设置预期停顿时间来控制垃圾收集时间来避免应用雪崩现象</li>
+<li>并行与并发 G1 能够充分的利用CPU，多核环境下的硬件优势来缩短STW的停顿时间</li>
+</ul>
+<h4 id="垃圾大致收集过程"><a href="#垃圾大致收集过程" class="headerlink" title="垃圾大致收集过程"></a>垃圾大致收集过程</h4><ul>
+<li> 新生代垃圾收集</li>
+<li> 并发收集，和用户线程同时执行</li>
+<li> 混合垃圾收集</li>
+<li> 必要的时候FullGC</li>
+</ul>
+<h5 id="G1的堆结构"><a href="#G1的堆结构" class="headerlink" title="G1的堆结构"></a>G1的堆结构</h5><p>传统的GC收集器将内存空间划分为新生代老年代和永久代(JDK1.8去除了永久代，引入了元空间metaspace)，这种划分的特点是各代的存储地址是连续的，而在G1收集器中则引入了分区的概念，弱化了分代的概念。</p>
+<ol>
+<li>整个堆默认分为2048份均分，每块大小是一致的(1M-32M)</li>
+<li>逻辑上，也会分为Eden,Survivor,Old区，但是各个区的大小是不固定的</li>
+<li>未分配区域可以为任何一个代使用</li>
+</ol>
+<h4 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h4><ul>
+<li>服务器多核CPU,JVM所占内存较大的情况(至少大于4G)</li>
+<li>应用在运行过程中会产生大量内存碎片，需要经常压缩空间</li>
+<li>想要更可控，可预期的GC停顿周期，防止高并发下应用雪崩现象</li>
+</ul>
+<h2 id="内存分配与垃圾回收策略"><a href="#内存分配与垃圾回收策略" class="headerlink" title="内存分配与垃圾回收策略"></a>内存分配与垃圾回收策略</h2><p>TODO </p>
+<h2 id="虚拟机类加载机制"><a href="#虚拟机类加载机制" class="headerlink" title="虚拟机类加载机制"></a>虚拟机类加载机制</h2><p>在了解类加载过程之前，我们其实需要了解一下什么是类加载，Java虚拟机把类的描述数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。Class文件由类加载器加载后，在JVM中形成一份描述Class结构的元信息对象，通过该元信息对象可以知晓Class文件的结构信息：如构造函数，属性和方法等，Java允许用户借由这个Class相关的元信息对象间接调用Class对象的功能，这里就是我们经常能见到的Class类</p>
+<h3 id="类加载的过程"><a href="#类加载的过程" class="headerlink" title="类加载的过程"></a>类加载的过程</h3><p><img src="https://s1.ax1x.com/2020/05/28/tZ0y5D.png"></p>
+<p>从图中我们可以看到类加载的过程分为加载、连接和初始化这么几个过程</p>
+<ul>
+<li><strong>加载</strong> 查找并导入class文件</li>
+<li><strong>连接</strong> 把类的二进制数据合并至jre中<ul>
+<li><strong>验证</strong> 检查载入class文件数据的正确性</li>
+<li><strong>准备</strong> 给类的静态变量分配存储空间</li>
+<li><strong>解析</strong> 将符号引用转成直接引用</li>
+</ul>
+</li>
+<li><strong>初始化</strong> 对类的静态变量，静态代码块执行初始化操作</li>
+</ul>
+<h4 id="类的加载"><a href="#类的加载" class="headerlink" title="类的加载"></a>类的加载</h4><p>加载这一步是指将类的.class文件中的二进制数据读入到内存中，将其放在运行时数据区中的方法区内，然后在堆区创建一个java.lang.Class对象，用来封装类在方法区中的数据结构。类加载的最终产物是位于堆区的Class对象，向开发者提供了访问方法区中数据结构的接口</p>
+<p>加载.class文件的方式有以下几种</p>
+<ul>
+<li><strong>本地系统直接加载</strong></li>
+<li><strong>通过网络下载.class文件</strong></li>
+<li><strong>从zip,jar等归档文件中加载.class文件</strong></li>
+<li><strong>从专有数据库中提取.class文件</strong></li>
+<li><strong>将java文件编译为.class文件</strong></li>
+</ul>
+<p>JVM需要通过以下步骤完成对类的加载</p>
+<ul>
+<li> 通过类的全名获取该类的二进制字节流</li>
+<li> 将这个字节流代表的静态存储结构转化为方法区的运行时数据结构</li>
+<li> 在JVM堆区域生成一个代表这个类的java.lang.Class对象，作为方法区这些数据的访问入口</li>
+</ul>
+<h4 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h4><p>验证主要是为了确保class中的字节流中包含的信息符合当前虚拟机的要求，并且不会危害虚拟机自身的安全。大致会经历以下四个阶段的验证</p>
+<ul>
+<li><strong>文件格式验证</strong>  验证字节流是否符合Class文件格式的规范，并且能被当前版本的虚拟机所处理，该验证的主要目的就是保证输入的字节流能正确的解析并存储与方法区内，只有经过该阶段的验证，字节流才会进入内存中的方法区进行存储</li>
+<li><strong>元数据验证</strong> 对类的元数据信息进行语义校验,保证不存在不符合java语言规范的元数据信息</li>
+<li><strong>字节码验证</strong> 该阶段主要工作是进行数据流和控制流分析，对类的方法进行校验分析，以保证被验证的类的方法在运行时不会做危害虚拟机安全的行为</li>
+<li><strong>符号引用验证</strong> 最后一阶段的验证 发生在虚拟机将符号引用转变为直接引用的时候，主要是对类以外的信息进行匹配性校验(常量池中的各种符号引用)</li>
+</ul>
+<h4 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h4><h4 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h4><h3 id="什么是双亲委派机制？"><a href="#什么是双亲委派机制？" class="headerlink" title="什么是双亲委派机制？"></a>什么是双亲委派机制？</h3><p>双亲委派机制就是说，当类加载器收到类加载请求的时候，该类加载器并不会去加载该类，而是将请求委派给父加载器，如果父加载器上层还有父加载器的话，还会将请求委派给更上层的父加载器，最终会将传送到最顶层的类加载器，只有当父加载器范围内找不到所需的类的时候，会将结果返回给子类加载器，然后由子类加载器尝试自己加载</p>
+<h3 id="为什么要使用双亲委派机制？"><a href="#为什么要使用双亲委派机制？" class="headerlink" title="为什么要使用双亲委派机制？"></a>为什么要使用双亲委派机制？</h3><p>如果不用双亲委派机制的话，有可能出现同一个类被不同的加载器加载多次的情况，如果发生这种情况，那么同一份字节码可能会在内存中出现多份，并且不同由不同类加载器加载的字节码对象又各不相同，从而导致一些意想不到的结果(相同的类通过不同的classLoader加载后生成的实例，通过instanceof发现不是同一个类)，所以为了安全性考虑，防止核心API被随意篡改，这里采用了双亲委派机制，如果一个类已经被父类加载器加载过了，那么就直接返回，子类加载器不做任何事情。</p>
+<h3 id="那么为什么又要破坏双亲委派机制呢？"><a href="#那么为什么又要破坏双亲委派机制呢？" class="headerlink" title="那么为什么又要破坏双亲委派机制呢？"></a>那么为什么又要破坏双亲委派机制呢？</h3><p>因为父类的类加载器范围是有限的，有些情况需要委托子类加载器去加载class文件，比如说java.sql.Driver接口是jdk提供的接口，而实现是需要各个厂商来自行实现的，这个时候根本就没有必要用父类加载器去加载了，因为父类加载器是肯定没有该类的(父类加载器只能加载JAVA_HOME/lib下的jar中的class文件)，所以这个时候就需要委托子类加载器去自行加载厂商的driver实现了，从而破坏了默认的双亲委派机制</p>
+<h3 id="JVM如何判断两个类是否相同？"><a href="#JVM如何判断两个类是否相同？" class="headerlink" title="JVM如何判断两个类是否相同？"></a>JVM如何判断两个类是否相同？</h3><p>前面在双亲委派模型中曾经提到过，当由一个类加载器进行类的加载的时候，首先不由该类加载器进行加载，而是把这个工作交给父加载器，那么这个过程其实就说明了一个问题，当我们需要判断两个类是否是同一个类的时候，实际上需要判断两个内容是否相同</p>
+<ul>
+<li>类全名</li>
+<li>类加载器<br>类全名相同的时候，如果类加载器不同的话，实际上这两个类也会被判定为两个完全不同的类</li>
+</ul>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p>《深入理解Java虚拟机》 第2版</p>
+<p><a target="_blank" rel="noopener" href="https://juejin.im/post/5a810b0e5188257a5c606a85">Java类加载机制</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/u012129558/article/details/81540804">【JVM】浅谈双亲委派和破坏双亲委派</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://kyo7701.github.io/blog/2020/04/30/about-jvm/" title="聊聊JVM" target="_blank" rel="external">https://kyo7701.github.io/blog/2020/04/30/about-jvm/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/blog/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">mr_cris</span><small class="ml-1x">Backend Developer</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/blog/2020/05/07/about-knowledge-tree/" title="知识树的建立"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;Newer</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/blog/2020/04/23/about-spring/" title="聊聊Spring框架"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>$</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>Maybe you could buy me a cup of coffee.</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/alipayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open alipay app scan this qrcode, buy me a coffee!</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/wechatpayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open wechat app scan this qrcode, buy me a coffee!</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> alipay</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> wechat payment</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/cofess" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/blog/js/plugin.min.js"></script>
+
+
+<script src="/blog/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/blog/',
+        CONTENT_URL: '/blog/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/blog/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+
+
+
+
+
+
+</body>
+</html>
