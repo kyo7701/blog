@@ -50,9 +50,9 @@
 
   
   
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitment@0.0.3/style/default.min.css">
   
   
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
   
 <meta name="generator" content="Hexo 5.4.0"></head>
 
@@ -500,7 +500,7 @@
     
   <section id="comments">
   	
-           
+
     
   </section>
 
@@ -655,23 +655,24 @@ window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
 
    
     
-  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
-  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
-  <script type="text/javascript">
-  var gitalk = new Gitalk({
-    clientID: 'd7ac612bb7b78584fa57',
-    clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
-    repo: 'blog-comment',
-    owner: 'kyo7701',
-    admin: ['kyo7701'],
-    id: md5(location.pathname),
-    distractionFreeMode: true
-  })
-  gitalk.render('comments')
-  </script>
+<script src="//cdn.jsdelivr.net/npm/gitment@0.0.3/dist/gitment.browser.min.js"></script>
+<script>
+var gitment = new Gitment({
+  // id默认为当前页面url，如果url后带参数或锚点，gitment要重新初始化
+  // https://github.com/imsun/gitment/issues/55
+  // 解决方案：id:window.location.pathname,或者将id设置为当前页面标题
+  id: '谈谈如何保障redis的高可用?', 
+  owner: 'kyo7701', // 可以是你的GitHub用户名，也可以是github id
+  repo: 'https://github.com/kyo7701/blog-comment',
+  oauth: {
+    client_id: 'd7ac612bb7b78584fa57',
+    client_secret: 'cefbf74bc07662d9b3ab86ef5600203a143cea41',
+  }
+})
+gitment.render('comments')
+</script>
 
-      
+
 
 
 
