@@ -22,22 +22,22 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="谈谈redis中的持久化机制">
 <meta property="og:url" content="https://kyo7701.github.io/blog/2020/04/20/about-redis-durability/index.html">
-<meta property="og:site_name" content="Hexo">
+<meta property="og:site_name" content="cris&#39;s blog">
 <meta property="og:description" content="为什么要进行持久化为了避免数据丢失  redis作为一个键值对的内存数据库，数据全存储在内存当中，当遇到进程退出或者服务器重启宕机的情况，内存中的数据就会消失，那这样存在redis中的数据就全丢了，如果业务场景仅仅是缓存，数据丢失影响或许不大，重新去数据库加载下再次写入redis就行了，但是如果把业务数据存储在redis中，拿redis当数据库使用的话，数据的丢失可能是毁灭性的打击，所以为了避免数">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://images2018.cnblogs.com/blog/1174710/201806/1174710-20180628011547892-692403928.png">
 <meta property="article:published_time" content="2020-04-20T04:07:33.000Z">
 <meta property="article:modified_time" content="2020-04-23T07:41:46.000Z">
-<meta property="article:author" content="John Doe">
+<meta property="article:author" content="mr_cris">
 <meta property="article:tag" content="redis">
-<meta property="article:tag" content="中间件">
 <meta property="article:tag" content="持久化机制">
+<meta property="article:tag" content="中间件">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://images2018.cnblogs.com/blog/1174710/201806/1174710-20180628011547892-692403928.png">
   <!-- Canonical links -->
   <link rel="canonical" href="https://kyo7701.github.io/blog/2020/04/20/about-redis-durability/index.html">
   
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+    <link rel="alternate" href="/atom.xml" title="cris&#39;s blog" type="application/atom+xml">
   
   
     <link rel="icon" href="/favicon.png" type="image/x-icon">
