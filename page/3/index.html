@@ -249,6 +249,1098 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/17/how-to-guarantee-message-sending-reliably-with-rabbitmq/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/04/17/how-to-guarantee-message-sending-reliably-with-rabbitmq/" itemprop="url">谈谈rabbitmq中如何保证消息的可靠传输</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-17T21:56:46+08:00">
+                2020-04-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/rabbitmq/" itemprop="url" rel="index">
+                    <span itemprop="name">rabbitmq</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>我们经常会在项目里面有用到消息队列的场景，比如贷款场景，用户之前在我们这里借了一笔钱，今天把钱还清了，假设这个时候需要发送一个含有推广链接的短信，或者这个用户还钱的时候正好触发了某个规则，可以对这个用户进行额度提升的操作，都可以用消息队列来处理，那么问题来了，</p>
+<ol>
+<li>消息是如何投递的？</li>
+<li>消息是否成功的投递到了消息队列中？</li>
+<li>消息投递过程中是否会有丢失的问题？消息是否被正确消费了呢？<br>带着上述的几个问题并以rabbitmq为例开始我们今天的主题</li>
+</ol>
+<h1 id="消息可靠性"><a href="#消息可靠性" class="headerlink" title="消息可靠性"></a>消息可靠性</h1><p>在计算机网络中，一个可靠的通讯协议可以通知发送者它发送的数据是否成功到达消息接收方，那么在rabbitmq中消息是怎样投递的呢？</p>
+<h1 id="rabbitmq-消息投递过程"><a href="#rabbitmq-消息投递过程" class="headerlink" title="rabbitmq 消息投递过程"></a>rabbitmq 消息投递过程</h1><ul>
+<li>生产者生产消息</li>
+<li>生产者建立与broker的连接</li>
+<li>生产者发送消息到broker</li>
+<li>broker收到消息，并通过消息中的exchange，routing-key将其路由到指定队列</li>
+<li>consumer监听到指定队列的消息并消费</li>
+</ul>
+<p>那么这里我们可以提出几个问题</p>
+<h2 id="生产者是否成功地将消息投递到broker"><a href="#生产者是否成功地将消息投递到broker" class="headerlink" title="生产者是否成功地将消息投递到broker?"></a>生产者是否成功地将消息投递到broker?</h2><p>在默认情况下，rabbitmq 生产者发送完消息后，是不会给rabbitmq返回任何结果的，那很有可能消息发送到一半因为网络或其他原因，消息没有到达broker，消息直接丢失，这种情况是我们无法忍受的，当然rabbitmq也提供了两种方式解决这种问题，供我们自行选择。</p>
+<ul>
+<li>事务消息模式</li>
+<li>发送方确认模式</li>
+</ul>
+<h2 id="生产者的消息到达broker后，在broker中是否会丢失？"><a href="#生产者的消息到达broker后，在broker中是否会丢失？" class="headerlink" title="生产者的消息到达broker后，在broker中是否会丢失？"></a>生产者的消息到达broker后，在broker中是否会丢失？</h2><p>消息到达broker后，很有可能因为一些原因导致broker重启或者退出，因为rabbitmq的消息默认都是在内存里面的，发生重启会导致消息丢失，这也是我们无法忍受的，这里用到了rabbitmq中的持久化机制，需要我们同时保证3个条件，才能保证消息的持久化</p>
+<ul>
+<li>消息投递时开启了持久化</li>
+<li>目标交换机开启了持久化</li>
+<li>目标队列开启了持久化</li>
+</ul>
+<ul>
+<li>消息是否被消费者成功消费呢？</li>
+</ul>
+<p>正常来讲如果消息投递成功了，并且在broker开启了持久化是不是就能保证消息可靠传输了呢？答案是否定的，消费者消费也可能出现问题，比如消费失败，或者消息压根就没有到达消费者(丢了)，这个时候又该如何处理呢？RabbitMQ这里提供了一个消费确认的机制，这种机制分为手动确认和自动确认</p>
+<ul>
+<li>manual ack 需要业务方根据消费情况手动确认消息消费情况</li>
+<li>auto ack 消息一经broker发出，就认为已经投递成功了</li>
+</ul>
+<p>很显然 autoack这种是有消息丢失风险的，我们很难保证业务方正确消费的情况，所以一般来说我们想要保证消费的可靠性需要开启手动ack模式，确保业务方正确消费后，再进行确认，下面就说一下手动确认在标准AMQP协议中定义的手动ack的接口方法</p>
+<ul>
+<li><p>basic.ack 如果业务方正确消费了消息，那么业务方需要给broker发送一个ack消息，代表消息已经正确处理, broker可以将这条消息删除了</p>
+</li>
+<li><p>basic.reject 如果业务方发生了异常或者因为某些原因导致无法消费消息，可以给broker发送拒绝消息，让这条消息重新入队，以便让别的消费者可以消费这条消息   对应标准AMQP0.9.1.1协议中的 basic.reject方法</p>
+</li>
+<li><p>basic.nack  在basic.reject的基础上提供批量拒绝消息的方法</p>
+</li>
+</ul>
+<h2 id="当消息消费失败时候怎么处理？"><a href="#当消息消费失败时候怎么处理？" class="headerlink" title="当消息消费失败时候怎么处理？"></a>当消息消费失败时候怎么处理？</h2><p>在原有队列进行几次重试操作,排除网络抖动原因后，将失败消息从原有队列上删除，并加入一个专门处理异常的重试队列以重试的方式进行补偿，必要的时候进行人工处理(若是消息发送方因为某些原因导致数据回滚了，当前消息一定会处理失败，所以需要将对应的消息进行删除，若是因为下游服务不可用导致的，则需要跟业务方进行沟通，如果是业务代码发生了bug，修代码吧兄弟，总之及时看生产的监控消息)</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.rabbitmq.com/confirms.html" target="_blank" rel="noopener">rabbitmq官网#Consumer Acknowledgements and Publisher Confirms</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/16/how-to-guarantee-redis-high-availability/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/04/16/how-to-guarantee-redis-high-availability/" itemprop="url">谈谈如何保障redis的高可用?</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-16T20:02:54+08:00">
+                2020-04-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/redis/" itemprop="url" rel="index">
+                    <span itemprop="name">redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>
+我们都知道，系统中每引入一个新的中间件，都会造成可用性的降低，举个例子，本来我只需要保障应用本身高可用即可，现在又引入了中间件A，如果它宕机了怎么办？所以，伴随着这个话题，我们今天就来聊聊如果保证redis的高可用
+
+</p>
+
+<h1 id="高可用方案"><a href="#高可用方案" class="headerlink" title="高可用方案"></a>高可用方案</h1><p>为什么要用保证redis的高可用？redis单点会带来哪些问题呢？</p>
+<ul>
+<li>单点故障问题<br>如果目前只有一台redis服务器在运行，发生机器故障，服务直接不可用，如果故障比较严重，磁盘损坏了，数据就损坏了，单台机器时没有办法保证数据的安全性的</li>
+<li>容量瓶颈<br>redis是内存存储的，单机很容易受到内存容量的限制</li>
+</ul>
+<h2 id="主从复制模式"><a href="#主从复制模式" class="headerlink" title="主从复制模式"></a>主从复制模式</h2><p>主从复制，顾名思义，分为主节点和从节点，主节点负责写，从节点负责扩展主节点的读能力，并且可以将主节点的数据同步给从节点，一旦发现主节点发生故障，从节点可以随时顶上来</p>
+<p><strong>主从复制模式面临的问题</strong></p>
+<ul>
+<li>并没有解决单点的写压力</li>
+<li>主节点发生故障的时候，需要手动将从节点晋升为主节点，同时需要通知应用放更改主节点地址并重启，并且需要命令其他从节点复制新的主节点，整个过程需要人工干预</li>
+<li>主节点的存储能力受到单机的限制</li>
+</ul>
+<p>redis 主从复制和sentinel架构示意图如下<br><img src="https://s1.ax1x.com/2020/04/07/GgEFqx.png" alt></p>
+<h2 id="redis-sentinel-哨兵模式"><a href="#redis-sentinel-哨兵模式" class="headerlink" title="redis sentinel 哨兵模式"></a>redis sentinel 哨兵模式</h2><p>哨兵模式实际上就是在主从复制的基础上，加上了一层监控的哨兵节点。Redis-sentinel也是官方提供的高可用方案，哨兵模式是在2.6以后开始提供的，如果需要在生产上使用，尽量使用2.8之后的版本，比较稳定。哨兵模式下在主节点发生故障时，可以实现自动的主备切换，并且可以监控多个主从集群，哨兵节点本身也支持集群，毕竟哨兵只有单个节点也无法支持哨兵节点的高可用，并且如果唯一的哨兵如果宕机了，哨兵模式又变回主从复制模式了，又将无法自动的进行主备切换了。<br>客户端连接的是哨兵节点，只要连接任意一个哨兵节点，就可以获得redis主从集群中的信息。</p>
+<p><img src="https://s1.ax1x.com/2020/04/16/JEEvHs.png" alt><br>图片引用自<a href="https://juejin.im/post/5d76f54b6fb9a06aeb10e53c#heading-8" target="_blank" rel="noopener">Redis哨兵（Sentinel）模式快速入门</a></p>
+<h3 id="哨兵节点的作用"><a href="#哨兵节点的作用" class="headerlink" title="哨兵节点的作用"></a>哨兵节点的作用</h3><h4 id="监控"><a href="#监控" class="headerlink" title="监控"></a><strong>监控</strong></h4><p>sentinel 会不间断的检查主服务器和从服务器是否正常运行</p>
+<h4 id="通知"><a href="#通知" class="headerlink" title="通知"></a><strong>通知</strong></h4><p>当被监控的某个redis服务器如果出现问题，sentinel通过api脚本向管理员或者其他应用程序发送通知</p>
+<h4 id="自动故障迁移"><a href="#自动故障迁移" class="headerlink" title="自动故障迁移"></a><strong>自动故障迁移</strong></h4><p>当主节点不能正常工作时，sentinel会开始一次自动的故障迁移，它将会与失效主节点是主从关系的其中一个主节点的其中一个从节点升级为新的主节点，并且将其他的从节点指向新的主节点。</p>
+<h4 id="配置提供者"><a href="#配置提供者" class="headerlink" title="配置提供者"></a><strong>配置提供者</strong></h4><p>在redis sentinel模式下，客户端在初始化连接的是sentinel的集合，从中获取主节点的信息。</p>
+<h3 id="主观下线-SDOWN"><a href="#主观下线-SDOWN" class="headerlink" title="主观下线(SDOWN)"></a>主观下线(SDOWN)</h3><p>主观下线其实是指单个sentinel实例对节点做出的下线判断，默认情况下，每个sentinel会以每秒一次的频率对redis节点和其他sentinel节点发送PING命令，并通过节点的回复来判断是否在线。</p>
+<p>主观下线适用于所有主节点和从节点。如果在down-after-milliseconds毫秒内，sentinel没有收到目标节点的有效回复(+PONG,-LOADING,-MASTERDOWN)，则会判定为该节点为主观下线</p>
+<h3 id="客观下线-ODOWN"><a href="#客观下线-ODOWN" class="headerlink" title="客观下线(ODOWN)"></a>客观下线(ODOWN)</h3><p>客观下线是指多个sentinel实例对同一个实例进行主观下线判断。</p>
+<p>客观下线只适用于主节点，如果哨兵节点发现主节点主观下线后，会通过is-master-down-by-addr命令向其他sentinel节点询问该节点的状态，若果超过<quorum>个数的节点认为主节点不可达(主节点已经主观下线)，则sentinel节点会判定主节点为客观下线，只有发现主节点客观下线后，才会开启自动的故障迁移</quorum></p>
+<h3 id="自动故障迁移-automatic-failover-过程"><a href="#自动故障迁移-automatic-failover-过程" class="headerlink" title="自动故障迁移(automatic-failover)过程"></a>自动故障迁移(automatic-failover)过程</h3><ol>
+<li>sentinel发现主节点主观下线，修改其状态为SDOWN</li>
+<li>sentinel和其他sentinel节点确认master是否down掉(SENTINEL is-master-down-by-addr)，确认其状态为客观下线(ODOWN),</li>
+<li>sentinel间进行leader选举，由被选出的leader sentinel节点来进行后续的故障切换工作，选举基于Raft协议</li>
+<li>sentinel节点开始进行故障切换，并选出合适的从节点作为主节点</li>
+<li>对选出的从节点执行 slaveof no one将其晋升为新的主节点</li>
+<li>对其余的从节点发送命令，使其变为新的主节点的从节点，并且从新的主节点复制数据</li>
+<li>leader sentinel继续监控已下线主节点，一旦其重新上线，就把他降级为新的主节点的从节点，并且从新的主节点中复制数据</li>
+</ol>
+<h3 id="leader哨兵节点选举"><a href="#leader哨兵节点选举" class="headerlink" title="leader哨兵节点选举"></a>leader哨兵节点选举</h3><ol>
+<li><p>某个sentinel发现master节点主观下线后，执行以下操作</p>
+<ul>
+<li>如果该哨兵节点没有投过票，它就成为candidate</li>
+<li>如果该哨兵节点已经投过票，则在2倍的故障时间内就不会成为leader，也就是相当于一个follower</li>
+</ul>
+</li>
+<li><p>sentinel节点成为candidate后执行以下操作</p>
+<ul>
+<li>更新故障转移状态为start</li>
+<li>令当前epoch + 1,即发起新一轮的选举,在sentinel中epoch相当于Raft协议中的term</li>
+<li>向其他节点发送SENTINEL is-master-down-by-addr指令，该命令包含自己的epoch</li>
+<li>投自己一票，投票的方式是将自己master结构中的leader和leader_epoch改成投给的sentinel和它的epoch</li>
+</ul>
+</li>
+<li><p>其他节点收到Candidate的SENTINEL is-master-down-by-addr命令，如果收到命令的sentinel判断发现当前epoch和通过命令收到的epoch一样，证明它已经投过票了，当前epoch内该sentinel就只能成为follower</p>
+</li>
+<li><p>candidate会不断统计自己的票数，直到他发现认同他成为leader超过一半且超过它配置的quorum，则该candidate成为leader哨兵节点</p>
+</li>
+<li><p>在一个选举时间内，如果一个candidate没有获得超过一半的票数且超过quorum,则该次选举失败</p>
+</li>
+<li><p>如果在一个epoch内，没有一个candidate获得更多的票数，则2倍故障转移的时间后，candidate增加epoch并重新投票</p>
+</li>
+</ol>
+<h3 id="master节点选举"><a href="#master节点选举" class="headerlink" title="master节点选举"></a>master节点选举</h3><p>从已经宕机的主节点的从节点中挑选一个节点作为主节点，这个主节点是按照以下规则选出来的</p>
+<ul>
+<li>slave优先级(手动配置的) 如果有配置最高的slave节点，则返回，没有则继续</li>
+<li>复制偏移量最大的(对主节点数据复制的最完整的从节点)，如果有则返回，没有则继续</li>
+<li>启动最早的slave节点(run_id最小)</li>
+</ul>
+<h2 id="redis-cluster"><a href="#redis-cluster" class="headerlink" title="redis cluster"></a>redis cluster</h2><p>来聊redis cluster之前先来聊聊几个问题 </p>
+<h3 id="水平扩展性"><a href="#水平扩展性" class="headerlink" title="水平扩展性"></a>水平扩展性</h3><p>水平扩展性或者说给系统中添加节点的能力，对于redis来说特别重要，redis只能进行垂直扩展(给予redis进程更多的CPU或者内存)，不过垂直扩展的特点也很明显，很快就会变得非常昂贵并且变得无法管理。</p>
+<p>我们只能通过把redis中的数据进行分区，将不同分区的数据存储到不同的redis实例中，很多公司针对redis已经实现了自己的分区方案，不过大部分方案都是在客户端进行分区，也就是，数据在哪个节点进行读写是客户端来决定的，这个方法的缺点也很明显，所有的客户端都要实现这个相同的分区策略，并且连接到同一个redis实例的不同的redis客户端将会紧紧的耦合在一起。</p>
+<p>另一种分区策略对客户端进行了解耦，就是用代理进行协助分区，Twitter就采用了这种分区策略，在这种方式下，<br>proxy就像一个在客户端和redis实例之间的一个单独的节点负责处理数据分区，虽然这种方式给客户端解耦，但是又引入了proxy单点故障的问题，又需要考虑proxy的高可用问题，还有一个问题就是如果将来需要添加或者删除节点的时候，又会带来数据的重新分区，如果只是用redis做缓存的话，这个问题没什么大不了的，但是如果用来做数据存储，只是改变分区策略可能会引起数据的“丢失”(原来的key值可能会被分区到别的redis实例上面去了)，并且这个新的redis实例上还没有数据，调整了分区策略后必须要进行数据迁移</p>
+<h3 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h3><p>当在一个大型企业级应用中依赖一个数据库的时候，是不允许数据库有停机时间的，现代的数据库必须要尽可能地有容灾和容错能力，并且不需要人为干预。尽管redis实例很少发生宕机，但是也有一些异常情况会导致redis实例不可用，由于没有好的redis高可用方案，一些公司开始自行研发自己的redis高可用方案，但是大部分用户都没有高可用方案，并且一些stackoverflow上面的问答都太专业化了，普通用户根本就被抛弃了，于是redis团队立刻研发了一套高可用方案redis sentinel,这是一个官方的高可用方案，但是引入了额外的复杂度，并且这种方案并不提供主节点的水平扩展，在redis实例外还需要3台额外的机器(存放哨兵节点)。</p>
+<p>为了解决上述问题，redis 3.0.0发布了redis cluster ，redis cluster是一个多主多从并且去中心的架构，redis cluster简而言之就是一个数据分片策略，它可以在集群运行的时候将数据重新分片到其他节点上面，并且提供了故障切换的方法可以确保系统可以应对各种各样的故障。redis cluster使用hash分区将key分配到16,384个hash槽内，集群的每一个主节点负责一部分hash槽，集群中的每一个从节点负责复制指定主节点的数据，并且可以重新分配给别的主节点或者是被选举为新的主节点，主节点接收来自客户端的读和写请求，从节点不与客户端做任何交互，只做主节点的数据备份。</p>
+<p><img src="https://img-blog.csdn.net/20180902175117548?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xvdmU5MDU2NjE0MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt><br>图片引用自<a href="https://blog.csdn.net/love905661433/article/details/82317635" target="_blank" rel="noopener">Redis Cluster集群使用与原理</a></p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://juejin.im/post/5d76f54b6fb9a06aeb10e53c#heading-8" target="_blank" rel="noopener">Redis哨兵（Sentinel）模式快速入门</a><br><a href="https://juejin.im/post/5e47cbe451882549522ab508#heading-17" target="_blank" rel="noopener">Redis 知识汇总</a><br><a href="https://www.credera.com/blog/technology-insights/open-source-technology-insights/an-introduction-to-redis-cluster/" target="_blank" rel="noopener">An Introduction to Redis Cluster</a></p>
+<p>关于Raft协议，<a href="http://thesecretlivesofdata.com/raft/" target="_blank" rel="noopener">这个网站</a>上面有动画演示，非常容易理解，可以去了解下</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/16/about-redis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/04/16/about-redis/" itemprop="url">聊聊中间件之redis</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-16T11:28:01+08:00">
+                2020-04-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/redis/" itemprop="url" rel="index">
+                    <span itemprop="name">redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>
+不知不觉4月份已经过去大半了，转眼间自己已经失业半个月了，感觉还有好多东西没有复习，不管怎么样，不能让自己闲下来,今天就来整理一下redis相关的内容
+</p>
+
+<h1 id="about-redis"><a href="#about-redis" class="headerlink" title="about redis"></a>about redis</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Redis是一个使用ANSI C编写的开源、支持网络、基于内存、可选持久性的键值对存储数据库。  --- wikipedia</span><br></pre></td></tr></table></figure>
+
+<p>redis是一款基于内存的数据库，即NOSQL,采用单线程模型，能支持10W的并发<br>常用的数据结构 String List Set ZSet Hash<br>持久化方式:RDB(快照)，AOF（日志追加）</p>
+<h1 id="redis为什么高性能？"><a href="#redis为什么高性能？" class="headerlink" title="redis为什么高性能？"></a>redis为什么高性能？</h1><ul>
+<li>单线程模型避免线程上下文切换问题</li>
+<li>纯内存操作</li>
+<li>核心基于非阻塞的IO多路复用</li>
+</ul>
+<h1 id="redis中的数据结构"><a href="#redis中的数据结构" class="headerlink" title="redis中的数据结构"></a>redis中的数据结构</h1><h2 id="string字符串-Simple-Dynamic-String-动态字符串"><a href="#string字符串-Simple-Dynamic-String-动态字符串" class="headerlink" title="string字符串 Simple Dynamic String(动态字符串)"></a>string字符串 Simple Dynamic String(动态字符串)</h2><p>String是redis里面最简单的key-value类型了，它的value不仅可以是String还可以是数字，它也是Memcached中的唯一的数据类型，redis String底层使用SDS(Simple Dynamic String)实现,常见的用法就是缓存、计数等功能，常用指令 set get decr(-1) incr(+1) mget(获取一个或多个给定key的值)</p>
+<h2 id="list-列表"><a href="#list-列表" class="headerlink" title="list 列表"></a>list 列表</h2><p>list就是列表，在redis底层是用链表实现的，通过列表可以轻松实现最新消息列表等与插入序有关的业务。<br>常用指令 lpush(链表头插入一个元素),lpop(链表头删除一个元素),rpush,rpop,lrange(获取指定范围内的元素)</p>
+<h2 id="set-集合"><a href="#set-集合" class="headerlink" title="set 集合"></a>set 集合</h2><p>set就是一个集合，一堆不重复值得集合，利用redis提供的set可以存储一些集合性的数据，比如微博中一个人关注的人，粉丝等等，redis还对set提供了一系列的函数可以实现对集合的并、交、差，这就可以非常方便的实现共同好友、共同关注、二度好友等功能</p>
+<p>常用指令 sadd(向一个集合中添加一个或多个元素) spop(移除一个随机元素) srem(移除一个或多个指定元素) smembers(获取集合所有成员) sunion(求并集)</p>
+<h2 id="zset有序集合-内部实现为skip-list跳跃表"><a href="#zset有序集合-内部实现为skip-list跳跃表" class="headerlink" title="zset有序集合 内部实现为skip list跳跃表"></a>zset有序集合 内部实现为skip list跳跃表</h2><p>zset(又称sorted set),有序集合，比set增加了一个score(权重)的概念，使得集合中的元素可以按照score进行排序，这一特性特别适合做排行榜</p>
+<h2 id="hash-字典"><a href="#hash-字典" class="headerlink" title="hash 字典"></a>hash 字典</h2><p>hash几乎可以等价于java中的hashmap,底层采用数组+链表的结构，常用于存储对象(因为)<br>常用指令 hget,hset,hgetall</p>
+<h1 id="redis常见的使用场景"><a href="#redis常见的使用场景" class="headerlink" title="redis常见的使用场景"></a>redis常见的使用场景</h1><ul>
+<li>缓存</li>
+<li>单线程模型可做分布式锁</li>
+<li>排行榜 有序集合可以实现</li>
+<li>计数器 商品浏览量 视频播放数 redis 提供的incr 内存操作 性能非常好</li>
+<li>分布式会话</li>
+<li>社交网络 共同关注/共同好友 redis提供的hash和集合(交并差)</li>
+</ul>
+<h1 id="redis中的内存淘汰策略"><a href="#redis中的内存淘汰策略" class="headerlink" title="redis中的内存淘汰策略"></a>redis中的内存淘汰策略</h1><p>redis中数据的存取是纯内存操作的，内存是很昂贵的资源，而redis在64位操作系统时是不做内存容量限制的，那么当数据量很大的时候，可想而知，如果不对redis中的数据进行淘汰，很有可能导致操作系统因为内存耗尽而进入假死状态，一般而言 我们会用两种机制(过期策略+内存淘汰机制)配合从而对一些不需要的数据进行删除用来节约空间。</p>
+<h2 id="过期策略"><a href="#过期策略" class="headerlink" title="过期策略"></a>过期策略</h2><p>通常情况下，我们设置一个key的时候，可以对这个key的过期时间进行设置，当key过期后，redis通过</p>
+<h3 id="定时删除"><a href="#定时删除" class="headerlink" title="定时删除"></a>定时删除</h3><p>定时删除是指每隔一段时间，随机抽取一些设置了过期时间的key，检测是否过期，过期了就将其删掉</p>
+<p>key可能很多，扫描所有的key值可能会很消耗性能，这样的话有一些key可能会删不掉，这时候就需要惰性删除的配合进行删除。</p>
+<h3 id="惰性删除"><a href="#惰性删除" class="headerlink" title="惰性删除"></a>惰性删除</h3><p>当redis中的key过期后，redis并不会主动去删除它，而是等到客户端访问某个key的时候，判断key是否过期，如果没过期则直接返回，如果过期，redis会将这个key删除并且不会返回给客户端，这样的话可以解决一些已经过期了，但没有被定期删除扫到的key，但是又引入了另一个问题，已经过期的key并且永远不会访问到，这样既不会被定时删除所处理，也不会被惰性删除所处理，这时就要引入内存淘汰的机制了</p>
+<h3 id="内存淘汰机制"><a href="#内存淘汰机制" class="headerlink" title="内存淘汰机制"></a>内存淘汰机制</h3><p>redis在使用内存超过某个阈值(通过配置文件进行配置 maxmemory)的时候，会触发内存淘汰机制，选取一些key进行删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">maxmemory</span><br><span class="line">maxmemory-policy</span><br></pre></td></tr></table></figure>
+
+<p>配置文件这里的maxmemory-policy 就是可以配置的策略，其中可配置的策略有以下几种</p>
+<ul>
+<li>noeviction 默认策略 不淘汰，内存不足时候，新的写入会报错</li>
+<li>allkeys-lru 当内存不足的时候，在所有的键空间中移除最近最少使用的key</li>
+<li>allkeys-random 在所有键中，随机移除key</li>
+<li>volatile-lru 在设置了过期时间的键空间中，找最近最少使用的key进行删除</li>
+<li>volatile-random 在设置了过期时间的键空间中，随机移除key</li>
+<li>volatile-ttl 在设置了过期时间的键空间中，有更早过期时间的key将会被删除</li>
+</ul>
+<p>一般来说 如果只是用来缓存数据的话，用allkeys-lru就可以了，如果既需要缓存又要保证数据安全性进行持久化的话，出于性能考虑推荐用volatile-lru</p>
+<h1 id="redis-分布式锁"><a href="#redis-分布式锁" class="headerlink" title="redis 分布式锁"></a>redis 分布式锁</h1><h2 id="单节点分布式锁"><a href="#单节点分布式锁" class="headerlink" title="单节点分布式锁"></a>单节点分布式锁</h2><p>单节点的分布式锁(只有一个master节点)往往是不可靠的，虽然实现起来很简单，但是如果主节点宕机或者没有来得及同步数据，给从节点导致从节点选举为master时候锁丢失，这种方案很明显是不可靠的</p>
+<h3 id="setnx-del"><a href="#setnx-del" class="headerlink" title="setnx + del"></a>setnx + del</h3><p>执行业务前通过 setnx 获取锁，执行完业务删除锁，表面上看起来没什么问题，但是如果业务的执行出现了异常，再或者服务宕机没有来得及删除该锁，导致这个业务再次执行的时候再也获取不到这个锁,从而导致死锁，这样是行不通的</p>
+<h3 id="setnx-expire"><a href="#setnx-expire" class="headerlink" title="setnx + expire"></a>setnx + expire</h3><p>业务先通过set nx获取锁，然后再通过expire命令为锁设置过期时间，这种情况实际上跟先加锁后删除的效果是一样的，如果业务执行出现了异常，expire没有被执行，业务还是无法获取这个锁，出现这样的问题的根本原因实际上就是因为 setnx + del || expire是两条指令，并非一个原子性操作，两个指令如果能同时执行就可以避免这样的问题 </p>
+<h3 id="lua脚本-setnx-expire"><a href="#lua脚本-setnx-expire" class="headerlink" title="lua脚本 setnx + expire"></a>lua脚本 setnx + expire</h3><p>setnx + expire 本身不是原子性的，但是redis提供了单线程模型执行lua脚本，保证脚本在运行过程中不会被任意其他请求打断，通过lua脚本执行相同的命令即可保证这两条命令的原子性</p>
+<h3 id="set-nx-ex"><a href="#set-nx-ex" class="headerlink" title="set nx  ex"></a>set nx  ex</h3><p>redis 2.6.12开始，set命令开始支持EX、NX、PX、XX等选项，可以完全替代setnx等操作，而且还是原子性的，可以执行通过set实现单节点的分布式锁。</p>
+<h2 id="多节点redis分布式锁"><a href="#多节点redis分布式锁" class="headerlink" title="多节点redis分布式锁"></a>多节点redis分布式锁</h2><h3 id="RedLock-真正意义上的分布式锁"><a href="#RedLock-真正意义上的分布式锁" class="headerlink" title="RedLock(真正意义上的分布式锁)"></a>RedLock(真正意义上的分布式锁)</h3><p>假设当前有5个独立的redis master节点</p>
+<ul>
+<li>获取当前unix时间戳 以毫秒为单位</li>
+<li>依次从5个实例尝试，使用相同的key和value获取锁，客户端在请求锁的时候，应该设置一个超时时间，防止在请求锁的时候避免由于服务端已经挂掉的时候，客户端还在死等响应结果。如果服务端没有在规定的超时时间内响应，客户端应该尽快从另外一个redis实例中获取锁</li>
+<li>客户端使用当前时间减去开始获取锁的时间，就得到锁的使用时间，并且当且仅当从大多数redis节点都获取到锁的时候，并且锁使用的时间小于锁失败时间时，锁才获取成功</li>
+<li>如果获取到了锁，锁的真正有效时间等于有效时间减去第三步获取锁所使用的时间</li>
+<li>如果获取锁失败，客户端应该在所有的redis实例上进行解锁，防止某些节点获取到锁，但是客户端没有得到响应，从而导致接下来的一端时间里客户端不能重新获取锁</li>
+</ul>
+<p>但是这种分布式锁真的可靠吗？ 业务时间超过了分布式锁的可用时间，这个锁还有意义吗？</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/14/db-lock/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/04/14/db-lock/" itemprop="url">谈谈mysql中的锁</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-14T14:25:07+08:00">
+                2020-04-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天又来写博客了，没错今天又被面试官锤了，这次被锤的问题是关于mysql中关于锁的问题，特此整理下有关锁的问题，避免今后对这种问题再次犯同样的错误(꒦_꒦) </p>
+<h1 id="什么是锁？为什么要加锁"><a href="#什么是锁？为什么要加锁" class="headerlink" title="什么是锁？为什么要加锁"></a>什么是锁？为什么要加锁</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">锁是计算机协调多个进程或纯线程并发访问某一资源的机制。在数据库中，除传统的计算资源(CPU,RAM,I/O)  </span><br><span class="line">的争用外,数据也是一种供许多用户共享的资源。如果保证数据并发访问的一致性、有效性是所有数据库必须解决  </span><br><span class="line">的一个问题，锁冲突也是影响数据库并发访问性能的一个因素，  </span><br><span class="line">从这个角度来看，锁对数据库而言显得尤为重要，也更加复杂。</span><br><span class="line">锁机制用于管理对共享资源的并发访问</span><br></pre></td></tr></table></figure>
+
+<h1 id="锁分类"><a href="#锁分类" class="headerlink" title="锁分类"></a>锁分类</h1><p><img src="https://image-static.segmentfault.com/393/973/393973056-5ac1c82c4bc61_articlex" alt><br>图片引用自参考文章<a href="https://segmentfault.com/a/1190000014133576" target="_blank" rel="noopener">MySQL InnoDB锁机制全面解析分享</a></p>
+<h2 id="按照加锁机制进行分类"><a href="#按照加锁机制进行分类" class="headerlink" title="按照加锁机制进行分类"></a>按照加锁机制进行分类</h2><ul>
+<li><strong>乐观锁</strong>  乐观锁乐观地假定大概率不会发生更新冲突，访问、处理数据的时候不加锁，只在更新数据的时候查看版本号是否有冲突，有则处理、无则提交事务</li>
+<li><strong>悲观锁</strong>  悲观锁悲观地假定大概率会发生更新冲突，访问或者处理数据前加排他锁，在整个数据处理过程中锁定数据，事务提交或者回滚后才释放锁</li>
+</ul>
+<h2 id="按照兼容性进行分类"><a href="#按照兼容性进行分类" class="headerlink" title="按照兼容性进行分类"></a>按照兼容性进行分类</h2><ul>
+<li><strong>共享锁</strong> 也就是读锁，读操作之间互相不冲突，但是读操作跟写操作互相冲突，也就是会阻塞写请求</li>
+<li><strong>排他锁</strong> 也就是写锁, 写操作之间互相冲突，写操作跟读操作互相冲突</li>
+</ul>
+<h2 id="按照锁的粒度进行分类"><a href="#按照锁的粒度进行分类" class="headerlink" title="按照锁的粒度进行分类"></a>按照锁的粒度进行分类</h2><ul>
+<li><strong>表级锁</strong> mysql中锁定粒度最大的一种锁，对整张表进行加锁，实现简单，资源消耗较少，加锁快，不会出现死锁。由于锁定粒度最大，触发锁冲突的概率最高，并发度最低，myisam和innodb引擎都支持表级锁</li>
+<li><strong>页级锁</strong> 开销和加锁时间介于表锁和行锁之间，会出现死锁，并发程度一般</li>
+<li><strong>行级锁</strong> 开销大，加锁慢，会出现死锁，锁定粒度最小，发生锁冲突的概率最低，并发程度也最高</li>
+</ul>
+<h2 id="按照锁模式进行分类"><a href="#按照锁模式进行分类" class="headerlink" title="按照锁模式进行分类"></a>按照锁模式进行分类</h2><ul>
+<li><strong>record lock</strong> 记录锁，对符合条件的行进行加锁，锁住索引项</li>
+<li><strong>gap lock</strong>   间隙锁，对符合条件的记录行之间的间隙进行加锁，不包含符合条件的索引项本身，只是锁定记录的范围，其他事务不能在锁范围内插入数据，这样就防止了别的数据新增幻影行(幻读)</li>
+<li><strong>next-key lock</strong> 锁定索引项本身和索引范围，即record lock + gap lock的结合 可解决幻读问题</li>
+<li><strong>意向锁</strong>  为了允许表锁和行锁共存，实现多粒度锁机制，innodb还有两种内部使用的意向锁(表级锁)分为<ul>
+<li><strong>意向共享锁(IS)</strong> 事务打算给数据行加共享锁，必须先取得该表的IS锁</li>
+<li><strong>意向排他锁(IX)</strong> 事务打算给数据行加排他锁，必须先取得该表的IX锁<br>意向锁是在给某一行进行加锁的时候，mysql会自动为这一行所处的表进行加意向锁，无需用户任何处理,意向锁的作用我们可以看下面一个例子</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>事务1</th>
+<th>事务2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>t1</td>
+<td>更新table a中某一行数据</td>
+<td>do nothing</td>
+</tr>
+<tr>
+<td>t2</td>
+<td>do nothing</td>
+<td>更新table a全表数据,需要获取表锁</td>
+</tr>
+<tr>
+<td>t3</td>
+<td>提交</td>
+<td>—</td>
+</tr>
+<tr>
+<td>t4</td>
+<td>—</td>
+<td>提交</td>
+</tr>
+</tbody></table>
+<p>在上述例子中，事务1中在t1时刻对表中数据进行数据更新时，自动加该表的意向排他锁，这时事务2获取该表的写锁时会先判断是否和意向锁兼容，发现该表存在意向排他锁，锁类型不兼容，需要等待事务1提交后才能进行操作。<br>这样如果某张表存在行级锁，获取表锁的时候就不必遍历整张表判断是否存在行级锁，直接判断是否与表级的意向锁是否兼容就可以了，下面给出表级的意向锁和读写锁的兼容情况</p>
+<table>
+<thead>
+<tr>
+<th>—-</th>
+<th>IS</th>
+<th>IX</th>
+<th>S</th>
+<th>X</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IS</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>IX</td>
+<td>兼容</td>
+<td>兼容</td>
+<td>冲突</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>S</td>
+<td>兼容</td>
+<td>冲突</td>
+<td>兼容</td>
+<td>冲突</td>
+</tr>
+<tr>
+<td>X</td>
+<td>冲突</td>
+<td>冲突</td>
+<td>冲突</td>
+<td>冲突</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>插入意向锁</strong> 插入意向锁是gap锁的一种，这种锁会在记录插入前设置。这种锁表示了多个事务在插入到相同的索引间隙的时候，只要他们不是插入到相同的位置上就不必彼此互相等待。在获取插入的排它锁之前，需要先获取插入意向锁</li>
+</ul>
+<p><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-locking.html#innodb-insert-intention-locks" target="_blank" rel="noopener">insert-intention-locks</a></p>
+<p>谈到这里其实可以聊聊今天被锤的一个面试问题,有关SQL优化相关的问题</p>
+<h1 id="面试中被面试官锤的问题"><a href="#面试中被面试官锤的问题" class="headerlink" title="面试中被面试官锤的问题"></a>面试中被面试官锤的问题</h1><p><strong>表级锁了解吗？什么时候会触发表级锁？update语句什么情况下会触发表级锁？</strong></p>
+<p>
+现在mysql默认存储引擎都是innodb,那么innodb存储引擎下什么情况会进行锁表呢？这就要从mysql的索引讲起了
+innodb中默认使用行级锁，这个行级锁锁的是索引记录，换句话说，如果你的SQL语句中如果没有索引，这时innodb会锁住谁呢？毫无疑问这个时候没有索引就会触发了表级锁,实际使用中我们要特别注意innodb行级锁的这个特性，不然会引起大量的锁冲突，从而影响并发性能, update语句中什么情况会触发表级锁可以看下面哪些情况会锁表
+</p>
+
+<p><strong>都有哪些情况innoDB会锁表呢</strong>？</p>
+<p>其实不管是读操作(select)还是写操作(update,delete,insert),只要涉及到带有筛选条件的语句，如果筛选条件中没有用到索引，就会触发全表扫描，区别是读操作可能加读锁(也有可能不加锁,mvcc中的快照读是通过版本号实现的，不加读锁，当前读需要加读锁)，写操作默认需要对影响的数据集隐式加写锁,那么如果发现影响的数据集没有用到索引或者是索引效果不好(区分度不够高,导致需要扫描表中大部分数据)再或者全表扫描的时候，就会锁住整张表，导致默认的行级锁升级为表级锁，因此我们总结下以下情况会导致锁表</p>
+<ul>
+<li>全表更新 事务需要更新大部分数据或全部数据，如果使用行级锁，会导致事务执行效率低，从而导致其他事务长时间等待锁和更多的锁冲突</li>
+<li>多表级联 事务涉及多张表，比较复杂的关联查询，很可能造成死锁，这种情况若能一次性锁住事务涉及的表，从而避免死锁，减少数据库事务回滚所带来的开销</li>
+<li>本应部分更新，但是因为筛选条件中未用到索引或者索引区分度程度不高(innodb认为全表扫描比走索引效率更高导致索引失效的情况)，导致全表扫描，这个时候就要通过explain去查看下查询计划，看下查询语句是否真的用到了索引</li>
+</ul>
+<h1 id="锁优化部分"><a href="#锁优化部分" class="headerlink" title="锁优化部分"></a>锁优化部分</h1><ul>
+<li>尽量让数据检索都通过索引来完成，避免无索引或者索引失效导致行级锁升级为表级锁</li>
+<li>合理设计索引，以缩小加锁范围，避免间隙锁造成不该锁定的键值被锁定</li>
+<li>尽量控制事务的大小，因为行级锁的复杂性会加大资源使用量以及锁定时间</li>
+</ul>
+<p>这里面实际上第三种情况是可以避免的，在做业务时，需要谨慎的加索引,在合适的列上创建索引，索引列区分程度是否高(主键索引和唯一索引不用说区分度百分百，如果能用到主键索引或者唯一索引就尽可能的使用这两种索引，如果不能使用，确保索引列区分程度够高)</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://segmentfault.com/a/1190000014133576" target="_blank" rel="noopener">MySQL InnoDB锁机制全面解析分享</a><br><a href="https://zhuanlan.zhihu.com/p/29150809" target="_blank" rel="noopener">MySQL锁总结</a><br><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-locking.html#innodb-insert-intention-locks" target="_blank" rel="noopener">mysql官方文档#insert-intention-locks</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/13/mq-Rabbit-MQ/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="mr_cris">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/blog/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cris's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/blog/2020/04/13/mq-Rabbit-MQ/" itemprop="url">消息队列之RabbitMQ</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-13T12:31:03+08:00">
+                2020-04-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/rabbitmq/" itemprop="url" rel="index">
+                    <span itemprop="name">rabbitmq</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>今天继续整理下跟RabbitMQ有关的内容，加深一下理解,还是避免被面试官锤。</p>
+<h1 id="什么是消息队列-为什么要用消息队列"><a href="#什么是消息队列-为什么要用消息队列" class="headerlink" title="什么是消息队列,为什么要用消息队列"></a>什么是消息队列,为什么要用消息队列</h1><p>这里的内容在上一篇(<a href="https://kyo7701.github.io/blog/2019/08/11/message_queue/">谈谈消息队列</a>)内容中已经讲过了，这里就不再赘述了</p>
+<h1 id="消息队列之RabbitMQ"><a href="#消息队列之RabbitMQ" class="headerlink" title="消息队列之RabbitMQ"></a>消息队列之RabbitMQ</h1><p>
+RabbitMQ是一款消息队列软件，也被成为消息代理(Message Broker)或队列管理器(Queue manager)，他是一个由ErLang语言开发的AMQP的开源实现
+</p>
+
+<p>AMQP(Adavanced message queue),高级消息队列协议，它是应用层协议的一个开放标准，为面向消息的中间件设计，基于此协议的客户端与消息中间件可以传递消息，并且不受产品、开发语言等条件的限制。</p>
+<p>这里引用了RabbitMQ官网的图片，AMQP的消息模型<br><img src="https://www.rabbitmq.com/img/tutorials/intro/hello-world-example-routing.png" alt><br>消息代理(messaging broker)从publisher(消息生产者)接收消息，并且将消息路由给消费者，由于AMQP是个网络协议，生产者、消息代理和消费者可以位于不同的机器上</p>
+<h1 id="RabbitMQ中的基本概念"><a href="#RabbitMQ中的基本概念" class="headerlink" title="RabbitMQ中的基本概念"></a>RabbitMQ中的基本概念</h1><ul>
+<li>Exchange 从生产者接收消息，并且根据exchange的类型将消息推送到对应的队列中</li>
+<li>Binding queue和exchange的绑定，通过这个绑定rabbitmq可以知道如何正确地将消息路由到指定的queue上了</li>
+<li>Routing key 生产者将消息发送给exchange的时候，rabbitmq 需要指定一个routing key来确定这个消息的路由规则，这个路由规则将决定消息如何路由到queue中</li>
+<li>Users </li>
+<li>Vhost,virtual host 是一种可以在同一个rabbitMQ实例中隔离多个不同的应用，不同的用户可以拥有不同virtual host的权限，每一个virtual host都可以拥有不同的queues和exchanges</li>
+<li>Producer 应用中消息的生产者</li>
+<li>Consumer 应用中消息的消费者</li>
+<li>Queue 一个存储消息的buffer</li>
+<li>Message 生产者通过rabbitMQ投递给消费者的消息</li>
+<li>Connection 客户端应用程序和RabbitMQ之间的TCP连接,和生产者与RabbitMQ之间都是通过TCP连接建立的。</li>
+<li>Channel 在Connection中的一个虚拟连接，队列中的消息的发布和消费</li>
+</ul>
+<p>由Exchange、Queue、RoutingKey三个才能决定一个从Exchange到Queue的唯一的线路</p>
+<h1 id="exchange和exchange类型"><a href="#exchange和exchange类型" class="headerlink" title="exchange和exchange类型"></a>exchange和exchange类型</h1><p>Exchanges在AMQP模型中是消息被发送到的实体。Exchanges将消息路由到0个或更多个queue上面去，路由算法取决于exchange的类型和绑定规则，AMQP提供以下exchange类型</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>默认预定义的名字</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Direct Exchange</td>
+<td>空串或者 amqp.direct</td>
+</tr>
+<tr>
+<td>Fanout Exchange</td>
+<td>amq.fanout</td>
+</tr>
+<tr>
+<td>Topic Exchange</td>
+<td>amq.topic</td>
+</tr>
+<tr>
+<td>Headers Exchange</td>
+<td>amq.match</td>
+</tr>
+</tbody></table>
+<p>此外 AMQP中还定义了几个很重要的属性</p>
+<ul>
+<li>name </li>
+<li>durability(broker重启后exchange是否还存在)</li>
+<li>Auto-delete(当exchange上面的最后一个queue解绑后是否自动删除)</li>
+<li>Arguments(可选参数，插件或者broker的特定功能会用到)</li>
+</ul>
+<p>下面的内容全部引用自rabbitmq官网，提供了AMQP协议的概述</p>
+<h1 id="Default-Exchanges"><a href="#Default-Exchanges" class="headerlink" title="Default Exchanges"></a>Default Exchanges</h1><p>默认的exchange是一个broker预定义的没有名字的direct exchange，它有一个特殊的性质:所有新建的queue都会绑定到默认的exchange上面，并且routing-key和queue名相同</p>
+<h1 id="Direct-Exchange"><a href="#Direct-Exchange" class="headerlink" title="Direct Exchange"></a>Direct Exchange</h1><p>direct exchange根据消息所带的routing-key将消息投递给对应的队列。direct exchange倾向于用作消息的单播路由(unicast routing),尽管它也可以用作多播路由(multicast routing)，工作原理:</p>
+<ul>
+<li>一个queue通过一个routing-key K绑定到一个exchange上</li>
+<li>当一条routing-key为R的消息到达direct-exchange时，direct exchange会把消息投递给routing-key跟R相等的queue上面去</li>
+</ul>
+<p>direct exchange通常用于循环分配任务给多个工作者，需要注意的是，消息的负载均衡是发生在consumer之间的，并不是发生在queue之间，举个例子(一个direct exchange 通过一个routing-key绑定了多个queue,消息会发到多个queue中，一个queue中消息的消费并不影响另一个queue的消费,也就是不会发生抢消息的行为)</p>
+<p><img src="https://www.rabbitmq.com/img/tutorials/intro/exchange-direct.png" alt><br>图片引用自<a href="https://www.rabbitmq.com/tutorials/amqp-concepts.html" target="_blank" rel="noopener">rabbitmq官网</a></p>
+<h1 id="Fanout-Exchange-扇形交换机"><a href="#Fanout-Exchange-扇形交换机" class="headerlink" title="Fanout Exchange 扇形交换机"></a>Fanout Exchange 扇形交换机</h1><p>扇形交换机会把他收到的消息发送到所有绑定到它的queue中,并且这里的routing-key是被忽略的。如果有n个queue绑定到了扇形交换机上面，当一条新消息发布到交换机中时，消息会复制n份投递到所有的n个queue中，扇形交换机特别适合做广播消息<br><img src="https://www.rabbitmq.com/img/tutorials/intro/exchange-fanout.png" alt><br>图片引用自<a href="https://www.rabbitmq.com/tutorials/amqp-concepts.html" target="_blank" rel="noopener">rabbitmq官网</a></p>
+<p>因为扇形交换机会把消息广播到所有的queue中，他的使用场景非常相似:</p>
+<ul>
+<li>很多大型多人在线游戏会用它处理排行榜更新或其他全局事件</li>
+<li>体育新闻网站可以准实时地将比分发送给移动客户端</li>
+<li>分布式系统可以将不同的状态和配置更新进行广播</li>
+<li>可以通过扇形交换机来实现分发消息给群聊中 的用户</li>
+</ul>
+<h1 id="topic-exchange"><a href="#topic-exchange" class="headerlink" title="topic exchange"></a>topic exchange</h1><p>topic exchange通过routing-key通配的方式将消息路由到一个或多个队列上面，正因如此，topic exchange一般用于实现各种发布/订阅的变种。topic exchange也常用来做消息的广播，topic exchange有很广泛的用途，当涉及到多个消费者可以选择性的接收它们所关注类型的消息的时候，就可以考虑topic exchange的使用了</p>
+<p>使用场景</p>
+<ul>
+<li>将数据按照地理位置的相关性做分发，比如销售点</li>
+<li>多个执行者处理一个后台任务，每一个执行者处理特定的一块任务</li>
+<li>股票价格更新(或者其他金融数据的更新)</li>
+<li>新闻更新(包括分类、标签的更新)</li>
+<li>云上不同类型服务的服务编排</li>
+<li>分布式(架构/系统)软件构建或者打包时，每个builder只能处理一种架构或者系统</li>
+</ul>
+<h1 id="spring-rabbitmq启动流程"><a href="#spring-rabbitmq启动流程" class="headerlink" title="spring rabbitmq启动流程"></a>spring rabbitmq启动流程</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">通过SpringFactoriesLoader机制,扫描META-INF/Spring.factories</span><br><span class="line">发现需要加载org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration</span><br><span class="line">加载RabbitAutoConfiguration后发现需要按条件进行装配，RabbitTemplate类加载后，则进行自动装配</span><br><span class="line">加载配置文件RabbitProperties(application.yml或application.properties等配置文件中spring.rabbitmq.下的内容),装配CachingConnectionFactory</span><br><span class="line"></span><br><span class="line">在Spring容器初始化完毕，并初始化对应listener bean时</span><br><span class="line"></span><br><span class="line">RabbitListenerAnnotationBeanPostProcessor#postProcessAfterInitialization()</span><br><span class="line">//</span><br><span class="line">processAmqpListener()</span><br><span class="line">processListener()</span><br><span class="line">RabbitListenerEndpointRegistrar#registerEndpoint()</span><br><span class="line">//用AmqpListenerEndpointDescriptor包装endPoint和containerfactory</span><br><span class="line">//如果是立刻启动，则调用</span><br><span class="line">RabbitListenerEndpointRegistry#registerListenerContainer()</span><br></pre></td></tr></table></figure>
+
+<p>通过RabbitListenerAnnotationBeanPostProcessor注册被rabbitListener注解的方法</p>
+<hr>
+<p>未完待续</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cloudamqp.com/blog/2015-05-18-part1-rabbitmq-for-beginners-what-is-rabbitmq.html" target="_blank" rel="noopener">for RabbitMQ beginners- what is RabbitMQ?</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="https://kyo7701.github.io/blog/blog/2020/04/10/db-index/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1300,7 +2392,7 @@
               
                 <a href="/blog/archives/">
               
-                  <span class="site-state-item-count">25</span>
+                  <span class="site-state-item-count">30</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1322,7 +2414,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/blog/tags/index.html">
-                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-count">20</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
@@ -1359,7 +2451,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
