@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="cris&#39;s blog">
 <meta property="og:description" content="一、 什么是servlet?  Servlet ,全称 Java Servlet. 是由Java编写的服务端程序。其主要功能在于交互地浏览和修改数据，生成动态web内容。   狭义的servlet是指Java实现的一个接口，广义的servlet是指任何实现了这个servlet的类，一般情况下人们将servlet理解为后者 wikipedia  二、servlet生命周期wikipedia 1234">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2022-05-28T15:19:40.484Z">
+<meta property="og:updated_time" content="2022-05-28T15:30:49.960Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="谈谈servlet">
 <meta name="twitter:description" content="一、 什么是servlet?  Servlet ,全称 Java Servlet. 是由Java编写的服务端程序。其主要功能在于交互地浏览和修改数据，生成动态web内容。   狭义的servlet是指Java实现的一个接口，广义的servlet是指任何实现了这个servlet的类，一般情况下人们将servlet理解为后者 wikipedia  二、servlet生命周期wikipedia 1234">
@@ -332,6 +332,7 @@
 <p>二、servlet生命周期<br><a href="https://zh.wikipedia.org/wiki/Java_Servlet#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F" target="_blank" rel="noopener">wikipedia</a></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">当servlet被部署在应用服务器中以后，由容器控制servlet的生命周期。</span><br><span class="line">除非特殊指定，否则在容器启动的时候，servlet是不会被加载的,</span><br><span class="line">servlet只会在第一次请求的时候被加载实例化，一旦被加载，一般不会从容器中剔除，</span><br><span class="line">直至应用服务器关闭或启动。但当容器做存储器回收动作时，servlet有可能被删除。</span><br><span class="line">也正是因为这个原因，第一次访问servlet的时间大大多于以后访问应用所需要的事件</span><br></pre></td></tr></table></figure>
 
+<p><a href="https://docs.oracle.com/javaee/5/tutorial/doc/bnafi.html#bnafn" target="_blank" rel="noopener">oracle官网</a></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">serlvet的生命周期是由被部署到的容器所控制的，当一个请求映射到一个servlet的时候，容器将会执行以下几步</span><br><span class="line">一、 如果servlet实例不存在，那么web容器会执行以下操作</span><br><span class="line">1. 装载serlvet类</span><br><span class="line">2. 创建servlet类的实例</span><br><span class="line">3. 通过调用servlet实例的init方法来进行初始化</span><br><span class="line"></span><br><span class="line">二、调用service方法，并将request和response对象传入</span><br><span class="line">三、如果需要移除servlet,则web容器通过destroy方法对serlvet进行析构</span><br></pre></td></tr></table></figure>
 
 <pre><code></code></pre><p>三、 servlet是否是线程安全的？</p>
@@ -339,7 +340,7 @@
 <p>默认情况下,servlet不是线程安全的，尽管在servlet引擎中只有一份servlet的拷贝，但是一个serlvet实例中的方法在同一时间是会可以执行数次的，直至达到内存限制，并且每次执行都是不同的线程来执行。因为Java编程语言是管理内存的，所以这种对系统资源的高效使用是有风险的。因为servlet实例所拥有的变量在每次引用时是会被传递的，这样就带来不同的线程有可能会覆盖同一块内存区域的副作用。所以为了保证servlet的线程安全，需要做到下面的其中任意一种</p>
 <ol>
 <li>对所有实例变量的写操作进行同步</li>
-<li>使用SingleThreadModel创建一个单线程的servlet 不过这样并行度会大大降低，所有传入的请求必须等待有空闲的实例才可以继续执行业务</li>
+<li>使用SingleThreadModel创建一个单线程的servlet 不过这样并行度会大大降低，所有传入的请求必须等待有空闲的实例才可以继续执行业务<br><a href="https://docs.oracle.com/cd/E19146-01/819-2634/abxbh/index.html#:~:text=By%20default%2C%20servlets%20are%20not,exists%20in%20the%20servlet%20engine." target="_blank" rel="noopener">oracle官网</a></li>
 </ol>
 </blockquote>
 <p>四、 doGet和doPost有什么区别？</p>
