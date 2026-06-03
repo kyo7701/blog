@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>分布式锁：原理、实现与选型 | Hexo</title>
+  <meta name="description" content="前言在单体应用中，我们可以使用JVM内置的锁机制（synchronized、ReentrantLock）来保证线程安全。但是在分布式系统中，多个应用实例运行在不同的JVM中，甚至不同的机器上，JVM内置的锁就无法满足需求了。今天就来聊聊分布式锁的各种实现方案，以及它们各自的优缺点和适用场景 什么是分布式锁分布式锁是在分布式系统中，用于控制多个进程对共享资源访问的一种机制 简单来说，分布式锁就是要保">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式锁：原理、实现与选型">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2026/06/03/distributed-03-lock/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="前言在单体应用中，我们可以使用JVM内置的锁机制（synchronized、ReentrantLock）来保证线程安全。但是在分布式系统中，多个应用实例运行在不同的JVM中，甚至不同的机器上，JVM内置的锁就无法满足需求了。今天就来聊聊分布式锁的各种实现方案，以及它们各自的优缺点和适用场景 什么是分布式锁分布式锁是在分布式系统中，用于控制多个进程对共享资源访问的一种机制 简单来说，分布式锁就是要保">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-03T11:20:00.000Z">
+<meta property="article:modified_time" content="2026-06-03T08:42:51.038Z">
+<meta property="article:author" content="mr_cris">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="锁">
+<meta property="article:tag" content="ZooKeeper">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2026/06/03/distributed-03-lock/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="cris&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/kyo7701" target="_blank">
+          <img class="img-circle img-rotate" src="/blog/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">mr_cris</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Backend Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">Categories</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a target="_blank" rel="noopener" href="https://github.com/kyo7701">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">Repository</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/blog/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/1221310881" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/mysql/">mysql</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/2PC/" rel="tag">2PC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/AI/" rel="tag">AI</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Agent/" rel="tag">Agent</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/CAP/" rel="tag">CAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LLM/" rel="tag">LLM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LangChain/" rel="tag">LangChain</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LangGraph/" rel="tag">LangGraph</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Multi-Agent/" rel="tag">Multi-Agent</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/No-SQL/" rel="tag">No-SQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/RAG/" rel="tag">RAG</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Saga/" rel="tag">Saga</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/TCC/" rel="tag">TCC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Tools/" rel="tag">Tools</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ZooKeeper/" rel="tag">ZooKeeper</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/rabbitmq/" rel="tag">rabbitmq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redis/" rel="tag">redis</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%80%E8%87%B4%E6%80%A7/" rel="tag">一致性</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%BA%8B%E5%8A%A1/" rel="tag">事务</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" rel="tag">人工智能</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%85%B6%E4%BB%96/" rel="tag">其他</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%8D%8F%E4%BD%9C/" rel="tag">协作</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" rel="tag">后端技术</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">向量数据库</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%AE%9E%E6%88%98/" rel="tag">实战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" rel="tag">工作感悟</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag">工作流</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%BC%82%E6%AD%A5/" rel="tag">异步</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" rel="tag">持久化机制</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" rel="tag">未完成</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag">消息队列</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%8A%B6%E6%80%81%E6%9C%BA/" rel="tag">状态机</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%90%86%E8%AE%BA/" rel="tag">理论</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag">索引</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BC%93%E5%AD%98/" rel="tag">缓存</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E8%A7%A3%E8%80%A6/" rel="tag">解耦</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag">负载均衡</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E9%94%81/" rel="tag">锁</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E9%A1%B9%E7%9B%AE/" rel="tag">项目</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/blog/tags/2PC/" style="font-size: 13px;">2PC</a> <a href="/blog/tags/AI/" style="font-size: 13.83px;">AI</a> <a href="/blog/tags/Agent/" style="font-size: 13.67px;">Agent</a> <a href="/blog/tags/CAP/" style="font-size: 13px;">CAP</a> <a href="/blog/tags/LLM/" style="font-size: 13.33px;">LLM</a> <a href="/blog/tags/LangChain/" style="font-size: 13.17px;">LangChain</a> <a href="/blog/tags/LangGraph/" style="font-size: 13.17px;">LangGraph</a> <a href="/blog/tags/Multi-Agent/" style="font-size: 13px;">Multi-Agent</a> <a href="/blog/tags/No-SQL/" style="font-size: 13px;">No-SQL</a> <a href="/blog/tags/Python/" style="font-size: 13px;">Python</a> <a href="/blog/tags/RAG/" style="font-size: 13px;">RAG</a> <a href="/blog/tags/Redis/" style="font-size: 13.17px;">Redis</a> <a href="/blog/tags/Saga/" style="font-size: 13px;">Saga</a> <a href="/blog/tags/TCC/" style="font-size: 13px;">TCC</a> <a href="/blog/tags/Tools/" style="font-size: 13px;">Tools</a> <a href="/blog/tags/ZooKeeper/" style="font-size: 13px;">ZooKeeper</a> <a href="/blog/tags/java/" style="font-size: 13px;">java</a> <a href="/blog/tags/mysql/" style="font-size: 13.5px;">mysql</a> <a href="/blog/tags/rabbitmq/" style="font-size: 13px;">rabbitmq</a> <a href="/blog/tags/redis/" style="font-size: 13.5px;">redis</a> <a href="/blog/tags/%E4%B8%80%E8%87%B4%E6%80%A7/" style="font-size: 13.17px;">一致性</a> <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 14px;">中间件</a> <a href="/blog/tags/%E4%BA%8B%E5%8A%A1/" style="font-size: 13px;">事务</a> <a href="/blog/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" style="font-size: 13px;">人工智能</a> <a href="/blog/tags/%E5%85%B6%E4%BB%96/" style="font-size: 13.17px;">其他</a> <a href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13.67px;">分布式</a> <a href="/blog/tags/%E5%8D%8F%E4%BD%9C/" style="font-size: 13px;">协作</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" style="font-size: 13.17px;">后端</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" style="font-size: 13.17px;">后端技术</a> <a href="/blog/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13px;">向量数据库</a> <a href="/blog/tags/%E5%AE%9E%E6%88%98/" style="font-size: 13px;">实战</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" style="font-size: 13px;">工作感悟</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" style="font-size: 13px;">工作流</a> <a href="/blog/tags/%E5%BC%82%E6%AD%A5/" style="font-size: 13px;">异步</a> <a href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" style="font-size: 13px;">持久化机制</a> <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13.33px;">数据库</a> <a href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" style="font-size: 13px;">未完成</a> <a href="/blog/tags/%E6%9D%82%E8%B0%88/" style="font-size: 13px;">杂谈</a> <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">框架</a> <a href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 13.33px;">消息队列</a> <a href="/blog/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13px;">源码</a> <a href="/blog/tags/%E7%8A%B6%E6%80%81%E6%9C%BA/" style="font-size: 13px;">状态机</a> <a href="/blog/tags/%E7%90%86%E8%AE%BA/" style="font-size: 13px;">理论</a> <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 13px;">索引</a> <a href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 13px;">线程池</a> <a href="/blog/tags/%E7%BC%93%E5%AD%98/" style="font-size: 13px;">缓存</a> <a href="/blog/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13px;">网络</a> <a href="/blog/tags/%E8%A7%A3%E8%80%A6/" style="font-size: 13px;">解耦</a> <a href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" style="font-size: 13px;">负载均衡</a> <a href="/blog/tags/%E9%94%81/" style="font-size: 13px;">锁</a> <a href="/blog/tags/%E9%A1%B9%E7%9B%AE/" style="font-size: 13px;">项目</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2026/06/">June 2026</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/06/">June 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/03/">March 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/05/">May 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/04/">April 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/12/">December 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/08/">August 2019</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-05-mq/" class="title">分布式消息队列：原理、架构与实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:40:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-04-cache/" class="title">分布式缓存：架构、问题与解决方案</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:30:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-03-lock/" class="title">分布式锁：原理、实现与选型</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:20:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-02-transaction/" class="title">分布式事务：从理论到实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:10:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-01-theory/" class="title">分布式系统理论基础：从CAP到一致性协议</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:00:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-distributed-03-lock" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      分布式锁：原理、实现与选型
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/blog/2026/06/03/distributed-03-lock/" class="article-date">
+	  <time datetime="2026-06-03T11:20:00.000Z" itemprop="datePublished">2026-06-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/blog/tags/Redis/" rel="tag">Redis</a>, <a class="article-tag-link-link" href="/blog/tags/ZooKeeper/" rel="tag">ZooKeeper</a>, <a class="article-tag-link-link" href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a>, <a class="article-tag-link-link" href="/blog/tags/%E9%94%81/" rel="tag">锁</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2026/06/03/distributed-03-lock/#comments" class="article-comment-link">Comments</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 2k(words)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 7(minutes)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在单体应用中，我们可以使用JVM内置的锁机制（synchronized、ReentrantLock）来保证线程安全。但是在分布式系统中，多个应用实例运行在不同的JVM中，甚至不同的机器上，JVM内置的锁就无法满足需求了。今天就来聊聊分布式锁的各种实现方案，以及它们各自的优缺点和适用场景</p>
+<h1 id="什么是分布式锁"><a href="#什么是分布式锁" class="headerlink" title="什么是分布式锁"></a>什么是分布式锁</h1><p>分布式锁是在分布式系统中，用于控制多个进程对共享资源访问的一种机制</p>
+<p>简单来说，分布式锁就是要保证在分布式环境下，同一时刻只有一个进程能够访问共享资源</p>
+<h2 id="分布式锁的应用场景"><a href="#分布式锁的应用场景" class="headerlink" title="分布式锁的应用场景"></a>分布式锁的应用场景</h2><ol>
+<li><strong>秒杀系统</strong>：防止超卖</li>
+<li><strong>任务调度</strong>：防止任务重复执行</li>
+<li><strong>配置更新</strong>：防止并发更新</li>
+<li><strong>限流控制</strong>：控制并发数</li>
+</ol>
+<h1 id="分布式锁的特性"><a href="#分布式锁的特性" class="headerlink" title="分布式锁的特性"></a>分布式锁的特性</h1><p>一个完善的分布式锁需要满足以下特性</p>
+<h2 id="1-互斥性"><a href="#1-互斥性" class="headerlink" title="1. 互斥性"></a>1. 互斥性</h2><p>同一时刻只能有一个客户端持有锁</p>
+<h2 id="2-避免死锁"><a href="#2-避免死锁" class="headerlink" title="2. 避免死锁"></a>2. 避免死锁</h2><p>锁必须有超时机制，防止持有锁的客户端宕机导致死锁</p>
+<h2 id="3-可重入性"><a href="#3-可重入性" class="headerlink" title="3. 可重入性"></a>3. 可重入性</h2><p>同一个客户端可以多次获取同一把锁</p>
+<h2 id="4-高可用"><a href="#4-高可用" class="headerlink" title="4. 高可用"></a>4. 高可用</h2><p>锁服务需要高可用，避免单点故障</p>
+<h2 id="5-高性能"><a href="#5-高性能" class="headerlink" title="5. 高性能"></a>5. 高性能</h2><p>获取和释放锁的性能要高</p>
+<h1 id="基于数据库的分布式锁"><a href="#基于数据库的分布式锁" class="headerlink" title="基于数据库的分布式锁"></a>基于数据库的分布式锁</h1><h2 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h2><h3 id="基于唯一索引"><a href="#基于唯一索引" class="headerlink" title="基于唯一索引"></a>基于唯一索引</h3><p>创建一张锁表，使用唯一索引来实现互斥</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> distributed_lock (</span><br><span class="line">    id <span class="type">BIGINT</span> <span class="keyword">PRIMARY</span> KEY AUTO_INCREMENT,</span><br><span class="line">    lock_key <span class="type">VARCHAR</span>(<span class="number">255</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">    lock_value <span class="type">VARCHAR</span>(<span class="number">255</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">    expire_time DATETIME <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">    <span class="keyword">UNIQUE</span> KEY uk_lock_key (lock_key)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>获取锁时，插入一条记录，如果插入成功则表示获取锁成功</p>
+<h3 id="基于悲观锁"><a href="#基于悲观锁" class="headerlink" title="基于悲观锁"></a>基于悲观锁</h3><p>使用SELECT FOR UPDATE来实现</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> distributed_lock <span class="keyword">WHERE</span> lock_key <span class="operator">=</span> <span class="string">&#x27;xxx&#x27;</span> <span class="keyword">FOR</span> UPDATE;</span><br></pre></td></tr></table></figure>
+
+<h3 id="基于乐观锁"><a href="#基于乐观锁" class="headerlink" title="基于乐观锁"></a>基于乐观锁</h3><p>使用版本号来实现</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UPDATE distributed_lock <span class="keyword">SET</span> version <span class="operator">=</span> version <span class="operator">+</span> <span class="number">1</span> </span><br><span class="line"><span class="keyword">WHERE</span> lock_key <span class="operator">=</span> <span class="string">&#x27;xxx&#x27;</span> <span class="keyword">AND</span> version <span class="operator">=</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="数据库锁的优缺点"><a href="#数据库锁的优缺点" class="headerlink" title="数据库锁的优缺点"></a>数据库锁的优缺点</h2><h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>实现简单</li>
+<li>易于理解</li>
+<li>不需要额外组件</li>
+</ul>
+<h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><ul>
+<li>性能差（数据库IO）</li>
+<li>可用性低（数据库单点）</li>
+<li>死锁风险（连接池耗尽）</li>
+<li>不支持可重入</li>
+</ul>
+<h2 id="适用场景"><a href="#适用场景" class="headerlink" title="适用场景"></a>适用场景</h2><ul>
+<li>并发量低的场景</li>
+<li>对性能要求不高的场景</li>
+<li>已有数据库，不想引入额外组件</li>
+</ul>
+<h1 id="基于Redis的分布式锁"><a href="#基于Redis的分布式锁" class="headerlink" title="基于Redis的分布式锁"></a>基于Redis的分布式锁</h1><h2 id="基本实现"><a href="#基本实现" class="headerlink" title="基本实现"></a>基本实现</h2><p>使用SETNX命令实现</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SET lock_key lock_value NX PX 30000</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>NX：只有key不存在时才设置</li>
+<li>PX：设置过期时间（毫秒）</li>
+</ul>
+<h2 id="释放锁"><a href="#释放锁" class="headerlink" title="释放锁"></a>释放锁</h2><p>使用Lua脚本保证原子性</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> redis.call(<span class="string">&quot;get&quot;</span>, KEYS[<span class="number">1</span>]) == ARGV[<span class="number">1</span>] <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">return</span> redis.call(<span class="string">&quot;del&quot;</span>, KEYS[<span class="number">1</span>])</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Redis锁的问题"><a href="#Redis锁的问题" class="headerlink" title="Redis锁的问题"></a>Redis锁的问题</h2><h3 id="1-锁超时问题"><a href="#1-锁超时问题" class="headerlink" title="1. 锁超时问题"></a>1. 锁超时问题</h3><p>如果业务执行时间超过锁的超时时间，锁会自动释放，可能导致并发问题</p>
+<p>解决方案：</p>
+<ul>
+<li>使用看门狗机制，自动续期</li>
+<li>评估业务执行时间，设置合理的超时时间</li>
+</ul>
+<h3 id="2-主从切换问题"><a href="#2-主从切换问题" class="headerlink" title="2. 主从切换问题"></a>2. 主从切换问题</h3><p>Redis主从架构下，主节点宕机，从节点提升为主节点，可能导致锁丢失</p>
+<p>解决方案：</p>
+<ul>
+<li>使用RedLock算法</li>
+<li>使用单节点Redis（牺牲可用性）</li>
+</ul>
+<h3 id="3-不可重入问题"><a href="#3-不可重入问题" class="headerlink" title="3. 不可重入问题"></a>3. 不可重入问题</h3><p>默认实现不支持可重入</p>
+<p>解决方案：</p>
+<ul>
+<li>使用Hash结构记录重入次数</li>
+<li>使用Redisson等客户端</li>
+</ul>
+<h2 id="RedLock算法"><a href="#RedLock算法" class="headerlink" title="RedLock算法"></a>RedLock算法</h2><h3 id="什么是RedLock"><a href="#什么是RedLock" class="headerlink" title="什么是RedLock"></a>什么是RedLock</h3><p>RedLock是Redis作者提出的分布式锁算法，基于多个独立的Redis实例</p>
+<h3 id="RedLock的步骤"><a href="#RedLock的步骤" class="headerlink" title="RedLock的步骤"></a>RedLock的步骤</h3><ol>
+<li>获取当前时间</li>
+<li>依次向N个Redis实例请求加锁</li>
+<li>计算获取锁花费的时间</li>
+<li>如果在多数实例（N/2+1）上加锁成功，且花费时间小于锁的有效时间，则认为加锁成功</li>
+<li>如果加锁失败，向所有实例发送释放锁请求</li>
+</ol>
+<h3 id="RedLock的问题"><a href="#RedLock的问题" class="headerlink" title="RedLock的问题"></a>RedLock的问题</h3><ol>
+<li>依赖时钟同步</li>
+<li>性能开销大</li>
+<li>实现复杂</li>
+</ol>
+<h2 id="Redisson"><a href="#Redisson" class="headerlink" title="Redisson"></a>Redisson</h2><h3 id="什么是Redisson"><a href="#什么是Redisson" class="headerlink" title="什么是Redisson"></a>什么是Redisson</h3><p>Redisson是一个Java的Redis客户端，提供了完善的分布式锁实现</p>
+<h3 id="Redisson的特性"><a href="#Redisson的特性" class="headerlink" title="Redisson的特性"></a>Redisson的特性</h3><ol>
+<li><strong>可重入锁</strong>：支持同一个线程多次加锁</li>
+<li><strong>看门狗机制</strong>：自动续期</li>
+<li><strong>公平锁</strong>：按照请求顺序获取锁</li>
+<li><strong>读写锁</strong>：支持读写分离</li>
+<li><strong>联锁</strong>：同时获取多个锁</li>
+<li><strong>红锁</strong>：基于RedLock算法</li>
+</ol>
+<h2 id="Redis锁的优缺点"><a href="#Redis锁的优缺点" class="headerlink" title="Redis锁的优缺点"></a>Redis锁的优缺点</h2><h3 id="优点-1"><a href="#优点-1" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>性能高</li>
+<li>实现简单</li>
+<li>支持可重入</li>
+</ul>
+<h3 id="缺点-1"><a href="#缺点-1" class="headerlink" title="缺点"></a>缺点</h3><ul>
+<li>主从切换可能丢锁</li>
+<li>依赖时钟同步</li>
+<li>需要处理续期问题</li>
+</ul>
+<h2 id="适用场景-1"><a href="#适用场景-1" class="headerlink" title="适用场景"></a>适用场景</h2><ul>
+<li>高并发场景</li>
+<li>对性能要求高的场景</li>
+<li>可以接受极端情况下锁失效</li>
+</ul>
+<h1 id="基于ZooKeeper的分布式锁"><a href="#基于ZooKeeper的分布式锁" class="headerlink" title="基于ZooKeeper的分布式锁"></a>基于ZooKeeper的分布式锁</h1><h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>基于ZooKeeper的临时顺序节点实现</p>
+<h3 id="获取锁"><a href="#获取锁" class="headerlink" title="获取锁"></a>获取锁</h3><ol>
+<li>在指定节点下创建临时顺序节点</li>
+<li>获取该节点下的所有子节点</li>
+<li>判断自己是否是最小的节点</li>
+<li>如果是，则获取锁成功</li>
+<li>如果不是，则监听比自己小的节点</li>
+<li>当监听的节点删除时，重新判断</li>
+</ol>
+<h3 id="释放锁-1"><a href="#释放锁-1" class="headerlink" title="释放锁"></a>释放锁</h3><ol>
+<li>删除自己创建的临时节点</li>
+<li>会话结束时自动删除</li>
+</ol>
+<h2 id="ZooKeeper锁的特性"><a href="#ZooKeeper锁的特性" class="headerlink" title="ZooKeeper锁的特性"></a>ZooKeeper锁的特性</h2><h3 id="1-可重入性"><a href="#1-可重入性" class="headerlink" title="1. 可重入性"></a>1. 可重入性</h3><p>通过记录节点路径实现可重入</p>
+<h3 id="2-避免死锁-1"><a href="#2-避免死锁-1" class="headerlink" title="2. 避免死锁"></a>2. 避免死锁</h3><p>临时节点在会话结束时自动删除</p>
+<h3 id="3-公平性"><a href="#3-公平性" class="headerlink" title="3. 公平性"></a>3. 公平性</h3><p>顺序节点保证公平性</p>
+<h3 id="4-高可用-1"><a href="#4-高可用-1" class="headerlink" title="4. 高可用"></a>4. 高可用</h3><p>ZooKeeper集群保证高可用</p>
+<h2 id="Curator"><a href="#Curator" class="headerlink" title="Curator"></a>Curator</h2><h3 id="什么是Curator"><a href="#什么是Curator" class="headerlink" title="什么是Curator"></a>什么是Curator</h3><p>Curator是Apache的ZooKeeper客户端，提供了分布式锁的实现</p>
+<h3 id="Curator提供的锁"><a href="#Curator提供的锁" class="headerlink" title="Curator提供的锁"></a>Curator提供的锁</h3><ol>
+<li><strong>InterProcessMutex</strong>：可重入锁</li>
+<li><strong>InterProcessSemaphoreMutex</strong>：不可重入锁</li>
+<li><strong>InterReadWriteLock</strong>：读写锁</li>
+<li><strong>InterProcessMultiLock</strong>：联锁</li>
+<li><strong>InterProcessSemaphore</strong>：信号量</li>
+</ol>
+<h2 id="ZooKeeper锁的优缺点"><a href="#ZooKeeper锁的优缺点" class="headerlink" title="ZooKeeper锁的优缺点"></a>ZooKeeper锁的优缺点</h2><h3 id="优点-2"><a href="#优点-2" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>强一致性</li>
+<li>避免死锁</li>
+<li>公平性</li>
+<li>高可用</li>
+</ul>
+<h3 id="缺点-2"><a href="#缺点-2" class="headerlink" title="缺点"></a>缺点</h3><ul>
+<li>性能相对较低</li>
+<li>依赖ZooKeeper集群</li>
+<li>实现复杂</li>
+</ul>
+<h2 id="适用场景-2"><a href="#适用场景-2" class="headerlink" title="适用场景"></a>适用场景</h2><ul>
+<li>对一致性要求高的场景</li>
+<li>已有ZooKeeper集群</li>
+<li>可以接受性能稍低</li>
+</ul>
+<h1 id="基于Etcd的分布式锁"><a href="#基于Etcd的分布式锁" class="headerlink" title="基于Etcd的分布式锁"></a>基于Etcd的分布式锁</h1><h2 id="实现原理-1"><a href="#实现原理-1" class="headerlink" title="实现原理"></a>实现原理</h2><p>基于Etcd的租约（Lease）和事务（Transaction）实现</p>
+<h3 id="获取锁-1"><a href="#获取锁-1" class="headerlink" title="获取锁"></a>获取锁</h3><ol>
+<li>创建租约</li>
+<li>使用事务尝试创建key</li>
+<li>如果创建成功，则获取锁成功</li>
+<li>如果创建失败，则监听key的变化</li>
+</ol>
+<h3 id="释放锁-2"><a href="#释放锁-2" class="headerlink" title="释放锁"></a>释放锁</h3><ol>
+<li>撤销租约</li>
+<li>key自动删除</li>
+</ol>
+<h2 id="Etcd锁的特性"><a href="#Etcd锁的特性" class="headerlink" title="Etcd锁的特性"></a>Etcd锁的特性</h2><ol>
+<li><strong>强一致性</strong>：基于Raft协议</li>
+<li><strong>租约机制</strong>：自动过期</li>
+<li><strong>事务支持</strong>：保证原子性</li>
+<li><strong>Watch机制</strong>：支持监听</li>
+</ol>
+<h2 id="Etcd锁的优缺点"><a href="#Etcd锁的优缺点" class="headerlink" title="Etcd锁的优缺点"></a>Etcd锁的优缺点</h2><h3 id="优点-3"><a href="#优点-3" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>强一致性</li>
+<li>高可用</li>
+<li>支持租约</li>
+</ul>
+<h3 id="缺点-3"><a href="#缺点-3" class="headerlink" title="缺点"></a>缺点</h3><ul>
+<li>性能相对较低</li>
+<li>需要Etcd集群</li>
+<li>Go生态更好</li>
+</ul>
+<h2 id="适用场景-3"><a href="#适用场景-3" class="headerlink" title="适用场景"></a>适用场景</h2><ul>
+<li>Kubernetes环境</li>
+<li>对一致性要求高的场景</li>
+<li>Go技术栈</li>
+</ul>
+<h1 id="分布式锁的选型"><a href="#分布式锁的选型" class="headerlink" title="分布式锁的选型"></a>分布式锁的选型</h1><h2 id="选型维度"><a href="#选型维度" class="headerlink" title="选型维度"></a>选型维度</h2><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>一致性</th>
+<th>性能</th>
+<th>可用性</th>
+<th>复杂度</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据库</td>
+<td>强</td>
+<td>低</td>
+<td>低</td>
+<td>低</td>
+<td>低并发</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>弱</td>
+<td>高</td>
+<td>高</td>
+<td>低</td>
+<td>高并发</td>
+</tr>
+<tr>
+<td>ZooKeeper</td>
+<td>强</td>
+<td>中</td>
+<td>高</td>
+<td>中</td>
+<td>强一致</td>
+</tr>
+<tr>
+<td>Etcd</td>
+<td>强</td>
+<td>中</td>
+<td>高</td>
+<td>中</td>
+<td>K8s环境</td>
+</tr>
+</tbody></table>
+<h2 id="选型建议"><a href="#选型建议" class="headerlink" title="选型建议"></a>选型建议</h2><ol>
+<li><strong>高并发场景</strong>：Redis</li>
+<li><strong>强一致性场景</strong>：ZooKeeper、Etcd</li>
+<li><strong>已有基础设施</strong>：选择已有的</li>
+<li><strong>Kubernetes环境</strong>：Etcd</li>
+<li><strong>简单场景</strong>：数据库</li>
+</ol>
+<h1 id="分布式锁的最佳实践"><a href="#分布式锁的最佳实践" class="headerlink" title="分布式锁的最佳实践"></a>分布式锁的最佳实践</h1><h2 id="1-设置合理的超时时间"><a href="#1-设置合理的超时时间" class="headerlink" title="1. 设置合理的超时时间"></a>1. 设置合理的超时时间</h2><ul>
+<li>超时时间要大于业务执行时间</li>
+<li>考虑网络延迟</li>
+<li>使用续期机制</li>
+</ul>
+<h2 id="2-保证锁的唯一性"><a href="#2-保证锁的唯一性" class="headerlink" title="2. 保证锁的唯一性"></a>2. 保证锁的唯一性</h2><ul>
+<li>使用UUID作为锁的value</li>
+<li>释放锁时验证value</li>
+</ul>
+<h2 id="3-处理锁失效"><a href="#3-处理锁失效" class="headerlink" title="3. 处理锁失效"></a>3. 处理锁失效</h2><ul>
+<li>使用幂等性设计</li>
+<li>使用分布式ID</li>
+<li>记录操作日志</li>
+</ul>
+<h2 id="4-监控锁的使用"><a href="#4-监控锁的使用" class="headerlink" title="4. 监控锁的使用"></a>4. 监控锁的使用</h2><ul>
+<li>监控锁的获取和释放</li>
+<li>告警锁的超时</li>
+<li>记录锁的等待时间</li>
+</ul>
+<h2 id="5-避免锁的滥用"><a href="#5-避免锁的滥用" class="headerlink" title="5. 避免锁的滥用"></a>5. 避免锁的滥用</h2><ul>
+<li>尽量减少锁的粒度</li>
+<li>使用乐观锁替代悲观锁</li>
+<li>考虑无锁设计</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>今天我们学习了分布式锁的各种实现方案</p>
+<ol>
+<li><strong>数据库锁</strong>：实现简单，但性能差</li>
+<li><strong>Redis锁</strong>：性能高，但一致性弱</li>
+<li><strong>ZooKeeper锁</strong>：强一致性，但性能中等</li>
+<li><strong>Etcd锁</strong>：强一致性，适合K8s环境</li>
+</ol>
+<p>选择合适的分布式锁方案需要根据业务场景、性能要求、一致性要求等因素综合考虑</p>
+<hr>
+<p>上一篇：<a href="/blog/2026/06/03/distributed-02-transaction/">聊聊分布式（二）：分布式事务</a><br>下一篇：<a href="/blog/2026/06/03/distributed-04-cache/">聊聊分布式（四）：分布式缓存</a></p>
+<p>参考资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://redis.io/docs/manual/patterns/distributed-locks/">Redis分布式锁 - Redis官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://curator.apache.org/">Curator - Apache</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/">Etcd - 官方文档</a></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://kyo7701.github.io/blog/2026/06/03/distributed-03-lock/" title="分布式锁：原理、实现与选型" target="_blank" rel="external">https://kyo7701.github.io/blog/2026/06/03/distributed-03-lock/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/kyo7701" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/blog/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/kyo7701" target="_blank"><span class="text-dark">mr_cris</span><small class="ml-1x">Backend Developer</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/blog/2026/06/03/distributed-04-cache/" title="分布式缓存：架构、问题与解决方案"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;Newer</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/blog/2026/06/03/distributed-02-transaction/" title="分布式事务：从理论到实践"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>$</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>Maybe you could buy me a cup of coffee.</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/alipayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open alipay app scan this qrcode, buy me a coffee!</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/wechatpayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open wechat app scan this qrcode, buy me a coffee!</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> alipay</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> wechat payment</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/1221310881" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/blog/js/plugin.min.js"></script>
+
+
+<script src="/blog/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/blog/',
+        CONTENT_URL: '/blog/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/blog/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'd7ac612bb7b78584fa57',
+    clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+    repo: 'blog-comment',
+    owner: 'kyo7701',
+    admin: ['kyo7701'],
+    proxy: 'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token',
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

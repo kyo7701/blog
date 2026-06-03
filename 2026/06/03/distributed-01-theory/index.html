@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>分布式系统理论基础：从CAP到一致性协议 | Hexo</title>
+  <meta name="description" content="前言在后端开发中，分布式系统已经成为了标配。但是你有没有想过，为什么分布式系统这么难设计？为什么总是要在一致性、可用性、分区容错性之间做选择？今天就来聊聊分布式系统的理论基础，这些理论是理解所有分布式系统的基石 CAP定理什么是CAPCAP定理是分布式系统中最著名的理论之一，由Eric Brewer在2000年提出 CAP代表三个特性：  C（Consistency）一致性：所有节点在同一时间看到">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式系统理论基础：从CAP到一致性协议">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2026/06/03/distributed-01-theory/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="前言在后端开发中，分布式系统已经成为了标配。但是你有没有想过，为什么分布式系统这么难设计？为什么总是要在一致性、可用性、分区容错性之间做选择？今天就来聊聊分布式系统的理论基础，这些理论是理解所有分布式系统的基石 CAP定理什么是CAPCAP定理是分布式系统中最著名的理论之一，由Eric Brewer在2000年提出 CAP代表三个特性：  C（Consistency）一致性：所有节点在同一时间看到">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-03T11:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-03T08:40:04.412Z">
+<meta property="article:author" content="mr_cris">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="理论">
+<meta property="article:tag" content="CAP">
+<meta property="article:tag" content="一致性">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2026/06/03/distributed-01-theory/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="cris&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/kyo7701" target="_blank">
+          <img class="img-circle img-rotate" src="/blog/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">mr_cris</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Backend Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">Categories</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a target="_blank" rel="noopener" href="https://github.com/kyo7701">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">Repository</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/blog/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/1221310881" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/mysql/">mysql</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/2PC/" rel="tag">2PC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/AI/" rel="tag">AI</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Agent/" rel="tag">Agent</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/CAP/" rel="tag">CAP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LLM/" rel="tag">LLM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LangChain/" rel="tag">LangChain</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LangGraph/" rel="tag">LangGraph</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Multi-Agent/" rel="tag">Multi-Agent</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/No-SQL/" rel="tag">No-SQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/RAG/" rel="tag">RAG</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Saga/" rel="tag">Saga</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/TCC/" rel="tag">TCC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Tools/" rel="tag">Tools</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/ZooKeeper/" rel="tag">ZooKeeper</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/rabbitmq/" rel="tag">rabbitmq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redis/" rel="tag">redis</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%80%E8%87%B4%E6%80%A7/" rel="tag">一致性</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%BA%8B%E5%8A%A1/" rel="tag">事务</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" rel="tag">人工智能</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%85%B6%E4%BB%96/" rel="tag">其他</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%8D%8F%E4%BD%9C/" rel="tag">协作</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" rel="tag">后端技术</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">向量数据库</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%AE%9E%E6%88%98/" rel="tag">实战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" rel="tag">工作感悟</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag">工作流</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%BC%82%E6%AD%A5/" rel="tag">异步</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" rel="tag">持久化机制</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" rel="tag">未完成</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag">消息队列</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%8A%B6%E6%80%81%E6%9C%BA/" rel="tag">状态机</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%90%86%E8%AE%BA/" rel="tag">理论</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag">索引</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BC%93%E5%AD%98/" rel="tag">缓存</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E8%A7%A3%E8%80%A6/" rel="tag">解耦</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag">负载均衡</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E9%94%81/" rel="tag">锁</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E9%A1%B9%E7%9B%AE/" rel="tag">项目</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/blog/tags/2PC/" style="font-size: 13px;">2PC</a> <a href="/blog/tags/AI/" style="font-size: 13.83px;">AI</a> <a href="/blog/tags/Agent/" style="font-size: 13.67px;">Agent</a> <a href="/blog/tags/CAP/" style="font-size: 13px;">CAP</a> <a href="/blog/tags/LLM/" style="font-size: 13.33px;">LLM</a> <a href="/blog/tags/LangChain/" style="font-size: 13.17px;">LangChain</a> <a href="/blog/tags/LangGraph/" style="font-size: 13.17px;">LangGraph</a> <a href="/blog/tags/Multi-Agent/" style="font-size: 13px;">Multi-Agent</a> <a href="/blog/tags/No-SQL/" style="font-size: 13px;">No-SQL</a> <a href="/blog/tags/Python/" style="font-size: 13px;">Python</a> <a href="/blog/tags/RAG/" style="font-size: 13px;">RAG</a> <a href="/blog/tags/Redis/" style="font-size: 13.17px;">Redis</a> <a href="/blog/tags/Saga/" style="font-size: 13px;">Saga</a> <a href="/blog/tags/TCC/" style="font-size: 13px;">TCC</a> <a href="/blog/tags/Tools/" style="font-size: 13px;">Tools</a> <a href="/blog/tags/ZooKeeper/" style="font-size: 13px;">ZooKeeper</a> <a href="/blog/tags/java/" style="font-size: 13px;">java</a> <a href="/blog/tags/mysql/" style="font-size: 13.5px;">mysql</a> <a href="/blog/tags/rabbitmq/" style="font-size: 13px;">rabbitmq</a> <a href="/blog/tags/redis/" style="font-size: 13.5px;">redis</a> <a href="/blog/tags/%E4%B8%80%E8%87%B4%E6%80%A7/" style="font-size: 13.17px;">一致性</a> <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 14px;">中间件</a> <a href="/blog/tags/%E4%BA%8B%E5%8A%A1/" style="font-size: 13px;">事务</a> <a href="/blog/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" style="font-size: 13px;">人工智能</a> <a href="/blog/tags/%E5%85%B6%E4%BB%96/" style="font-size: 13.17px;">其他</a> <a href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13.67px;">分布式</a> <a href="/blog/tags/%E5%8D%8F%E4%BD%9C/" style="font-size: 13px;">协作</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" style="font-size: 13.17px;">后端</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" style="font-size: 13.17px;">后端技术</a> <a href="/blog/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13px;">向量数据库</a> <a href="/blog/tags/%E5%AE%9E%E6%88%98/" style="font-size: 13px;">实战</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" style="font-size: 13px;">工作感悟</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" style="font-size: 13px;">工作流</a> <a href="/blog/tags/%E5%BC%82%E6%AD%A5/" style="font-size: 13px;">异步</a> <a href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" style="font-size: 13px;">持久化机制</a> <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13.33px;">数据库</a> <a href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" style="font-size: 13px;">未完成</a> <a href="/blog/tags/%E6%9D%82%E8%B0%88/" style="font-size: 13px;">杂谈</a> <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">框架</a> <a href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 13.33px;">消息队列</a> <a href="/blog/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13px;">源码</a> <a href="/blog/tags/%E7%8A%B6%E6%80%81%E6%9C%BA/" style="font-size: 13px;">状态机</a> <a href="/blog/tags/%E7%90%86%E8%AE%BA/" style="font-size: 13px;">理论</a> <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 13px;">索引</a> <a href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 13px;">线程池</a> <a href="/blog/tags/%E7%BC%93%E5%AD%98/" style="font-size: 13px;">缓存</a> <a href="/blog/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13px;">网络</a> <a href="/blog/tags/%E8%A7%A3%E8%80%A6/" style="font-size: 13px;">解耦</a> <a href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" style="font-size: 13px;">负载均衡</a> <a href="/blog/tags/%E9%94%81/" style="font-size: 13px;">锁</a> <a href="/blog/tags/%E9%A1%B9%E7%9B%AE/" style="font-size: 13px;">项目</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2026/06/">June 2026</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/06/">June 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/03/">March 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/05/">May 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/04/">April 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/12/">December 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/08/">August 2019</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-05-mq/" class="title">分布式消息队列：原理、架构与实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:40:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-04-cache/" class="title">分布式缓存：架构、问题与解决方案</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:30:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-03-lock/" class="title">分布式锁：原理、实现与选型</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:20:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-02-transaction/" class="title">分布式事务：从理论到实践</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:10:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/distributed-01-theory/" class="title">分布式系统理论基础：从CAP到一致性协议</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T11:00:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-distributed-01-theory" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      分布式系统理论基础：从CAP到一致性协议
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/blog/2026/06/03/distributed-01-theory/" class="article-date">
+	  <time datetime="2026-06-03T11:00:00.000Z" itemprop="datePublished">2026-06-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/blog/tags/CAP/" rel="tag">CAP</a>, <a class="article-tag-link-link" href="/blog/tags/%E4%B8%80%E8%87%B4%E6%80%A7/" rel="tag">一致性</a>, <a class="article-tag-link-link" href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a>, <a class="article-tag-link-link" href="/blog/tags/%E7%90%86%E8%AE%BA/" rel="tag">理论</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2026/06/03/distributed-01-theory/#comments" class="article-comment-link">Comments</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 2k(words)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 7(minutes)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在后端开发中，分布式系统已经成为了标配。但是你有没有想过，为什么分布式系统这么难设计？为什么总是要在一致性、可用性、分区容错性之间做选择？今天就来聊聊分布式系统的理论基础，这些理论是理解所有分布式系统的基石</p>
+<h1 id="CAP定理"><a href="#CAP定理" class="headerlink" title="CAP定理"></a>CAP定理</h1><h2 id="什么是CAP"><a href="#什么是CAP" class="headerlink" title="什么是CAP"></a>什么是CAP</h2><p>CAP定理是分布式系统中最著名的理论之一，由Eric Brewer在2000年提出</p>
+<p>CAP代表三个特性：</p>
+<ul>
+<li><strong>C（Consistency）一致性</strong>：所有节点在同一时间看到相同的数据</li>
+<li><strong>A（Availability）可用性</strong>：每个请求都能收到一个（非错误）响应</li>
+<li><strong>P（Partition Tolerance）分区容错性</strong>：系统在网络分区的情况下仍能继续运行</li>
+</ul>
+<h2 id="CAP的不可能三角"><a href="#CAP的不可能三角" class="headerlink" title="CAP的不可能三角"></a>CAP的不可能三角</h2><p>CAP定理指出，在一个分布式系统中，最多只能同时满足这三个特性中的两个</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">        C（一致性）</span><br><span class="line">       / \</span><br><span class="line">      /   \</span><br><span class="line">     /     \</span><br><span class="line">    /       \</span><br><span class="line">   /         \</span><br><span class="line">  A ————————— P</span><br><span class="line">（可用性）  （分区容错性）</span><br></pre></td></tr></table></figure>
+
+<p>这意味着我们只能在以下三种组合中选择：</p>
+<ol>
+<li><strong>CP系统</strong>：保证一致性和分区容错性，但可能牺牲可用性</li>
+<li><strong>AP系统</strong>：保证可用性和分区容错性，但可能牺牲一致性</li>
+<li><strong>CA系统</strong>：保证一致性和可用性，但无法处理分区</li>
+</ol>
+<h2 id="为什么P是必须的"><a href="#为什么P是必须的" class="headerlink" title="为什么P是必须的"></a>为什么P是必须的</h2><p>在分布式系统中，网络分区是不可避免的。网络可能断开、服务器可能宕机、延迟可能很高。因此，实际上我们只能在CP和AP之间选择</p>
+<h2 id="CP系统的例子"><a href="#CP系统的例子" class="headerlink" title="CP系统的例子"></a>CP系统的例子</h2><ul>
+<li><strong>ZooKeeper</strong>：分布式协调服务，保证强一致性</li>
+<li><strong>etcd</strong>：键值存储，用于配置管理</li>
+<li><strong>HBase</strong>：分布式数据库，保证强一致性</li>
+</ul>
+<p>当发生网络分区时，CP系统可能会拒绝某些请求，以保证一致性</p>
+<h2 id="AP系统的例子"><a href="#AP系统的例子" class="headerlink" title="AP系统的例子"></a>AP系统的例子</h2><ul>
+<li><strong>Cassandra</strong>：分布式数据库，保证最终一致性</li>
+<li><strong>DynamoDB</strong>：亚马逊的键值存储</li>
+<li><strong>Eureka</strong>：服务注册中心</li>
+</ul>
+<p>当发生网络分区时，AP系统可能会返回过期数据，但保证服务可用</p>
+<h1 id="BASE理论"><a href="#BASE理论" class="headerlink" title="BASE理论"></a>BASE理论</h1><h2 id="什么是BASE"><a href="#什么是BASE" class="headerlink" title="什么是BASE"></a>什么是BASE</h2><p>BASE理论是对CAP定理的延伸，它提出了另一种思路</p>
+<p>BASE代表：</p>
+<ul>
+<li><strong>BA（Basically Available）基本可用</strong>：系统保证基本可用，允许损失部分可用性</li>
+<li><strong>S（Soft State）软状态</strong>：系统状态可以随时间变化，不要求实时一致</li>
+<li><strong>E（Eventually Consistent）最终一致性</strong>：系统最终会达到一致状态</li>
+</ul>
+<h2 id="BASE-vs-ACID"><a href="#BASE-vs-ACID" class="headerlink" title="BASE vs ACID"></a>BASE vs ACID</h2><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>ACID</th>
+<th>BASE</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一致性</td>
+<td>强一致性</td>
+<td>最终一致性</td>
+</tr>
+<tr>
+<td>可用性</td>
+<td>可能牺牲</td>
+<td>基本可用</td>
+</tr>
+<tr>
+<td>事务</td>
+<td>严格事务</td>
+<td>柔性事务</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>传统数据库</td>
+<td>分布式系统</td>
+</tr>
+</tbody></table>
+<h2 id="最终一致性的模型"><a href="#最终一致性的模型" class="headerlink" title="最终一致性的模型"></a>最终一致性的模型</h2><p>最终一致性有多种变体：</p>
+<ol>
+<li><strong>因果一致性</strong>：保证因果关系的操作顺序</li>
+<li><strong>读己之所写</strong>：用户总能读到自己写的数据</li>
+<li><strong>会话一致性</strong>：在会话范围内保证一致性</li>
+<li><strong>单调读一致性</strong>：读取操作不会读到更旧的数据</li>
+<li><strong>单调写一致性</strong>：写操作按顺序执行</li>
+</ol>
+<h1 id="一致性协议"><a href="#一致性协议" class="headerlink" title="一致性协议"></a>一致性协议</h1><h2 id="Paxos"><a href="#Paxos" class="headerlink" title="Paxos"></a>Paxos</h2><h3 id="什么是Paxos"><a href="#什么是Paxos" class="headerlink" title="什么是Paxos"></a>什么是Paxos</h3><p>Paxos是Lamport在1990年提出的一致性协议，被公认为最难理解的分布式协议之一</p>
+<p>Paxos解决的问题是：在一个可能发生网络分区的分布式系统中，如何就某个值达成一致</p>
+<h3 id="Paxos的角色"><a href="#Paxos的角色" class="headerlink" title="Paxos的角色"></a>Paxos的角色</h3><p>Paxos中有三种角色：</p>
+<ol>
+<li><strong>Proposer（提议者）</strong>：提出提案</li>
+<li><strong>Acceptor（接受者）</strong>：投票决定是否接受提案</li>
+<li><strong>Learner（学习者）</strong>：学习最终达成一致的值</li>
+</ol>
+<h3 id="Paxos的两个阶段"><a href="#Paxos的两个阶段" class="headerlink" title="Paxos的两个阶段"></a>Paxos的两个阶段</h3><p><strong>阶段一：Prepare阶段</strong></p>
+<ol>
+<li>Proposer选择一个提案号n，向所有Acceptor发送Prepare(n)请求</li>
+<li>Acceptor收到Prepare(n)后，如果n大于它已经响应的所有提案号，则承诺不再接受编号小于n的提案</li>
+<li>Acceptor返回它已经接受的最大编号提案</li>
+</ol>
+<p><strong>阶段二：Accept阶段</strong></p>
+<ol>
+<li>如果Proposer收到了多数Acceptor的响应，它会发送Accept(n, v)请求</li>
+<li>v是响应中编号最大的提案的值，如果没有则Proposer可以自己决定值</li>
+<li>Acceptor收到Accept(n, v)后，如果n不小于它承诺的最小提案号，则接受该提案</li>
+</ol>
+<h3 id="Paxos的问题"><a href="#Paxos的问题" class="headerlink" title="Paxos的问题"></a>Paxos的问题</h3><ol>
+<li><strong>活锁问题</strong>：多个Proposer交替提出提案，导致无法达成一致</li>
+<li><strong>实现复杂</strong>：Paxos的正确实现非常困难</li>
+<li><strong>性能问题</strong>：需要两轮通信</li>
+</ol>
+<h2 id="Raft"><a href="#Raft" class="headerlink" title="Raft"></a>Raft</h2><h3 id="什么是Raft"><a href="#什么是Raft" class="headerlink" title="什么是Raft"></a>什么是Raft</h3><p>Raft是2014年提出的一致性协议，设计目标是比Paxos更容易理解</p>
+<p>Raft将问题分解为三个子问题：</p>
+<ol>
+<li><strong>领导选举（Leader Election）</strong></li>
+<li><strong>日志复制（Log Replication）</strong></li>
+<li><strong>安全性（Safety）</strong></li>
+</ol>
+<h3 id="Raft的角色"><a href="#Raft的角色" class="headerlink" title="Raft的角色"></a>Raft的角色</h3><p>Raft中有三种角色：</p>
+<ol>
+<li><strong>Leader（领导者）</strong>：处理所有客户端请求</li>
+<li><strong>Follower（追随者）</strong>：被动接收Leader的指令</li>
+<li><strong>Candidate（候选者）</strong>：参与领导选举</li>
+</ol>
+<h3 id="领导选举"><a href="#领导选举" class="headerlink" title="领导选举"></a>领导选举</h3><ol>
+<li>所有节点初始状态为Follower</li>
+<li>Follower在超时后变为Candidate，发起选举</li>
+<li>Candidate向其他节点请求投票</li>
+<li>获得多数票的Candidate变为Leader</li>
+<li>Leader定期发送心跳维持领导地位</li>
+</ol>
+<h3 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h3><ol>
+<li>客户端发送命令给Leader</li>
+<li>Leader将命令追加到日志</li>
+<li>Leader并行发送AppendEntries RPC给所有Follower</li>
+<li>多数Follower确认后，Leader提交日志</li>
+<li>Leader通知Follower提交日志</li>
+</ol>
+<h3 id="安全性"><a href="#安全性" class="headerlink" title="安全性"></a>安全性</h3><ul>
+<li><strong>选举限制</strong>：只有包含所有已提交日志的节点才能成为Leader</li>
+<li><strong>提交规则</strong>：Leader只能提交当前任期的日志</li>
+<li><strong>日志匹配</strong>：如果两个日志在某个索引处相同，则之前的所有日志也相同</li>
+</ul>
+<h2 id="ZAB协议"><a href="#ZAB协议" class="headerlink" title="ZAB协议"></a>ZAB协议</h2><h3 id="什么是ZAB"><a href="#什么是ZAB" class="headerlink" title="什么是ZAB"></a>什么是ZAB</h3><p>ZAB（ZooKeeper Atomic Broadcast）是ZooKeeper使用的协议</p>
+<p>ZAB有两种模式：</p>
+<ol>
+<li><strong>崩溃恢复（Recovery）</strong>：选举新的Leader</li>
+<li><strong>消息广播（Broadcast）</strong>：Leader广播消息给Follower</li>
+</ol>
+<h3 id="ZAB-vs-Raft"><a href="#ZAB-vs-Raft" class="headerlink" title="ZAB vs Raft"></a>ZAB vs Raft</h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>ZAB</th>
+<th>Raft</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>选举</td>
+<td>基于zxid</td>
+<td>基于任期</td>
+</tr>
+<tr>
+<td>日志复制</td>
+<td>两阶段</td>
+<td>追加</td>
+</tr>
+<tr>
+<td>提交</td>
+<td>两阶段</td>
+<td>多数确认</td>
+</tr>
+</tbody></table>
+<h1 id="一致性哈希"><a href="#一致性哈希" class="headerlink" title="一致性哈希"></a>一致性哈希</h1><h2 id="为什么需要一致性哈希"><a href="#为什么需要一致性哈希" class="headerlink" title="为什么需要一致性哈希"></a>为什么需要一致性哈希</h2><p>在分布式系统中，我们经常需要将数据分布到多个节点。传统的取模哈希（hash % n）有一个问题：当节点数量变化时，几乎所有数据都需要重新分布</p>
+<h2 id="一致性哈希的原理"><a href="#一致性哈希的原理" class="headerlink" title="一致性哈希的原理"></a>一致性哈希的原理</h2><p>一致性哈希将整个哈希值空间组织成一个虚拟的环：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">    0</span><br><span class="line">   / \</span><br><span class="line">  /   \</span><br><span class="line">n1     n2</span><br><span class="line"> |     |</span><br><span class="line"> |     |</span><br><span class="line">n3     n4</span><br><span class="line">  \   /</span><br><span class="line">   \ /</span><br><span class="line">    n</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>将节点映射到环上</li>
+<li>将数据映射到环上</li>
+<li>数据由顺时针方向遇到的第一个节点负责</li>
+</ol>
+<h2 id="数据倾斜问题"><a href="#数据倾斜问题" class="headerlink" title="数据倾斜问题"></a>数据倾斜问题</h2><p>当节点数量较少时，可能会出现数据分布不均匀的问题</p>
+<p>解决方案：<strong>虚拟节点</strong></p>
+<p>每个物理节点对应多个虚拟节点，虚拟节点均匀分布在环上</p>
+<h1 id="分布式ID生成"><a href="#分布式ID生成" class="headerlink" title="分布式ID生成"></a>分布式ID生成</h1><h2 id="为什么需要分布式ID"><a href="#为什么需要分布式ID" class="headerlink" title="为什么需要分布式ID"></a>为什么需要分布式ID</h2><p>在分布式系统中，我们需要生成全局唯一的ID，用于标识订单、用户、消息等</p>
+<h2 id="常见方案"><a href="#常见方案" class="headerlink" title="常见方案"></a>常见方案</h2><h3 id="UUID"><a href="#UUID" class="headerlink" title="UUID"></a>UUID</h3><ul>
+<li>优点：简单、无中心化</li>
+<li>缺点：无序、存储空间大、不适合做主键</li>
+</ul>
+<h3 id="数据库自增"><a href="#数据库自增" class="headerlink" title="数据库自增"></a>数据库自增</h3><ul>
+<li>优点：简单、有序</li>
+<li>缺点：单点瓶颈、扩展性差</li>
+</ul>
+<h3 id="号段模式"><a href="#号段模式" class="headerlink" title="号段模式"></a>号段模式</h3><ul>
+<li>使用数据库存储号段，应用从号段中获取ID</li>
+<li>优点：性能好、扩展性好</li>
+<li>缺点：实现复杂</li>
+</ul>
+<h3 id="Snowflake算法"><a href="#Snowflake算法" class="headerlink" title="Snowflake算法"></a>Snowflake算法</h3><ul>
+<li>64位ID = 1位符号 + 41位时间戳 + 10位机器ID + 12位序列号</li>
+<li>优点：有序、高性能、去中心化</li>
+<li>缺点：依赖时钟</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>今天我们学习了分布式系统的理论基础</p>
+<ol>
+<li><strong>CAP定理</strong>：一致性、可用性、分区容错性三选二</li>
+<li><strong>BASE理论</strong>：基本可用、软状态、最终一致性</li>
+<li><strong>一致性协议</strong>：Paxos、Raft、ZAB</li>
+<li><strong>一致性哈希</strong>：解决数据分布问题</li>
+<li><strong>分布式ID</strong>：解决全局唯一ID问题</li>
+</ol>
+<p>这些理论是理解所有分布式系统的基石，在接下来的文章中，我们将深入探讨分布式事务、分布式锁等具体问题</p>
+<hr>
+<p>下一篇：<a href="/blog/2026/06/03/distributed-02-transaction/">聊聊分布式（二）：分布式事务</a></p>
+<p>参考资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CAP_theorem">CAP定理 - Wikipedia</a></li>
+<li><a target="_blank" rel="noopener" href="https://raft.github.io/raft.pdf">Raft论文</a></li>
+<li><a target="_blank" rel="noopener" href="https://lamport.azurewebsites.net/pubs/paxos-simple.pdf">Paxos论文</a></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://kyo7701.github.io/blog/2026/06/03/distributed-01-theory/" title="分布式系统理论基础：从CAP到一致性协议" target="_blank" rel="external">https://kyo7701.github.io/blog/2026/06/03/distributed-01-theory/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/kyo7701" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/blog/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/kyo7701" target="_blank"><span class="text-dark">mr_cris</span><small class="ml-1x">Backend Developer</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/blog/2026/06/03/distributed-02-transaction/" title="分布式事务：从理论到实践"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;Newer</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/blog/2026/06/03/ai-agent-08-practice/" title="聊聊AI Agent（八）：Agent实战"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>$</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>Maybe you could buy me a cup of coffee.</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/alipayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open alipay app scan this qrcode, buy me a coffee!</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/wechatpayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open wechat app scan this qrcode, buy me a coffee!</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> alipay</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> wechat payment</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/1221310881" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/blog/js/plugin.min.js"></script>
+
+
+<script src="/blog/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/blog/',
+        CONTENT_URL: '/blog/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/blog/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'd7ac612bb7b78584fa57',
+    clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+    repo: 'blog-comment',
+    owner: 'kyo7701',
+    admin: ['kyo7701'],
+    proxy: 'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token',
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
