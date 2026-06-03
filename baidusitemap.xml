@@ -1,6 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-08-practice/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-07-multi-agent/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-06-langgraph-advanced/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-05-langgraph-basics/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-04-langchain-advanced/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-03-langchain-basics/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-02-rag/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-01-overview/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
     <loc>https://kyo7701.github.io/blog/blog/2020/06/04/about-redis-data-structure/</loc>
     <lastmod>2026-06-03</lastmod>
   </url>

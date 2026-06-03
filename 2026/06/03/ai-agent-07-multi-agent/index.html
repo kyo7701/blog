@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>聊聊AI Agent（七）：多Agent编排 | Hexo</title>
+  <meta name="description" content="前言在前面的文章中，我们学习了如何构建单个Agent。但是现实世界中的任务往往很复杂，单个Agent可能无法很好地完成。这时候就需要多个Agent协作来完成任务。今天就来聊聊多Agent编排的概念和实现 什么是多Agent编排多Agent编排（Multi-Agent Orchestration）是指协调多个Agent共同完成复杂任务的技术 用通俗的话来说，多Agent编排就像是一个团队协作，每个A">
+<meta property="og:type" content="article">
+<meta property="og:title" content="聊聊AI Agent（七）：多Agent编排">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2026/06/03/ai-agent-07-multi-agent/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="前言在前面的文章中，我们学习了如何构建单个Agent。但是现实世界中的任务往往很复杂，单个Agent可能无法很好地完成。这时候就需要多个Agent协作来完成任务。今天就来聊聊多Agent编排的概念和实现 什么是多Agent编排多Agent编排（Multi-Agent Orchestration）是指协调多个Agent共同完成复杂任务的技术 用通俗的话来说，多Agent编排就像是一个团队协作，每个A">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-03T10:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-03T08:23:02.660Z">
+<meta property="article:author" content="mr_cris">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="Multi-Agent">
+<meta property="article:tag" content="协作">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2026/06/03/ai-agent-07-multi-agent/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="cris&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/kyo7701" target="_blank">
+          <img class="img-circle img-rotate" src="/blog/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">mr_cris</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Backend Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">Categories</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a target="_blank" rel="noopener" href="https://github.com/kyo7701">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">Repository</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/blog/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/1221310881" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/mysql/">mysql</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/AI/" rel="tag">AI</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Agent/" rel="tag">Agent</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LLM/" rel="tag">LLM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LangChain/" rel="tag">LangChain</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LangGraph/" rel="tag">LangGraph</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Multi-Agent/" rel="tag">Multi-Agent</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/No-SQL/" rel="tag">No-SQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/RAG/" rel="tag">RAG</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Tools/" rel="tag">Tools</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/rabbitmq/" rel="tag">rabbitmq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redis/" rel="tag">redis</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" rel="tag">人工智能</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%85%B6%E4%BB%96/" rel="tag">其他</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%8D%8F%E4%BD%9C/" rel="tag">协作</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" rel="tag">后端技术</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">向量数据库</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%AE%9E%E6%88%98/" rel="tag">实战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" rel="tag">工作感悟</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag">工作流</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" rel="tag">持久化机制</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" rel="tag">未完成</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag">消息队列</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%8A%B6%E6%80%81%E6%9C%BA/" rel="tag">状态机</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag">索引</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag">负载均衡</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E9%A1%B9%E7%9B%AE/" rel="tag">项目</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/blog/tags/AI/" style="font-size: 13.83px;">AI</a> <a href="/blog/tags/Agent/" style="font-size: 13.67px;">Agent</a> <a href="/blog/tags/LLM/" style="font-size: 13.33px;">LLM</a> <a href="/blog/tags/LangChain/" style="font-size: 13.17px;">LangChain</a> <a href="/blog/tags/LangGraph/" style="font-size: 13.17px;">LangGraph</a> <a href="/blog/tags/Multi-Agent/" style="font-size: 13px;">Multi-Agent</a> <a href="/blog/tags/No-SQL/" style="font-size: 13px;">No-SQL</a> <a href="/blog/tags/Python/" style="font-size: 13px;">Python</a> <a href="/blog/tags/RAG/" style="font-size: 13px;">RAG</a> <a href="/blog/tags/Tools/" style="font-size: 13px;">Tools</a> <a href="/blog/tags/java/" style="font-size: 13px;">java</a> <a href="/blog/tags/mysql/" style="font-size: 13.5px;">mysql</a> <a href="/blog/tags/rabbitmq/" style="font-size: 13px;">rabbitmq</a> <a href="/blog/tags/redis/" style="font-size: 13.5px;">redis</a> <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 14px;">中间件</a> <a href="/blog/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" style="font-size: 13px;">人工智能</a> <a href="/blog/tags/%E5%85%B6%E4%BB%96/" style="font-size: 13.17px;">其他</a> <a href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/blog/tags/%E5%8D%8F%E4%BD%9C/" style="font-size: 13px;">协作</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" style="font-size: 13.17px;">后端</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" style="font-size: 13.17px;">后端技术</a> <a href="/blog/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13px;">向量数据库</a> <a href="/blog/tags/%E5%AE%9E%E6%88%98/" style="font-size: 13px;">实战</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" style="font-size: 13px;">工作感悟</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" style="font-size: 13px;">工作流</a> <a href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" style="font-size: 13px;">持久化机制</a> <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13.33px;">数据库</a> <a href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" style="font-size: 13px;">未完成</a> <a href="/blog/tags/%E6%9D%82%E8%B0%88/" style="font-size: 13px;">杂谈</a> <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">框架</a> <a href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 13.17px;">消息队列</a> <a href="/blog/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13px;">源码</a> <a href="/blog/tags/%E7%8A%B6%E6%80%81%E6%9C%BA/" style="font-size: 13px;">状态机</a> <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 13px;">索引</a> <a href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 13px;">线程池</a> <a href="/blog/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13px;">网络</a> <a href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" style="font-size: 13px;">负载均衡</a> <a href="/blog/tags/%E9%A1%B9%E7%9B%AE/" style="font-size: 13px;">项目</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2026/06/">June 2026</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/06/">June 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/03/">March 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/05/">May 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/04/">April 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/12/">December 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/08/">August 2019</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-08-practice/" class="title">聊聊AI Agent（八）：Agent实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T10:10:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-07-multi-agent/" class="title">聊聊AI Agent（七）：多Agent编排</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T10:00:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-06-langgraph-advanced/" class="title">聊聊AI Agent（六）：LangGraph进阶</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T09:50:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-05-langgraph-basics/" class="title">聊聊AI Agent（五）：LangGraph入门</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T09:40:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-04-langchain-advanced/" class="title">聊聊AI Agent（四）：LangChain进阶</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T09:30:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-ai-agent-07-multi-agent" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      聊聊AI Agent（七）：多Agent编排
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/blog/2026/06/03/ai-agent-07-multi-agent/" class="article-date">
+	  <time datetime="2026-06-03T10:00:00.000Z" itemprop="datePublished">2026-06-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/blog/tags/AI/" rel="tag">AI</a>, <a class="article-tag-link-link" href="/blog/tags/Agent/" rel="tag">Agent</a>, <a class="article-tag-link-link" href="/blog/tags/Multi-Agent/" rel="tag">Multi-Agent</a>, <a class="article-tag-link-link" href="/blog/tags/%E5%8D%8F%E4%BD%9C/" rel="tag">协作</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2026/06/03/ai-agent-07-multi-agent/#comments" class="article-comment-link">Comments</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 2.7k(words)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 13(minutes)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在前面的文章中，我们学习了如何构建单个Agent。但是现实世界中的任务往往很复杂，单个Agent可能无法很好地完成。这时候就需要多个Agent协作来完成任务。今天就来聊聊多Agent编排的概念和实现</p>
+<h1 id="什么是多Agent编排"><a href="#什么是多Agent编排" class="headerlink" title="什么是多Agent编排"></a>什么是多Agent编排</h1><p>多Agent编排（Multi-Agent Orchestration）是指协调多个Agent共同完成复杂任务的技术</p>
+<p>用通俗的话来说，多Agent编排就像是一个团队协作，每个Agent负责不同的任务，通过协作来完成更大的目标</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">任务</span><br><span class="line">  ↓</span><br><span class="line">[协调Agent]</span><br><span class="line">  ↙    ↓    ↘</span><br><span class="line">[Agent1] [Agent2] [Agent3]</span><br><span class="line">  ↘    ↓    ↙</span><br><span class="line">[汇总Agent]</span><br><span class="line">  ↓</span><br><span class="line">结果</span><br></pre></td></tr></table></figure>
+
+<h1 id="为什么需要多Agent编排"><a href="#为什么需要多Agent编排" class="headerlink" title="为什么需要多Agent编排"></a>为什么需要多Agent编排</h1><p>那么为什么需要多Agent编排呢？我们来看看单Agent的局限性</p>
+<h2 id="单Agent的局限性"><a href="#单Agent的局限性" class="headerlink" title="单Agent的局限性"></a>单Agent的局限性</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 单Agent处理复杂任务</span></span><br><span class="line">agent = Agent(</span><br><span class="line">    llm=llm,</span><br><span class="line">    tools=[search, code, write, analyze, ...]  <span class="comment"># 工具太多</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 问题：</span></span><br><span class="line"><span class="comment"># 1. 工具太多，选择困难</span></span><br><span class="line"><span class="comment"># 2. 上下文窗口有限</span></span><br><span class="line"><span class="comment"># 3. 任务太复杂，难以处理</span></span><br><span class="line"><span class="comment"># 4. 无法并行处理</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="多Agent的优势"><a href="#多Agent的优势" class="headerlink" title="多Agent的优势"></a>多Agent的优势</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 多Agent协作</span></span><br><span class="line">researcher = Agent(tools=[search, read])  <span class="comment"># 研究员</span></span><br><span class="line">coder = Agent(tools=[code, debug])        <span class="comment"># 程序员</span></span><br><span class="line">writer = Agent(tools=[write, edit])       <span class="comment"># 作家</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 优势：</span></span><br><span class="line"><span class="comment"># 1. 专业化分工</span></span><br><span class="line"><span class="comment"># 2. 并行处理</span></span><br><span class="line"><span class="comment"># 3. 更好的上下文管理</span></span><br><span class="line"><span class="comment"># 4. 更灵活的协作模式</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="多Agent的协作模式"><a href="#多Agent的协作模式" class="headerlink" title="多Agent的协作模式"></a>多Agent的协作模式</h1><h2 id="1-顺序协作（Sequential）"><a href="#1-顺序协作（Sequential）" class="headerlink" title="1. 顺序协作（Sequential）"></a>1. 顺序协作（Sequential）</h2><p>Agent按照顺序依次执行任务</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">State</span>(<span class="params">TypedDict</span>):</span></span><br><span class="line">    task: <span class="built_in">str</span></span><br><span class="line">    research: <span class="built_in">str</span></span><br><span class="line">    code: <span class="built_in">str</span></span><br><span class="line">    document: <span class="built_in">str</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">researcher</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;研究员：进行调研&quot;&quot;&quot;</span></span><br><span class="line">    result = research_agent.run(state[<span class="string">&quot;task&quot;</span>])</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;research&quot;</span>: result&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">coder</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;程序员：编写代码&quot;&quot;&quot;</span></span><br><span class="line">    result = code_agent.run(state[<span class="string">&quot;research&quot;</span>])</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;code&quot;</span>: result&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">writer</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;作家：撰写文档&quot;&quot;&quot;</span></span><br><span class="line">    result = write_agent.run(state[<span class="string">&quot;code&quot;</span>])</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;document&quot;</span>: result&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建顺序协作图</span></span><br><span class="line">graph = StateGraph(State)</span><br><span class="line">graph.add_node(<span class="string">&quot;researcher&quot;</span>, researcher)</span><br><span class="line">graph.add_node(<span class="string">&quot;coder&quot;</span>, coder)</span><br><span class="line">graph.add_node(<span class="string">&quot;writer&quot;</span>, writer)</span><br><span class="line"></span><br><span class="line">graph.set_entry_point(<span class="string">&quot;researcher&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;researcher&quot;</span>, <span class="string">&quot;coder&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;coder&quot;</span>, <span class="string">&quot;writer&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;writer&quot;</span>, END)</span><br><span class="line"></span><br><span class="line">app = graph.<span class="built_in">compile</span>()</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-并行协作（Parallel）"><a href="#2-并行协作（Parallel）" class="headerlink" title="2. 并行协作（Parallel）"></a>2. 并行协作（Parallel）</h2><p>多个Agent同时执行任务</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END, Send</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">State</span>(<span class="params">TypedDict</span>):</span></span><br><span class="line">    task: <span class="built_in">str</span></span><br><span class="line">    result_a: <span class="built_in">str</span></span><br><span class="line">    result_b: <span class="built_in">str</span></span><br><span class="line">    final_result: <span class="built_in">str</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">analyst_a</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;分析师A&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;result_a&quot;</span>: <span class="string">f&quot;A分析: <span class="subst">&#123;state[<span class="string">&#x27;task&#x27;</span>]&#125;</span>&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">analyst_b</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;分析师B&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;result_b&quot;</span>: <span class="string">f&quot;B分析: <span class="subst">&#123;state[<span class="string">&#x27;task&#x27;</span>]&#125;</span>&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">synthesizer</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;汇总者&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;final_result&quot;</span>: <span class="string">f&quot;<span class="subst">&#123;state[<span class="string">&#x27;result_a&#x27;</span>]&#125;</span> + <span class="subst">&#123;state[<span class="string">&#x27;result_b&#x27;</span>]&#125;</span>&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建并行协作图</span></span><br><span class="line">graph = StateGraph(State)</span><br><span class="line">graph.add_node(<span class="string">&quot;analyst_a&quot;</span>, analyst_a)</span><br><span class="line">graph.add_node(<span class="string">&quot;analyst_b&quot;</span>, analyst_b)</span><br><span class="line">graph.add_node(<span class="string">&quot;synthesizer&quot;</span>, synthesizer)</span><br><span class="line"></span><br><span class="line">graph.set_entry_point(<span class="string">&quot;start&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;start&quot;</span>, <span class="string">&quot;analyst_a&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;start&quot;</span>, <span class="string">&quot;analyst_b&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;analyst_a&quot;</span>, <span class="string">&quot;synthesizer&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;analyst_b&quot;</span>, <span class="string">&quot;synthesizer&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;synthesizer&quot;</span>, END)</span><br><span class="line"></span><br><span class="line">app = graph.<span class="built_in">compile</span>()</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-层级协作（Hierarchical）"><a href="#3-层级协作（Hierarchical）" class="headerlink" title="3. 层级协作（Hierarchical）"></a>3. 层级协作（Hierarchical）</h2><p>存在管理层级，上级Agent分配任务给下级Agent</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">State</span>(<span class="params">TypedDict</span>):</span></span><br><span class="line">    task: <span class="built_in">str</span></span><br><span class="line">    subtasks: <span class="type">List</span>[<span class="built_in">str</span>]</span><br><span class="line">    results: <span class="type">List</span>[<span class="built_in">str</span>]</span><br><span class="line">    final_result: <span class="built_in">str</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">manager</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;管理者：分解任务&quot;&quot;&quot;</span></span><br><span class="line">    subtasks = manager_agent.run(<span class="string">f&quot;将以下任务分解为子任务：<span class="subst">&#123;state[<span class="string">&#x27;task&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;subtasks&quot;</span>: subtasks&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">worker</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;工作者：执行子任务&quot;&quot;&quot;</span></span><br><span class="line">    <span class="comment"># 这里会并行执行多个worker</span></span><br><span class="line">    results = []</span><br><span class="line">    <span class="keyword">for</span> subtask <span class="keyword">in</span> state[<span class="string">&quot;subtasks&quot;</span>]:</span><br><span class="line">        result = worker_agent.run(subtask)</span><br><span class="line">        results.append(result)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;results&quot;</span>: results&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">reviewer</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;审核者：审核结果&quot;&quot;&quot;</span></span><br><span class="line">    final_result = reviewer_agent.run(<span class="string">f&quot;审核以下结果：<span class="subst">&#123;state[<span class="string">&#x27;results&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;final_result&quot;</span>: final_result&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建层级协作图</span></span><br><span class="line">graph = StateGraph(State)</span><br><span class="line">graph.add_node(<span class="string">&quot;manager&quot;</span>, manager)</span><br><span class="line">graph.add_node(<span class="string">&quot;worker&quot;</span>, worker)</span><br><span class="line">graph.add_node(<span class="string">&quot;reviewer&quot;</span>, reviewer)</span><br><span class="line"></span><br><span class="line">graph.set_entry_point(<span class="string">&quot;manager&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;manager&quot;</span>, <span class="string">&quot;worker&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;worker&quot;</span>, <span class="string">&quot;reviewer&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;reviewer&quot;</span>, END)</span><br><span class="line"></span><br><span class="line">app = graph.<span class="built_in">compile</span>()</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-辩论协作（Debate）"><a href="#4-辩论协作（Debate）" class="headerlink" title="4. 辩论协作（Debate）"></a>4. 辩论协作（Debate）</h2><p>多个Agent进行辩论，最终达成共识</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">State</span>(<span class="params">TypedDict</span>):</span></span><br><span class="line">    topic: <span class="built_in">str</span></span><br><span class="line">    arguments: <span class="type">List</span>[<span class="built_in">str</span>]</span><br><span class="line">    counter_arguments: <span class="type">List</span>[<span class="built_in">str</span>]</span><br><span class="line">    consensus: <span class="built_in">str</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">debater_a</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;辩手A：提出论点&quot;&quot;&quot;</span></span><br><span class="line">    argument = debater_a_agent.run(<span class="string">f&quot;关于<span class="subst">&#123;state[<span class="string">&#x27;topic&#x27;</span>]&#125;</span>，请提出你的论点&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;arguments&quot;</span>: [argument]&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">debater_b</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;辩手B：提出反驳&quot;&quot;&quot;</span></span><br><span class="line">    counter = debater_b_agent.run(<span class="string">f&quot;反驳以下论点：<span class="subst">&#123;state[<span class="string">&#x27;arguments&#x27;</span>][-<span class="number">1</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;counter_arguments&quot;</span>: [counter]&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">judge</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;裁判：总结辩论&quot;&quot;&quot;</span></span><br><span class="line">    consensus = judge_agent.run(<span class="string">f&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    辩论主题：<span class="subst">&#123;state[<span class="string">&#x27;topic&#x27;</span>]&#125;</span></span></span><br><span class="line"><span class="string">    正方论点：<span class="subst">&#123;state[<span class="string">&#x27;arguments&#x27;</span>]&#125;</span></span></span><br><span class="line"><span class="string">    反方论点：<span class="subst">&#123;state[<span class="string">&#x27;counter_arguments&#x27;</span>]&#125;</span></span></span><br><span class="line"><span class="string">    请给出最终结论</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;consensus&quot;</span>: consensus&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建辩论协作图</span></span><br><span class="line">graph = StateGraph(State)</span><br><span class="line">graph.add_node(<span class="string">&quot;debater_a&quot;</span>, debater_a)</span><br><span class="line">graph.add_node(<span class="string">&quot;debater_b&quot;</span>, debater_b)</span><br><span class="line">graph.add_node(<span class="string">&quot;judge&quot;</span>, judge)</span><br><span class="line"></span><br><span class="line">graph.set_entry_point(<span class="string">&quot;debater_a&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;debater_a&quot;</span>, <span class="string">&quot;debater_b&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;debater_b&quot;</span>, <span class="string">&quot;debater_a&quot;</span>)  <span class="comment"># 循环辩论</span></span><br><span class="line"><span class="comment"># 或者设置最大轮数后进入judge</span></span><br><span class="line"></span><br><span class="line">app = graph.<span class="built_in">compile</span>()</span><br></pre></td></tr></table></figure>
+
+<h1 id="使用LangGraph实现多Agent"><a href="#使用LangGraph实现多Agent" class="headerlink" title="使用LangGraph实现多Agent"></a>使用LangGraph实现多Agent</h1><p>让我们来实现一个完整的多Agent系统</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"><span class="keyword">from</span> langchain.tools <span class="keyword">import</span> tool</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, <span class="type">List</span>, Annotated</span><br><span class="line"><span class="keyword">import</span> operator</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 定义状态</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MultiAgentState</span>(<span class="params">TypedDict</span>):</span></span><br><span class="line">    task: <span class="built_in">str</span></span><br><span class="line">    research_results: Annotated[<span class="type">List</span>[<span class="built_in">str</span>], operator.add]</span><br><span class="line">    code_results: Annotated[<span class="type">List</span>[<span class="built_in">str</span>], operator.add]</span><br><span class="line">    review_results: Annotated[<span class="type">List</span>[<span class="built_in">str</span>], operator.add]</span><br><span class="line">    final_output: <span class="built_in">str</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 创建Agent</span></span><br><span class="line">llm = ChatOpenAI(model=<span class="string">&quot;gpt-4&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 研究Agent</span></span><br><span class="line"><span class="meta">@tool</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">search</span>(<span class="params">query: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;搜索信息&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;搜索结果：<span class="subst">&#123;query&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line">research_agent = Agent(</span><br><span class="line">    llm=llm,</span><br><span class="line">    tools=[search],</span><br><span class="line">    role=<span class="string">&quot;研究员&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 代码Agent</span></span><br><span class="line"><span class="meta">@tool</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">write_code</span>(<span class="params">requirement: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;编写代码&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;代码：<span class="subst">&#123;requirement&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line">code_agent = Agent(</span><br><span class="line">    llm=llm,</span><br><span class="line">    tools=[write_code],</span><br><span class="line">    role=<span class="string">&quot;程序员&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 审核Agent</span></span><br><span class="line"><span class="meta">@tool</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">review</span>(<span class="params">content: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;审核内容&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;审核意见：<span class="subst">&#123;content&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line">review_agent = Agent(</span><br><span class="line">    llm=llm,</span><br><span class="line">    tools=[review],</span><br><span class="line">    role=<span class="string">&quot;审核员&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 定义节点</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">research_node</span>(<span class="params">state: MultiAgentState</span>) -&gt; MultiAgentState:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;研究节点&quot;&quot;&quot;</span></span><br><span class="line">    result = research_agent.run(<span class="string">f&quot;调研以下任务：<span class="subst">&#123;state[<span class="string">&#x27;task&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;research_results&quot;</span>: [result]&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">code_node</span>(<span class="params">state: MultiAgentState</span>) -&gt; MultiAgentState:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;代码节点&quot;&quot;&quot;</span></span><br><span class="line">    result = code_agent.run(<span class="string">f&quot;根据以下调研结果编写代码：<span class="subst">&#123;state[<span class="string">&#x27;research_results&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;code_results&quot;</span>: [result]&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">review_node</span>(<span class="params">state: MultiAgentState</span>) -&gt; MultiAgentState:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;审核节点&quot;&quot;&quot;</span></span><br><span class="line">    result = review_agent.run(<span class="string">f&quot;审核以下代码：<span class="subst">&#123;state[<span class="string">&#x27;code_results&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;review_results&quot;</span>: [result]&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">synthesize_node</span>(<span class="params">state: MultiAgentState</span>) -&gt; MultiAgentState:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;汇总节点&quot;&quot;&quot;</span></span><br><span class="line">    final_output = <span class="string">f&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    任务：<span class="subst">&#123;state[<span class="string">&#x27;task&#x27;</span>]&#125;</span></span></span><br><span class="line"><span class="string">    调研结果：<span class="subst">&#123;state[<span class="string">&#x27;research_results&#x27;</span>]&#125;</span></span></span><br><span class="line"><span class="string">    代码：<span class="subst">&#123;state[<span class="string">&#x27;code_results&#x27;</span>]&#125;</span></span></span><br><span class="line"><span class="string">    审核意见：<span class="subst">&#123;state[<span class="string">&#x27;review_results&#x27;</span>]&#125;</span></span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;final_output&quot;</span>: final_output&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 创建图</span></span><br><span class="line">graph = StateGraph(MultiAgentState)</span><br><span class="line"></span><br><span class="line">graph.add_node(<span class="string">&quot;research&quot;</span>, research_node)</span><br><span class="line">graph.add_node(<span class="string">&quot;code&quot;</span>, code_node)</span><br><span class="line">graph.add_node(<span class="string">&quot;review&quot;</span>, review_node)</span><br><span class="line">graph.add_node(<span class="string">&quot;synthesize&quot;</span>, synthesize_node)</span><br><span class="line"></span><br><span class="line">graph.set_entry_point(<span class="string">&quot;research&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;research&quot;</span>, <span class="string">&quot;code&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;code&quot;</span>, <span class="string">&quot;review&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;review&quot;</span>, <span class="string">&quot;synthesize&quot;</span>)</span><br><span class="line">graph.add_edge(<span class="string">&quot;synthesize&quot;</span>, END)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 编译并运行</span></span><br><span class="line">app = graph.<span class="built_in">compile</span>()</span><br><span class="line">result = app.invoke(&#123;<span class="string">&quot;task&quot;</span>: <span class="string">&quot;开发一个简单的计算器&quot;</span>&#125;)</span><br><span class="line"><span class="built_in">print</span>(result[<span class="string">&quot;final_output&quot;</span>])</span><br></pre></td></tr></table></figure>
+
+<h1 id="多Agent通信"><a href="#多Agent通信" class="headerlink" title="多Agent通信"></a>多Agent通信</h1><p>多Agent之间需要有效的通信机制</p>
+<h2 id="1-共享状态"><a href="#1-共享状态" class="headerlink" title="1. 共享状态"></a>1. 共享状态</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 所有Agent共享同一个状态</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SharedState</span>(<span class="params">TypedDict</span>):</span></span><br><span class="line">    messages: <span class="type">List</span>[<span class="built_in">str</span>]</span><br><span class="line">    shared_data: <span class="built_in">dict</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Agent可以读取和修改共享状态</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">agent_a</span>(<span class="params">state: SharedState</span>) -&gt; SharedState:</span></span><br><span class="line">    <span class="comment"># 读取共享数据</span></span><br><span class="line">    data = state[<span class="string">&quot;shared_data&quot;</span>]</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 修改共享数据</span></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;shared_data&quot;</span>: &#123;**data, <span class="string">&quot;agent_a_result&quot;</span>: <span class="string">&quot;result&quot;</span>&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-消息传递"><a href="#2-消息传递" class="headerlink" title="2. 消息传递"></a>2. 消息传递</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Agent通过消息传递进行通信</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MessageState</span>(<span class="params">TypedDict</span>):</span></span><br><span class="line">    messages: Annotated[<span class="type">List</span>, add_messages]</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">sender_agent</span>(<span class="params">state: MessageState</span>) -&gt; MessageState:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;发送消息&quot;&quot;&quot;</span></span><br><span class="line">    message = AIMessage(content=<span class="string">&quot;请帮我处理这个任务&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;messages&quot;</span>: [message]&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">receiver_agent</span>(<span class="params">state: MessageState</span>) -&gt; MessageState:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;接收消息&quot;&quot;&quot;</span></span><br><span class="line">    last_message = state[<span class="string">&quot;messages&quot;</span>][-<span class="number">1</span>]</span><br><span class="line">    response = AIMessage(content=<span class="string">f&quot;收到：<span class="subst">&#123;last_message.content&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;messages&quot;</span>: [response]&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-黑板模式"><a href="#3-黑板模式" class="headerlink" title="3. 黑板模式"></a>3. 黑板模式</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用黑板进行间接通信</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Blackboard</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.data = &#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">write</span>(<span class="params">self, key, value</span>):</span></span><br><span class="line">        self.data[key] = value</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">read</span>(<span class="params">self, key</span>):</span></span><br><span class="line">        <span class="keyword">return</span> self.data.get(key)</span><br><span class="line"></span><br><span class="line">blackboard = Blackboard()</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">agent_a</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;Agent A写入黑板&quot;&quot;&quot;</span></span><br><span class="line">    blackboard.write(<span class="string">&quot;research_result&quot;</span>, <span class="string">&quot;调研结果&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> state</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">agent_b</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;Agent B从黑板读取&quot;&quot;&quot;</span></span><br><span class="line">    research = blackboard.read(<span class="string">&quot;research_result&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;result&quot;</span>: <span class="string">f&quot;基于<span class="subst">&#123;research&#125;</span>的代码&quot;</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="多Agent的最佳实践"><a href="#多Agent的最佳实践" class="headerlink" title="多Agent的最佳实践"></a>多Agent的最佳实践</h1><h2 id="1-明确角色分工"><a href="#1-明确角色分工" class="headerlink" title="1. 明确角色分工"></a>1. 明确角色分工</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 每个Agent有明确的职责</span></span><br><span class="line">researcher = Agent(</span><br><span class="line">    role=<span class="string">&quot;研究员&quot;</span>,</span><br><span class="line">    goal=<span class="string">&quot;收集和分析信息&quot;</span>,</span><br><span class="line">    tools=[search, read, analyze]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">coder = Agent(</span><br><span class="line">    role=<span class="string">&quot;程序员&quot;</span>,</span><br><span class="line">    goal=<span class="string">&quot;编写高质量代码&quot;</span>,</span><br><span class="line">    tools=[code, test, debug]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">writer = Agent(</span><br><span class="line">    role=<span class="string">&quot;作家&quot;</span>,</span><br><span class="line">    goal=<span class="string">&quot;撰写清晰的文档&quot;</span>,</span><br><span class="line">    tools=[write, edit, <span class="built_in">format</span>]</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-定义清晰的接口"><a href="#2-定义清晰的接口" class="headerlink" title="2. 定义清晰的接口"></a>2. 定义清晰的接口</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 定义Agent之间的接口</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AgentInterface</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">input_schema</span>(<span class="params">self</span>) -&gt; <span class="built_in">dict</span>:</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;输入格式&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">output_schema</span>(<span class="params">self</span>) -&gt; <span class="built_in">dict</span>:</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;输出格式&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="3-错误处理和重试"><a href="#3-错误处理和重试" class="headerlink" title="3. 错误处理和重试"></a>3. 错误处理和重试</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">safe_agent_node</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;带错误处理的Agent节点&quot;&quot;&quot;</span></span><br><span class="line">    max_retries = <span class="number">3</span></span><br><span class="line">    <span class="keyword">for</span> attempt <span class="keyword">in</span> <span class="built_in">range</span>(max_retries):</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            result = agent.run(state)</span><br><span class="line">            <span class="keyword">return</span> result</span><br><span class="line">        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">            <span class="keyword">if</span> attempt &lt; max_retries - <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">continue</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="keyword">return</span> &#123;<span class="string">&quot;error&quot;</span>: <span class="built_in">str</span>(e)&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-监控和日志"><a href="#4-监控和日志" class="headerlink" title="4. 监控和日志"></a>4. 监控和日志</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> logging</span><br><span class="line"></span><br><span class="line">logging.basicConfig(level=logging.INFO)</span><br><span class="line">logger = logging.getLogger(__name__)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">monitored_agent_node</span>(<span class="params">state: State</span>) -&gt; State:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;带监控的Agent节点&quot;&quot;&quot;</span></span><br><span class="line">    logger.info(<span class="string">f&quot;Agent开始处理：<span class="subst">&#123;state[<span class="string">&#x27;task&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        result = agent.run(state)</span><br><span class="line">        logger.info(<span class="string">f&quot;Agent处理完成：<span class="subst">&#123;result&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        logger.error(<span class="string">f&quot;Agent处理失败：<span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">raise</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="多Agent的应用场景"><a href="#多Agent的应用场景" class="headerlink" title="多Agent的应用场景"></a>多Agent的应用场景</h1><h2 id="1-软件开发团队"><a href="#1-软件开发团队" class="headerlink" title="1. 软件开发团队"></a>1. 软件开发团队</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 产品经理 -&gt; 设计师 -&gt; 程序员 -&gt; 测试员</span></span><br><span class="line">pm = Agent(role=<span class="string">&quot;产品经理&quot;</span>, tools=[requirements])</span><br><span class="line">designer = Agent(role=<span class="string">&quot;设计师&quot;</span>, tools=[design])</span><br><span class="line">developer = Agent(role=<span class="string">&quot;程序员&quot;</span>, tools=[code])</span><br><span class="line">tester = Agent(role=<span class="string">&quot;测试员&quot;</span>, tools=[test])</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-研究团队"><a href="#2-研究团队" class="headerlink" title="2. 研究团队"></a>2. 研究团队</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 研究员 -&gt; 分析师 -&gt; 写手 -&gt; 审核员</span></span><br><span class="line">researcher = Agent(role=<span class="string">&quot;研究员&quot;</span>, tools=[search])</span><br><span class="line">analyst = Agent(role=<span class="string">&quot;分析师&quot;</span>, tools=[analyze])</span><br><span class="line">writer = Agent(role=<span class="string">&quot;写手&quot;</span>, tools=[write])</span><br><span class="line">reviewer = Agent(role=<span class="string">&quot;审核员&quot;</span>, tools=[review])</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-客服团队"><a href="#3-客服团队" class="headerlink" title="3. 客服团队"></a>3. 客服团队</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 接待员 -&gt; 专家 -&gt; 升级处理</span></span><br><span class="line">receptionist = Agent(role=<span class="string">&quot;接待员&quot;</span>, tools=[greet, classify])</span><br><span class="line">specialist = Agent(role=<span class="string">&quot;专家&quot;</span>, tools=[answer, troubleshoot])</span><br><span class="line">escalator = Agent(role=<span class="string">&quot;升级处理&quot;</span>, tools=[escalate, followup])</span><br></pre></td></tr></table></figure>
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>今天我们学习了多Agent编排的相关知识</p>
+<ol>
+<li><strong>什么是多Agent编排</strong>：协调多个Agent共同完成复杂任务</li>
+<li><strong>为什么需要多Agent</strong>：单Agent的局限性，多Agent的优势</li>
+<li><strong>多Agent的协作模式</strong>：<ul>
+<li>顺序协作：依次执行</li>
+<li>并行协作：同时执行</li>
+<li>层级协作：上下级关系</li>
+<li>辩论协作：辩论达成共识</li>
+</ul>
+</li>
+<li><strong>多Agent通信</strong>：共享状态、消息传递、黑板模式</li>
+<li><strong>最佳实践</strong>：明确角色、清晰接口、错误处理、监控日志</li>
+<li><strong>应用场景</strong>：软件开发、研究团队、客服团队</li>
+</ol>
+<p>多Agent编排是构建复杂AI系统的关键技术，在接下来的文章中，我们将通过一个完整的实战项目来综合运用这些知识</p>
+<hr>
+<p>上一篇：<a href="/2026/06/03/ai-agent-06-langgraph-advanced/">聊聊AI Agent（六）：LangGraph进阶</a><br>下一篇：<a href="/2026/06/03/ai-agent-08-practice/">聊聊AI Agent（八）：Agent实战</a></p>
+<p>参考资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/Significant-Gravitas/AutoGPT">AutoGPT</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/geekan/MetaGPT">MetaGPT</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/joaomdmoura/crewai">CrewAI</a></li>
+<li><a target="_blank" rel="noopener" href="https://langchain-ai.github.io/langgraph/tutorials/multi_agent/">LangGraph多Agent教程</a></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://kyo7701.github.io/blog/2026/06/03/ai-agent-07-multi-agent/" title="聊聊AI Agent（七）：多Agent编排" target="_blank" rel="external">https://kyo7701.github.io/blog/2026/06/03/ai-agent-07-multi-agent/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/kyo7701" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/blog/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/kyo7701" target="_blank"><span class="text-dark">mr_cris</span><small class="ml-1x">Backend Developer</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/blog/2026/06/03/ai-agent-08-practice/" title="聊聊AI Agent（八）：Agent实战"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;Newer</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/blog/2026/06/03/ai-agent-06-langgraph-advanced/" title="聊聊AI Agent（六）：LangGraph进阶"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>$</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>Maybe you could buy me a cup of coffee.</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/alipayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open alipay app scan this qrcode, buy me a coffee!</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/wechatpayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open wechat app scan this qrcode, buy me a coffee!</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> alipay</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> wechat payment</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/1221310881" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/blog/js/plugin.min.js"></script>
+
+
+<script src="/blog/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/blog/',
+        CONTENT_URL: '/blog/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/blog/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'd7ac612bb7b78584fa57',
+    clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+    repo: 'blog-comment',
+    owner: 'kyo7701',
+    admin: ['kyo7701'],
+    proxy: 'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token',
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

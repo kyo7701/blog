@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>聊聊AI Agent（三）：LangChain入门 | Hexo</title>
+  <meta name="description" content="前言在上一篇文章中，我们了解了RAG的概念和实现。你可能会发现，实现一个RAG系统需要处理很多细节，比如文档加载、文本分割、向量化、检索等等。有没有一个框架可以帮我们简化这些操作呢？答案就是LangChain。今天就来聊聊LangChain是什么，以及如何使用它来构建AI应用 什么是LangChainLangChain是一个用于构建LLM应用的开源框架。它提供了一系列工具和组件，让开发者可以更轻松">
+<meta property="og:type" content="article">
+<meta property="og:title" content="聊聊AI Agent（三）：LangChain入门">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2026/06/03/ai-agent-03-langchain-basics/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="前言在上一篇文章中，我们了解了RAG的概念和实现。你可能会发现，实现一个RAG系统需要处理很多细节，比如文档加载、文本分割、向量化、检索等等。有没有一个框架可以帮我们简化这些操作呢？答案就是LangChain。今天就来聊聊LangChain是什么，以及如何使用它来构建AI应用 什么是LangChainLangChain是一个用于构建LLM应用的开源框架。它提供了一系列工具和组件，让开发者可以更轻松">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-03T09:20:00.000Z">
+<meta property="article:modified_time" content="2026-06-03T08:16:38.635Z">
+<meta property="article:author" content="mr_cris">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2026/06/03/ai-agent-03-langchain-basics/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="cris&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/kyo7701" target="_blank">
+          <img class="img-circle img-rotate" src="/blog/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">mr_cris</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Backend Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">Categories</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a target="_blank" rel="noopener" href="https://github.com/kyo7701">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">Repository</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/blog/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/1221310881" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/mysql/">mysql</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/AI/" rel="tag">AI</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Agent/" rel="tag">Agent</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LLM/" rel="tag">LLM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LangChain/" rel="tag">LangChain</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/LangGraph/" rel="tag">LangGraph</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Multi-Agent/" rel="tag">Multi-Agent</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/No-SQL/" rel="tag">No-SQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Python/" rel="tag">Python</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/RAG/" rel="tag">RAG</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/Tools/" rel="tag">Tools</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/rabbitmq/" rel="tag">rabbitmq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redis/" rel="tag">redis</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" rel="tag">人工智能</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%85%B6%E4%BB%96/" rel="tag">其他</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%8D%8F%E4%BD%9C/" rel="tag">协作</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" rel="tag">后端技术</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">向量数据库</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%AE%9E%E6%88%98/" rel="tag">实战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" rel="tag">工作感悟</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag">工作流</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" rel="tag">持久化机制</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" rel="tag">未完成</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag">消息队列</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%8A%B6%E6%80%81%E6%9C%BA/" rel="tag">状态机</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag">索引</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag">负载均衡</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E9%A1%B9%E7%9B%AE/" rel="tag">项目</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/blog/tags/AI/" style="font-size: 13.83px;">AI</a> <a href="/blog/tags/Agent/" style="font-size: 13.67px;">Agent</a> <a href="/blog/tags/LLM/" style="font-size: 13.33px;">LLM</a> <a href="/blog/tags/LangChain/" style="font-size: 13.17px;">LangChain</a> <a href="/blog/tags/LangGraph/" style="font-size: 13.17px;">LangGraph</a> <a href="/blog/tags/Multi-Agent/" style="font-size: 13px;">Multi-Agent</a> <a href="/blog/tags/No-SQL/" style="font-size: 13px;">No-SQL</a> <a href="/blog/tags/Python/" style="font-size: 13px;">Python</a> <a href="/blog/tags/RAG/" style="font-size: 13px;">RAG</a> <a href="/blog/tags/Tools/" style="font-size: 13px;">Tools</a> <a href="/blog/tags/java/" style="font-size: 13px;">java</a> <a href="/blog/tags/mysql/" style="font-size: 13.5px;">mysql</a> <a href="/blog/tags/rabbitmq/" style="font-size: 13px;">rabbitmq</a> <a href="/blog/tags/redis/" style="font-size: 13.5px;">redis</a> <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 14px;">中间件</a> <a href="/blog/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" style="font-size: 13px;">人工智能</a> <a href="/blog/tags/%E5%85%B6%E4%BB%96/" style="font-size: 13.17px;">其他</a> <a href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/blog/tags/%E5%8D%8F%E4%BD%9C/" style="font-size: 13px;">协作</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" style="font-size: 13.17px;">后端</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" style="font-size: 13.17px;">后端技术</a> <a href="/blog/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13px;">向量数据库</a> <a href="/blog/tags/%E5%AE%9E%E6%88%98/" style="font-size: 13px;">实战</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" style="font-size: 13px;">工作感悟</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" style="font-size: 13px;">工作流</a> <a href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" style="font-size: 13px;">持久化机制</a> <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13.33px;">数据库</a> <a href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" style="font-size: 13px;">未完成</a> <a href="/blog/tags/%E6%9D%82%E8%B0%88/" style="font-size: 13px;">杂谈</a> <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">框架</a> <a href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 13.17px;">消息队列</a> <a href="/blog/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13px;">源码</a> <a href="/blog/tags/%E7%8A%B6%E6%80%81%E6%9C%BA/" style="font-size: 13px;">状态机</a> <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 13px;">索引</a> <a href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 13px;">线程池</a> <a href="/blog/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13px;">网络</a> <a href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" style="font-size: 13px;">负载均衡</a> <a href="/blog/tags/%E9%A1%B9%E7%9B%AE/" style="font-size: 13px;">项目</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2026/06/">June 2026</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/06/">June 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/03/">March 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/05/">May 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/04/">April 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/12/">December 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/08/">August 2019</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-08-practice/" class="title">聊聊AI Agent（八）：Agent实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T10:10:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-07-multi-agent/" class="title">聊聊AI Agent（七）：多Agent编排</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T10:00:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-06-langgraph-advanced/" class="title">聊聊AI Agent（六）：LangGraph进阶</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T09:50:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-05-langgraph-basics/" class="title">聊聊AI Agent（五）：LangGraph入门</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T09:40:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/ai-agent-04-langchain-advanced/" class="title">聊聊AI Agent（四）：LangChain进阶</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T09:30:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-ai-agent-03-langchain-basics" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      聊聊AI Agent（三）：LangChain入门
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/blog/2026/06/03/ai-agent-03-langchain-basics/" class="article-date">
+	  <time datetime="2026-06-03T09:20:00.000Z" itemprop="datePublished">2026-06-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/blog/categories/AI-Agent%E7%B3%BB%E5%88%97/">AI Agent系列</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/blog/tags/AI/" rel="tag">AI</a>, <a class="article-tag-link-link" href="/blog/tags/LLM/" rel="tag">LLM</a>, <a class="article-tag-link-link" href="/blog/tags/LangChain/" rel="tag">LangChain</a>, <a class="article-tag-link-link" href="/blog/tags/Python/" rel="tag">Python</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2026/06/03/ai-agent-03-langchain-basics/#comments" class="article-comment-link">Comments</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 2k(words)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 9(minutes)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在上一篇文章中，我们了解了RAG的概念和实现。你可能会发现，实现一个RAG系统需要处理很多细节，比如文档加载、文本分割、向量化、检索等等。有没有一个框架可以帮我们简化这些操作呢？答案就是LangChain。今天就来聊聊LangChain是什么，以及如何使用它来构建AI应用</p>
+<h1 id="什么是LangChain"><a href="#什么是LangChain" class="headerlink" title="什么是LangChain"></a>什么是LangChain</h1><p>LangChain是一个用于构建LLM应用的开源框架。它提供了一系列工具和组件，让开发者可以更轻松地构建基于大语言模型的应用</p>
+<p>用通俗的话来说，LangChain就是一个”胶水框架”，它把各种LLM相关的工具和组件粘合在一起，让我们可以快速构建AI应用</p>
+<h1 id="为什么需要LangChain"><a href="#为什么需要LangChain" class="headerlink" title="为什么需要LangChain"></a>为什么需要LangChain</h1><p>那么为什么需要LangChain呢？我们来看看没有LangChain时的开发体验</p>
+<h2 id="没有LangChain"><a href="#没有LangChain" class="headerlink" title="没有LangChain"></a>没有LangChain</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> openai</span><br><span class="line"><span class="keyword">from</span> chromadb <span class="keyword">import</span> Client</span><br><span class="line"><span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 初始化各种组件</span></span><br><span class="line">openai_client = openai.OpenAI()</span><br><span class="line">embedding_model = SentenceTransformer(<span class="string">&#x27;all-MiniLM-L6-v2&#x27;</span>)</span><br><span class="line">chroma_client = Client()</span><br><span class="line">collection = chroma_client.create_collection(<span class="string">&quot;my_docs&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 加载文档</span></span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&quot;document.txt&quot;</span>, <span class="string">&quot;r&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    text = f.read()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 分割文档</span></span><br><span class="line">chunks = []</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, <span class="built_in">len</span>(text), <span class="number">1000</span>):</span><br><span class="line">    chunks.append(text[i:i+<span class="number">1000</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 向量化并存储</span></span><br><span class="line"><span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="built_in">enumerate</span>(chunks):</span><br><span class="line">    embedding = embedding_model.encode(chunk)</span><br><span class="line">    collection.add(</span><br><span class="line">        documents=[chunk],</span><br><span class="line">        embeddings=[embedding.tolist()],</span><br><span class="line">        ids=[<span class="string">f&quot;doc_<span class="subst">&#123;i&#125;</span>&quot;</span>]</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 检索</span></span><br><span class="line">query = <span class="string">&quot;什么是Python？&quot;</span></span><br><span class="line">query_embedding = embedding_model.encode(query)</span><br><span class="line">results = collection.query(</span><br><span class="line">    query_embeddings=[query_embedding.tolist()],</span><br><span class="line">    n_results=<span class="number">3</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 6. 生成回答</span></span><br><span class="line">context = <span class="string">&quot;\n&quot;</span>.join(results[<span class="string">&#x27;documents&#x27;</span>][<span class="number">0</span>])</span><br><span class="line">prompt = <span class="string">f&quot;根据以下内容回答问题：\n<span class="subst">&#123;context&#125;</span>\n\n问题：<span class="subst">&#123;query&#125;</span>&quot;</span></span><br><span class="line">response = openai_client.chat.completions.create(</span><br><span class="line">    model=<span class="string">&quot;gpt-4&quot;</span>,</span><br><span class="line">    messages=[&#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>: prompt&#125;]</span><br><span class="line">)</span><br><span class="line"><span class="built_in">print</span>(response.choices[<span class="number">0</span>].message.content)</span><br></pre></td></tr></table></figure>
+
+<h2 id="有LangChain"><a href="#有LangChain" class="headerlink" title="有LangChain"></a>有LangChain</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.document_loaders <span class="keyword">import</span> TextLoader</span><br><span class="line"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter</span><br><span class="line"><span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> Chroma</span><br><span class="line"><span class="keyword">from</span> langchain.chat_models <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> RetrievalQA</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 加载文档</span></span><br><span class="line">loader = TextLoader(<span class="string">&quot;document.txt&quot;</span>)</span><br><span class="line">documents = loader.load()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 分割文档</span></span><br><span class="line">text_splitter = RecursiveCharacterTextSplitter(</span><br><span class="line">    chunk_size=<span class="number">1000</span>,</span><br><span class="line">    chunk_overlap=<span class="number">200</span></span><br><span class="line">)</span><br><span class="line">chunks = text_splitter.split_documents(documents)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 创建向量数据库</span></span><br><span class="line">embeddings = OpenAIEmbeddings()</span><br><span class="line">vectorstore = Chroma.from_documents(chunks, embeddings)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 创建QA链</span></span><br><span class="line">llm = ChatOpenAI(model=<span class="string">&quot;gpt-4&quot;</span>)</span><br><span class="line">qa_chain = RetrievalQA.from_chain_type(</span><br><span class="line">    llm=llm,</span><br><span class="line">    retriever=vectorstore.as_retriever()</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 查询</span></span><br><span class="line">answer = qa_chain.run(<span class="string">&quot;什么是Python？&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(answer)</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，LangChain大大简化了代码，让我们可以更专注于业务逻辑</p>
+<h1 id="LangChain的核心概念"><a href="#LangChain的核心概念" class="headerlink" title="LangChain的核心概念"></a>LangChain的核心概念</h1><p>LangChain有几个核心概念，我们来逐一了解</p>
+<h2 id="1-Models（模型）"><a href="#1-Models（模型）" class="headerlink" title="1. Models（模型）"></a>1. Models（模型）</h2><p>Models是LangChain的核心组件，它封装了各种LLM的调用接口</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.llms <span class="keyword">import</span> OpenAI</span><br><span class="line"><span class="keyword">from</span> langchain.chat_models <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"><span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"></span><br><span class="line"><span class="comment"># LLM模型</span></span><br><span class="line">llm = OpenAI(model=<span class="string">&quot;gpt-3.5-turbo-instruct&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 聊天模型</span></span><br><span class="line">chat_model = ChatOpenAI(model=<span class="string">&quot;gpt-4&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 嵌入模型</span></span><br><span class="line">embedding_model = OpenAIEmbeddings()</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-Prompts（提示词）"><a href="#2-Prompts（提示词）" class="headerlink" title="2. Prompts（提示词）"></a>2. Prompts（提示词）</h2><p>Prompts负责构建发送给LLM的提示词</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate, ChatPromptTemplate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 简单提示词模板</span></span><br><span class="line">prompt = PromptTemplate(</span><br><span class="line">    input_variables=[<span class="string">&quot;product&quot;</span>],</span><br><span class="line">    template=<span class="string">&quot;给我写一个关于&#123;product&#125;的广告语&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 聊天提示词模板</span></span><br><span class="line">chat_prompt = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是一个有用的助手&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;human&quot;</span>, <span class="string">&quot;&#123;input&#125;&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 格式化提示词</span></span><br><span class="line">formatted_prompt = prompt.<span class="built_in">format</span>(product=<span class="string">&quot;iPhone&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(formatted_prompt)</span><br><span class="line"><span class="comment"># 输出：给我写一个关于iPhone的广告语</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="3-Chains（链）"><a href="#3-Chains（链）" class="headerlink" title="3. Chains（链）"></a>3. Chains（链）</h2><p>Chains是LangChain的核心抽象，它将多个组件串联起来</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> LLMChain, SequentialChain</span><br><span class="line"></span><br><span class="line"><span class="comment"># 简单链</span></span><br><span class="line">chain = LLMChain(llm=llm, prompt=prompt)</span><br><span class="line">result = chain.run(product=<span class="string">&quot;iPhone&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 顺序链</span></span><br><span class="line">chain1 = LLMChain(llm=llm, prompt=prompt1, output_key=<span class="string">&quot;title&quot;</span>)</span><br><span class="line">chain2 = LLMChain(llm=llm, prompt=prompt2, output_key=<span class="string">&quot;content&quot;</span>)</span><br><span class="line"></span><br><span class="line">sequential_chain = SequentialChain(</span><br><span class="line">    chains=[chain1, chain2],</span><br><span class="line">    input_variables=[<span class="string">&quot;product&quot;</span>],</span><br><span class="line">    output_variables=[<span class="string">&quot;title&quot;</span>, <span class="string">&quot;content&quot;</span>]</span><br><span class="line">)</span><br><span class="line">result = sequential_chain(&#123;<span class="string">&quot;product&quot;</span>: <span class="string">&quot;iPhone&quot;</span>&#125;)</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-Memory（记忆）"><a href="#4-Memory（记忆）" class="headerlink" title="4. Memory（记忆）"></a>4. Memory（记忆）</h2><p>Memory让链能够记住之前的对话</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory, ConversationSummaryMemory</span><br><span class="line"></span><br><span class="line"><span class="comment"># 缓冲记忆（记住所有对话）</span></span><br><span class="line">memory = ConversationBufferMemory(</span><br><span class="line">    memory_key=<span class="string">&quot;chat_history&quot;</span>,</span><br><span class="line">    return_messages=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 摘要记忆（压缩对话历史）</span></span><br><span class="line">summary_memory = ConversationSummaryMemory(</span><br><span class="line">    llm=llm,</span><br><span class="line">    memory_key=<span class="string">&quot;chat_history&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用记忆的链</span></span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain</span><br><span class="line"></span><br><span class="line">conversation = ConversationChain(</span><br><span class="line">    llm=llm,</span><br><span class="line">    memory=memory,</span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 多轮对话</span></span><br><span class="line">conversation.run(<span class="string">&quot;你好，我叫张三&quot;</span>)</span><br><span class="line">conversation.run(<span class="string">&quot;我叫什么名字？&quot;</span>)  <span class="comment"># 会记住你叫张三</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="5-Tools（工具）"><a href="#5-Tools（工具）" class="headerlink" title="5. Tools（工具）"></a>5. Tools（工具）</h2><p>Tools让LLM能够与外部世界交互</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.tools <span class="keyword">import</span> Tool, tool</span><br><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> load_tools</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义工具</span></span><br><span class="line"><span class="meta">@tool</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">search</span>(<span class="params">query: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;搜索互联网&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">f&quot;搜索结果：<span class="subst">&#123;query&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@tool</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">calculator</span>(<span class="params">expression: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;计算数学表达式&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">str</span>(<span class="built_in">eval</span>(expression))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用工具</span></span><br><span class="line">tools = [search, calculator]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载内置工具</span></span><br><span class="line">tools = load_tools([<span class="string">&quot;serpapi&quot;</span>, <span class="string">&quot;llm-math&quot;</span>], llm=llm)</span><br></pre></td></tr></table></figure>
+
+<h2 id="6-Agents（代理）"><a href="#6-Agents（代理）" class="headerlink" title="6. Agents（代理）"></a>6. Agents（代理）</h2><p>Agents是LangChain中最强大的组件，它让LLM能够自主决策使用哪些工具</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> AgentType, initialize_agent</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建Agent</span></span><br><span class="line">agent = initialize_agent(</span><br><span class="line">    tools=tools,</span><br><span class="line">    llm=llm,</span><br><span class="line">    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,</span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行Agent</span></span><br><span class="line">result = agent.run(<span class="string">&quot;2024年奥运会的主办城市是哪里？&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h1 id="LangChain的使用场景"><a href="#LangChain的使用场景" class="headerlink" title="LangChain的使用场景"></a>LangChain的使用场景</h1><h2 id="1-对话机器人"><a href="#1-对话机器人" class="headerlink" title="1. 对话机器人"></a>1. 对话机器人</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain</span><br><span class="line"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建对话机器人</span></span><br><span class="line">memory = ConversationBufferMemory()</span><br><span class="line">conversation = ConversationChain(</span><br><span class="line">    llm=ChatOpenAI(model=<span class="string">&quot;gpt-4&quot;</span>),</span><br><span class="line">    memory=memory</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 多轮对话</span></span><br><span class="line"><span class="built_in">print</span>(conversation.run(<span class="string">&quot;你好&quot;</span>))</span><br><span class="line"><span class="built_in">print</span>(conversation.run(<span class="string">&quot;今天天气怎么样？&quot;</span>))</span><br><span class="line"><span class="built_in">print</span>(conversation.run(<span class="string">&quot;我刚才说了什么？&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-文档问答"><a href="#2-文档问答" class="headerlink" title="2. 文档问答"></a>2. 文档问答</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.document_loaders <span class="keyword">import</span> TextLoader</span><br><span class="line"><span class="keyword">from</span> langchain.indexes <span class="keyword">import</span> VectorstoreIndexCreator</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载文档并创建索引</span></span><br><span class="line">loader = TextLoader(<span class="string">&quot;my_document.txt&quot;</span>)</span><br><span class="line">index = VectorstoreIndexCreator().from_loaders([loader])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查询</span></span><br><span class="line">answer = index.query(<span class="string">&quot;这个文档的主要内容是什么？&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(answer)</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-代码生成"><a href="#3-代码生成" class="headerlink" title="3. 代码生成"></a>3. 代码生成</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> LLMChain</span><br><span class="line"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 代码生成提示词</span></span><br><span class="line">code_prompt = PromptTemplate(</span><br><span class="line">    input_variables=[<span class="string">&quot;requirement&quot;</span>],</span><br><span class="line">    template=<span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">你是一个Python专家。请根据以下需求编写代码：</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">需求：&#123;requirement&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">代码：</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成代码</span></span><br><span class="line">chain = LLMChain(llm=llm, prompt=code_prompt)</span><br><span class="line">code = chain.run(requirement=<span class="string">&quot;写一个函数，计算斐波那契数列的第n项&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(code)</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-数据分析"><a href="#4-数据分析" class="headerlink" title="4. 数据分析"></a>4. 数据分析</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.agents <span class="keyword">import</span> create_pandas_dataframe_agent</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载数据</span></span><br><span class="line">df = pd.read_csv(<span class="string">&quot;sales_data.csv&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建数据分析Agent</span></span><br><span class="line">agent = create_pandas_dataframe_agent(</span><br><span class="line">    llm=ChatOpenAI(model=<span class="string">&quot;gpt-4&quot;</span>),</span><br><span class="line">    df=df,</span><br><span class="line">    verbose=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 分析数据</span></span><br><span class="line">result = agent.run(<span class="string">&quot;销售额最高的产品是什么？&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(result)</span><br></pre></td></tr></table></figure>
+
+<h1 id="LangChain的安装和配置"><a href="#LangChain的安装和配置" class="headerlink" title="LangChain的安装和配置"></a>LangChain的安装和配置</h1><h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装LangChain</span></span><br><span class="line">pip install langchain</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装依赖</span></span><br><span class="line">pip install openai chromadb tiktoken</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装文档加载器</span></span><br><span class="line">pip install pypdf unstructured</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置API密钥"><a href="#配置API密钥" class="headerlink" title="配置API密钥"></a>配置API密钥</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置OpenAI API密钥</span></span><br><span class="line">os.environ[<span class="string">&quot;OPENAI_API_KEY&quot;</span>] = <span class="string">&quot;your-api-key&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果使用其他服务</span></span><br><span class="line">os.environ[<span class="string">&quot;SERPAPI_API_KEY&quot;</span>] = <span class="string">&quot;your-serpapi-key&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="一个完整的例子"><a href="#一个完整的例子" class="headerlink" title="一个完整的例子"></a>一个完整的例子</h1><p>让我们来构建一个完整的文档问答系统</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.document_loaders <span class="keyword">import</span> DirectoryLoader, TextLoader</span><br><span class="line"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter</span><br><span class="line"><span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> Chroma</span><br><span class="line"><span class="keyword">from</span> langchain.chat_models <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> RetrievalQA</span><br><span class="line"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 加载文档</span></span><br><span class="line">loader = DirectoryLoader(</span><br><span class="line">    <span class="string">&quot;./documents&quot;</span>,</span><br><span class="line">    glob=<span class="string">&quot;**/*.txt&quot;</span>,</span><br><span class="line">    loader_cls=TextLoader</span><br><span class="line">)</span><br><span class="line">documents = loader.load()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;加载了 <span class="subst">&#123;<span class="built_in">len</span>(documents)&#125;</span> 个文档&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 分割文档</span></span><br><span class="line">text_splitter = RecursiveCharacterTextSplitter(</span><br><span class="line">    chunk_size=<span class="number">1000</span>,</span><br><span class="line">    chunk_overlap=<span class="number">200</span>,</span><br><span class="line">    length_function=<span class="built_in">len</span>,</span><br><span class="line">)</span><br><span class="line">chunks = text_splitter.split_documents(documents)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;分割成 <span class="subst">&#123;<span class="built_in">len</span>(chunks)&#125;</span> 个块&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 创建向量数据库</span></span><br><span class="line">embeddings = OpenAIEmbeddings()</span><br><span class="line">vectorstore = Chroma.from_documents(</span><br><span class="line">    documents=chunks,</span><br><span class="line">    embedding=embeddings,</span><br><span class="line">    persist_directory=<span class="string">&quot;./chroma_db&quot;</span></span><br><span class="line">)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;向量数据库创建完成&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 创建自定义提示词</span></span><br><span class="line">prompt_template = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">你是一个文档问答助手。请根据以下上下文回答问题。</span></span><br><span class="line"><span class="string">如果上下文中没有相关信息，请说&quot;我不知道&quot;。</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">上下文：</span></span><br><span class="line"><span class="string">&#123;context&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">问题：&#123;question&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">回答：</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">PROMPT = PromptTemplate(</span><br><span class="line">    template=prompt_template,</span><br><span class="line">    input_variables=[<span class="string">&quot;context&quot;</span>, <span class="string">&quot;question&quot;</span>]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 创建QA链</span></span><br><span class="line">llm = ChatOpenAI(</span><br><span class="line">    model_name=<span class="string">&quot;gpt-4&quot;</span>,</span><br><span class="line">    temperature=<span class="number">0</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">qa_chain = RetrievalQA.from_chain_type(</span><br><span class="line">    llm=llm,</span><br><span class="line">    chain_type=<span class="string">&quot;stuff&quot;</span>,</span><br><span class="line">    retriever=vectorstore.as_retriever(</span><br><span class="line">        search_type=<span class="string">&quot;similarity&quot;</span>,</span><br><span class="line">        search_kwargs=&#123;<span class="string">&quot;k&quot;</span>: <span class="number">3</span>&#125;</span><br><span class="line">    ),</span><br><span class="line">    chain_type_kwargs=&#123;<span class="string">&quot;prompt&quot;</span>: PROMPT&#125;,</span><br><span class="line">    return_source_documents=<span class="literal">True</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 6. 查询</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">ask</span>(<span class="params">question</span>):</span></span><br><span class="line">    result = qa_chain(&#123;<span class="string">&quot;query&quot;</span>: question&#125;)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;问题：<span class="subst">&#123;question&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;回答：<span class="subst">&#123;result[<span class="string">&#x27;result&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;来源：<span class="subst">&#123;result[<span class="string">&#x27;source_documents&#x27;</span>][<span class="number">0</span>].metadata[<span class="string">&#x27;source&#x27;</span>]&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用</span></span><br><span class="line">ask(<span class="string">&quot;什么是Python？&quot;</span>)</span><br><span class="line">ask(<span class="string">&quot;Python有哪些优点？&quot;</span>)</span><br><span class="line">ask(<span class="string">&quot;如何安装Python？&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>今天我们了解了LangChain的基本概念</p>
+<ol>
+<li><strong>什么是LangChain</strong>：用于构建LLM应用的开源框架</li>
+<li><strong>为什么需要LangChain</strong>：简化LLM应用的开发</li>
+<li><strong>LangChain的核心概念</strong>：<ul>
+<li>Models：模型封装</li>
+<li>Prompts：提示词模板</li>
+<li>Chains：组件串联</li>
+<li>Memory：对话记忆</li>
+<li>Tools：外部工具</li>
+<li>Agents：智能代理</li>
+</ul>
+</li>
+<li><strong>LangChain的使用场景</strong>：对话机器人、文档问答、代码生成、数据分析</li>
+</ol>
+<p>LangChain是构建AI Agent的重要工具，在接下来的文章中，我们将深入学习LangChain的高级特性和LangGraph</p>
+<hr>
+<p>上一篇：<a href="/2026/06/03/ai-agent-02-rag/">聊聊AI Agent（二）：RAG检索增强生成</a><br>下一篇：<a href="/2026/06/03/ai-agent-04-langchain-advanced/">聊聊AI Agent（四）：LangChain进阶</a></p>
+<p>参考资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/">LangChain官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/langchain-ai/langchain">LangChain GitHub</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/langchain-ai/langchain/tree/master/cookbook">LangChain Cookbook</a></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://kyo7701.github.io/blog/2026/06/03/ai-agent-03-langchain-basics/" title="聊聊AI Agent（三）：LangChain入门" target="_blank" rel="external">https://kyo7701.github.io/blog/2026/06/03/ai-agent-03-langchain-basics/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/kyo7701" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/blog/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/kyo7701" target="_blank"><span class="text-dark">mr_cris</span><small class="ml-1x">Backend Developer</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/blog/2026/06/03/ai-agent-04-langchain-advanced/" title="聊聊AI Agent（四）：LangChain进阶"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;Newer</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/blog/2026/06/03/ai-agent-02-rag/" title="聊聊AI Agent（二）：RAG检索增强生成"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>$</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>Maybe you could buy me a cup of coffee.</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/alipayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open alipay app scan this qrcode, buy me a coffee!</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/wechatpayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open wechat app scan this qrcode, buy me a coffee!</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> alipay</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> wechat payment</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="https://weibo.com/u/1221310881" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/blog/js/plugin.min.js"></script>
+
+
+<script src="/blog/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/blog/',
+        CONTENT_URL: '/blog/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/blog/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'd7ac612bb7b78584fa57',
+    clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+    repo: 'blog-comment',
+    owner: 'kyo7701',
+    admin: ['kyo7701'],
+    proxy: 'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token',
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
