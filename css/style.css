@@ -2984,7 +2984,7 @@ button.close {
 }
 
 .tooltip-inner {
-  max-width: 200px;
+  max-width: auto;
   padding: 3px 8px;
   color: #fff;
   text-align: center;
@@ -5056,7 +5056,7 @@ table table {
 }
 
 .modal-small .modal-dialog {
-  width: 480px;
+  width: auto;
 }
 
 @font-face {
@@ -6805,7 +6805,7 @@ body.okayNav-loaded {
   z-index: 9;
   top: -209px;
   left: -90px;
-  width: 200px;
+  width: auto;
   height: 200px;
   color: #666;
   font-size: 12px;
@@ -6963,8 +6963,8 @@ body.okayNav-loaded {
 
 .donate-box .donate-payimg {
   display: inline-block;
-  padding: 10px;
-  border: 6px solid #ea5f00;
+  padding: 0;
+  border: none;
   margin: 0 auto;
   border-radius: 3px;
 }
@@ -6972,7 +6972,7 @@ body.okayNav-loaded {
 .donate-box .donate-payimg img {
   display: block;
   text-align: center;
-  width: 200px;
+  width: auto;
   height: auto;
 }
 
