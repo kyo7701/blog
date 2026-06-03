@@ -6972,8 +6972,8 @@ body.okayNav-loaded {
 .donate-box .donate-payimg img {
   display: block;
   text-align: center;
-  width: 140px;
-  height: 140px;
+  width: 200px;
+  height: auto;
 }
 
 .book .media-middle {
