@@ -26,7 +26,7 @@
 <meta property="og:description" content="前言在后端开发中，分布式系统已经成为了标配。但是你有没有想过，为什么分布式系统这么难设计？为什么总是要在一致性、可用性、分区容错性之间做选择？今天就来聊聊分布式系统的理论基础，这些理论是理解所有分布式系统的基石 CAP定理什么是CAPCAP定理是分布式系统中最著名的理论之一，由Eric Brewer在2000年提出 CAP代表三个特性：  C（Consistency）一致性：所有节点在同一时间看到">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-06-03T11:00:00.000Z">
-<meta property="article:modified_time" content="2026-06-03T08:40:04.412Z">
+<meta property="article:modified_time" content="2026-06-03T09:35:08.389Z">
 <meta property="article:author" content="mr_cris">
 <meta property="article:tag" content="分布式">
 <meta property="article:tag" content="理论">
@@ -377,10 +377,10 @@
         <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2026/06/03/distributed-01-theory/#comments" class="article-comment-link">Comments</a></span>
         
 	
-		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 2k(words)</span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 4.3k(words)</span>
 	
 	
-		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 7(minutes)</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 15(minutes)</span>
 	
 
       </div>
@@ -395,6 +395,27 @@
 <li><strong>A（Availability）可用性</strong>：每个请求都能收到一个（非错误）响应</li>
 <li><strong>P（Partition Tolerance）分区容错性</strong>：系统在网络分区的情况下仍能继续运行</li>
 </ul>
+<h2 id="为什么CAP很难理解"><a href="#为什么CAP很难理解" class="headerlink" title="为什么CAP很难理解"></a>为什么CAP很难理解</h2><p>很多人对CAP的理解是错误的。他们以为CAP是说”三选二”，但实际上CAP的真正含义是：<strong>在发生网络分区时，你只能在一致性和可用性之间选择</strong></p>
+<h3 id="什么是网络分区"><a href="#什么是网络分区" class="headerlink" title="什么是网络分区"></a>什么是网络分区</h3><p>网络分区是指网络中的一部分节点无法与其他节点通信。比如：</p>
+<ul>
+<li>机房之间的网络断开</li>
+<li>服务器宕机</li>
+<li>网络延迟过高</li>
+</ul>
+<p>在正常情况下，一致性、可用性、分区容错性都可以满足。问题只在网络分区发生时出现</p>
+<h3 id="一致性到底意味着什么"><a href="#一致性到底意味着什么" class="headerlink" title="一致性到底意味着什么"></a>一致性到底意味着什么</h3><p>一致性不是说”数据最终会一致”，而是说”所有节点在同一时间看到相同的数据”</p>
+<p>举个例子：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">客户端写入 x=1</span><br><span class="line">客户端读取 x</span><br></pre></td></tr></table></figure>
+
+<p>如果系统保证强一致性，那么读取操作一定返回1。如果系统只保证最终一致性，那么读取操作可能返回旧值（比如0），但最终会变成1</p>
+<h3 id="可用性到底意味着什么"><a href="#可用性到底意味着什么" class="headerlink" title="可用性到底意味着什么"></a>可用性到底意味着什么</h3><p>可用性不是说”系统永远不会宕机”，而是说”每个请求都能收到一个响应”</p>
+<p>这个响应可能是：</p>
+<ul>
+<li>正确的数据</li>
+<li>过期的数据</li>
+<li>错误信息</li>
+</ul>
+<p>关键是：<strong>不能没有响应</strong></p>
 <h2 id="CAP的不可能三角"><a href="#CAP的不可能三角" class="headerlink" title="CAP的不可能三角"></a>CAP的不可能三角</h2><p>CAP定理指出，在一个分布式系统中，最多只能同时满足这三个特性中的两个</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">        C（一致性）</span><br><span class="line">       / \</span><br><span class="line">      /   \</span><br><span class="line">     /     \</span><br><span class="line">    /       \</span><br><span class="line">   /         \</span><br><span class="line">  A ————————— P</span><br><span class="line">（可用性）  （分区容错性）</span><br></pre></td></tr></table></figure>
 
@@ -405,18 +426,84 @@
 <li><strong>CA系统</strong>：保证一致性和可用性，但无法处理分区</li>
 </ol>
 <h2 id="为什么P是必须的"><a href="#为什么P是必须的" class="headerlink" title="为什么P是必须的"></a>为什么P是必须的</h2><p>在分布式系统中，网络分区是不可避免的。网络可能断开、服务器可能宕机、延迟可能很高。因此，实际上我们只能在CP和AP之间选择</p>
+<h3 id="为什么网络分区不可避免"><a href="#为什么网络分区不可避免" class="headerlink" title="为什么网络分区不可避免"></a>为什么网络分区不可避免</h3><ol>
+<li><strong>物理限制</strong>：光速有限，网络延迟不可能为0</li>
+<li><strong>硬件故障</strong>：交换机、路由器、网卡都可能故障</li>
+<li><strong>软件故障</strong>：操作系统、网络协议栈可能有bug</li>
+<li><strong>人为因素</strong>：运维人员可能误操作</li>
+</ol>
+<h3 id="如果不处理分区会怎样"><a href="#如果不处理分区会怎样" class="headerlink" title="如果不处理分区会怎样"></a>如果不处理分区会怎样</h3><p>如果你选择CA系统（不处理分区），那么当网络分区发生时：</p>
+<ul>
+<li>系统可能无法写入数据</li>
+<li>系统可能返回错误</li>
+<li>系统可能完全不可用</li>
+</ul>
+<p>这就是为什么大多数分布式系统都选择CP或AP</p>
 <h2 id="CP系统的例子"><a href="#CP系统的例子" class="headerlink" title="CP系统的例子"></a>CP系统的例子</h2><ul>
 <li><strong>ZooKeeper</strong>：分布式协调服务，保证强一致性</li>
 <li><strong>etcd</strong>：键值存储，用于配置管理</li>
 <li><strong>HBase</strong>：分布式数据库，保证强一致性</li>
 </ul>
 <p>当发生网络分区时，CP系统可能会拒绝某些请求，以保证一致性</p>
+<h3 id="ZooKeeper如何保证一致性"><a href="#ZooKeeper如何保证一致性" class="headerlink" title="ZooKeeper如何保证一致性"></a>ZooKeeper如何保证一致性</h3><p>ZooKeeper使用ZAB协议（类似Paxos）来保证一致性：</p>
+<ol>
+<li>所有写操作都通过Leader节点</li>
+<li>Leader将写操作复制到大多数Follower</li>
+<li>只有大多数Follower确认后，写操作才提交</li>
+<li>如果Leader宕机，重新选举Leader</li>
+</ol>
+<p>这样做的代价是：</p>
+<ul>
+<li>写操作延迟较高（需要等待大多数确认）</li>
+<li>如果Leader宕机，系统短暂不可用</li>
+<li>网络分区时，少数派节点无法提供服务</li>
+</ul>
+<h3 id="etcd如何保证一致性"><a href="#etcd如何保证一致性" class="headerlink" title="etcd如何保证一致性"></a>etcd如何保证一致性</h3><p>etcd使用Raft协议来保证一致性：</p>
+<ol>
+<li>所有节点都有一个状态机</li>
+<li>写操作先写入日志</li>
+<li>Leader将日志复制到大多数Follower</li>
+<li>大多数Follower确认后，日志提交</li>
+<li>所有节点按顺序应用日志到状态机</li>
+</ol>
+<p>这样做的代价是：</p>
+<ul>
+<li>写操作需要等待大多数确认</li>
+<li>读操作可能读到旧数据（如果不从Leader读）</li>
+<li>网络分区时，少数派节点无法提供服务</li>
+</ul>
 <h2 id="AP系统的例子"><a href="#AP系统的例子" class="headerlink" title="AP系统的例子"></a>AP系统的例子</h2><ul>
 <li><strong>Cassandra</strong>：分布式数据库，保证最终一致性</li>
 <li><strong>DynamoDB</strong>：亚马逊的键值存储</li>
 <li><strong>Eureka</strong>：服务注册中心</li>
 </ul>
 <p>当发生网络分区时，AP系统可能会返回过期数据，但保证服务可用</p>
+<h3 id="Cassandra如何保证可用性"><a href="#Cassandra如何保证可用性" class="headerlink" title="Cassandra如何保证可用性"></a>Cassandra如何保证可用性</h3><p>Cassandra使用无中心架构：</p>
+<ol>
+<li>所有节点都是对等的</li>
+<li>数据通过一致性哈希分布到多个节点</li>
+<li>读写操作可以发送到任意节点</li>
+<li>通过Quorum机制保证最终一致性</li>
+</ol>
+<p>这样做的代价是：</p>
+<ul>
+<li>可能读到旧数据</li>
+<li>写冲突需要解决</li>
+<li>数据一致性需要时间</li>
+</ul>
+<h3 id="DynamoDB如何保证可用性"><a href="#DynamoDB如何保证可用性" class="headerlink" title="DynamoDB如何保证可用性"></a>DynamoDB如何保证可用性</h3><p>DynamoDB使用多主架构：</p>
+<ol>
+<li>数据复制到多个数据中心</li>
+<li>每个数据中心都可以处理写操作</li>
+<li>通过向量时钟解决写冲突</li>
+<li>最终所有数据中心会一致</li>
+</ol>
+<p>这样做的代价是：</p>
+<ul>
+<li>可能读到旧数据</li>
+<li>写冲突需要解决</li>
+<li>数据一致性需要时间</li>
+</ul>
 <h1 id="BASE理论"><a href="#BASE理论" class="headerlink" title="BASE理论"></a>BASE理论</h1><h2 id="什么是BASE"><a href="#什么是BASE" class="headerlink" title="什么是BASE"></a>什么是BASE</h2><p>BASE理论是对CAP定理的延伸，它提出了另一种思路</p>
 <p>BASE代表：</p>
 <ul>
@@ -424,6 +511,13 @@
 <li><strong>S（Soft State）软状态</strong>：系统状态可以随时间变化，不要求实时一致</li>
 <li><strong>E（Eventually Consistent）最终一致性</strong>：系统最终会达到一致状态</li>
 </ul>
+<h2 id="为什么需要BASE"><a href="#为什么需要BASE" class="headerlink" title="为什么需要BASE"></a>为什么需要BASE</h2><p>CAP定理告诉我们，在网络分区时，我们只能在一致性和可用性之间选择。但是CAP定理没有告诉我们：</p>
+<ul>
+<li>如何设计系统</li>
+<li>如何处理不一致</li>
+<li>如何保证最终一致性</li>
+</ul>
+<p>BASE理论就是为了解决这些问题</p>
 <h2 id="BASE-vs-ACID"><a href="#BASE-vs-ACID" class="headerlink" title="BASE vs ACID"></a>BASE vs ACID</h2><table>
 <thead>
 <tr>
@@ -453,16 +547,70 @@
 <td>分布式系统</td>
 </tr>
 </tbody></table>
+<h3 id="ACID的特点"><a href="#ACID的特点" class="headerlink" title="ACID的特点"></a>ACID的特点</h3><p>ACID是传统数据库的事务特性：</p>
+<ul>
+<li><strong>A（Atomicity）原子性</strong>：事务要么全部成功，要么全部失败</li>
+<li><strong>C（Consistency）一致性</strong>：事务前后数据保持一致</li>
+<li><strong>I（Isolation）隔离性</strong>：并发事务互不影响</li>
+<li><strong>D（Durability）持久性</strong>：事务提交后数据永久保存</li>
+</ul>
+<p>ACID的问题是：</p>
+<ul>
+<li>难以扩展到分布式环境</li>
+<li>性能较差</li>
+<li>可用性较低</li>
+</ul>
+<h3 id="BASE的特点"><a href="#BASE的特点" class="headerlink" title="BASE的特点"></a>BASE的特点</h3><p>BASE是分布式系统的设计理念：</p>
+<ul>
+<li><strong>基本可用</strong>：系统在正常情况下保证可用，在极端情况下允许降级</li>
+<li><strong>软状态</strong>：系统状态可以随时间变化，不要求实时一致</li>
+<li><strong>最终一致性</strong>：系统最终会达到一致状态，但不要求立即一致</li>
+</ul>
+<p>BASE的优势是：</p>
+<ul>
+<li>可以扩展到分布式环境</li>
+<li>性能较好</li>
+<li>可用性较高</li>
+</ul>
 <h2 id="最终一致性的模型"><a href="#最终一致性的模型" class="headerlink" title="最终一致性的模型"></a>最终一致性的模型</h2><p>最终一致性有多种变体：</p>
-<ol>
-<li><strong>因果一致性</strong>：保证因果关系的操作顺序</li>
-<li><strong>读己之所写</strong>：用户总能读到自己写的数据</li>
-<li><strong>会话一致性</strong>：在会话范围内保证一致性</li>
-<li><strong>单调读一致性</strong>：读取操作不会读到更旧的数据</li>
-<li><strong>单调写一致性</strong>：写操作按顺序执行</li>
-</ol>
+<h3 id="因果一致性"><a href="#因果一致性" class="headerlink" title="因果一致性"></a>因果一致性</h3><p>因果一致性保证：如果操作A在操作B之前发生，那么所有节点都能看到这个顺序</p>
+<p>比如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">A: 写入 x=1</span><br><span class="line">B: 读取 x，然后写入 y=2</span><br></pre></td></tr></table></figure>
+
+<p>因果一致性保证：所有节点都能看到 x=1 在 y=2 之前</p>
+<h3 id="读己之所写"><a href="#读己之所写" class="headerlink" title="读己之所写"></a>读己之所写</h3><p>读己之所写保证：用户总能读到自己写的数据</p>
+<p>比如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">用户A写入 x=1</span><br><span class="line">用户A读取 x</span><br></pre></td></tr></table></figure>
+
+<p>读己之所写保证：用户A读取到的x一定是1</p>
+<h3 id="会话一致性"><a href="#会话一致性" class="headerlink" title="会话一致性"></a>会话一致性</h3><p>会话一致性保证：在会话范围内，用户看到的数据是一致的</p>
+<p>比如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">用户A开始会话</span><br><span class="line">用户A写入 x=1</span><br><span class="line">用户A读取 x</span><br></pre></td></tr></table></figure>
+
+<p>会话一致性保证：用户A在会话内读取到的x一定是1</p>
+<h3 id="单调读一致性"><a href="#单调读一致性" class="headerlink" title="单调读一致性"></a>单调读一致性</h3><p>单调读一致性保证：如果用户读取了某个数据，那么后续的读取不会返回更旧的数据</p>
+<p>比如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">用户A读取 x，得到值1</span><br><span class="line">用户A读取 x，得到值2</span><br><span class="line">用户A读取 x，不会得到值0</span><br></pre></td></tr></table></figure>
+
+<h3 id="单调写一致性"><a href="#单调写一致性" class="headerlink" title="单调写一致性"></a>单调写一致性</h3><p>单调写一致性保证：写操作按顺序执行</p>
+<p>比如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">用户A写入 x=1</span><br><span class="line">用户A写入 x=2</span><br></pre></td></tr></table></figure>
+
+<p>单调写一致性保证：x的最终值是2，而不是1</p>
 <h1 id="一致性协议"><a href="#一致性协议" class="headerlink" title="一致性协议"></a>一致性协议</h1><h2 id="Paxos"><a href="#Paxos" class="headerlink" title="Paxos"></a>Paxos</h2><h3 id="什么是Paxos"><a href="#什么是Paxos" class="headerlink" title="什么是Paxos"></a>什么是Paxos</h3><p>Paxos是Lamport在1990年提出的一致性协议，被公认为最难理解的分布式协议之一</p>
 <p>Paxos解决的问题是：在一个可能发生网络分区的分布式系统中，如何就某个值达成一致</p>
+<h3 id="为什么需要Paxos"><a href="#为什么需要Paxos" class="headerlink" title="为什么需要Paxos"></a>为什么需要Paxos</h3><p>在分布式系统中，多个节点需要就某个值达成一致。比如：</p>
+<ul>
+<li>选举Leader</li>
+<li>提交事务</li>
+<li>更新配置</li>
+</ul>
+<p>如果没有一致性协议，可能会出现：</p>
+<ul>
+<li>脑裂：多个节点都认为自己是Leader</li>
+<li>数据丢失：事务没有正确提交</li>
+<li>配置冲突：不同节点看到不同的配置</li>
+</ul>
 <h3 id="Paxos的角色"><a href="#Paxos的角色" class="headerlink" title="Paxos的角色"></a>Paxos的角色</h3><p>Paxos中有三种角色：</p>
 <ol>
 <li><strong>Proposer（提议者）</strong>：提出提案</li>
@@ -481,6 +629,12 @@
 <li>v是响应中编号最大的提案的值，如果没有则Proposer可以自己决定值</li>
 <li>Acceptor收到Accept(n, v)后，如果n不小于它承诺的最小提案号，则接受该提案</li>
 </ol>
+<h3 id="Paxos如何保证一致性"><a href="#Paxos如何保证一致性" class="headerlink" title="Paxos如何保证一致性"></a>Paxos如何保证一致性</h3><p>Paxos通过以下机制保证一致性：</p>
+<ol>
+<li><strong>多数派机制</strong>：任何提案都需要多数Acceptor接受</li>
+<li><strong>提案号机制</strong>：保证提案的顺序</li>
+<li><strong>承诺机制</strong>：Acceptor承诺不接受旧提案</li>
+</ol>
 <h3 id="Paxos的问题"><a href="#Paxos的问题" class="headerlink" title="Paxos的问题"></a>Paxos的问题</h3><ol>
 <li><strong>活锁问题</strong>：多个Proposer交替提出提案，导致无法达成一致</li>
 <li><strong>实现复杂</strong>：Paxos的正确实现非常困难</li>
@@ -493,6 +647,18 @@
 <li><strong>日志复制（Log Replication）</strong></li>
 <li><strong>安全性（Safety）</strong></li>
 </ol>
+<h3 id="为什么需要Raft"><a href="#为什么需要Raft" class="headerlink" title="为什么需要Raft"></a>为什么需要Raft</h3><p>Paxos的问题是：</p>
+<ul>
+<li>难以理解</li>
+<li>难以实现</li>
+<li>难以优化</li>
+</ul>
+<p>Raft的设计目标是：</p>
+<ul>
+<li>易于理解</li>
+<li>易于实现</li>
+<li>易于优化</li>
+</ul>
 <h3 id="Raft的角色"><a href="#Raft的角色" class="headerlink" title="Raft的角色"></a>Raft的角色</h3><p>Raft中有三种角色：</p>
 <ol>
 <li><strong>Leader（领导者）</strong>：处理所有客户端请求</li>
@@ -506,12 +672,24 @@
 <li>获得多数票的Candidate变为Leader</li>
 <li>Leader定期发送心跳维持领导地位</li>
 </ol>
+<h3 id="选举安全性"><a href="#选举安全性" class="headerlink" title="选举安全性"></a>选举安全性</h3><p>Raft保证选举的安全性：</p>
+<ol>
+<li><strong>每个任期最多一个Leader</strong>：通过多数派机制保证</li>
+<li><strong>Leader一定有所有已提交的日志</strong>：通过选举限制保证</li>
+<li><strong>日志只能从Leader流向Follower</strong>：通过日志复制机制保证</li>
+</ol>
 <h3 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h3><ol>
 <li>客户端发送命令给Leader</li>
 <li>Leader将命令追加到日志</li>
 <li>Leader并行发送AppendEntries RPC给所有Follower</li>
 <li>多数Follower确认后，Leader提交日志</li>
 <li>Leader通知Follower提交日志</li>
+</ol>
+<h3 id="日志一致性"><a href="#日志一致性" class="headerlink" title="日志一致性"></a>日志一致性</h3><p>Raft保证日志的一致性：</p>
+<ol>
+<li><strong>日志匹配</strong>：如果两个日志在某个索引处相同，则之前的所有日志也相同</li>
+<li><strong>日志覆盖</strong>：Leader会强制Follower的日志与自己一致</li>
+<li><strong>日志提交</strong>：只有多数派确认的日志才会被提交</li>
 </ol>
 <h3 id="安全性"><a href="#安全性" class="headerlink" title="安全性"></a>安全性</h3><ul>
 <li><strong>选举限制</strong>：只有包含所有已提交日志的节点才能成为Leader</li>
@@ -523,6 +701,13 @@
 <ol>
 <li><strong>崩溃恢复（Recovery）</strong>：选举新的Leader</li>
 <li><strong>消息广播（Broadcast）</strong>：Leader广播消息给Follower</li>
+</ol>
+<h3 id="ZAB的工作流程"><a href="#ZAB的工作流程" class="headerlink" title="ZAB的工作流程"></a>ZAB的工作流程</h3><ol>
+<li>所有节点初始状态为Looking</li>
+<li>节点投票选出Leader</li>
+<li>Leader进入广播模式，处理客户端请求</li>
+<li>Follower接收Leader的消息</li>
+<li>如果Leader宕机，重新选举</li>
 </ol>
 <h3 id="ZAB-vs-Raft"><a href="#ZAB-vs-Raft" class="headerlink" title="ZAB vs Raft"></a>ZAB vs Raft</h3><table>
 <thead>
@@ -549,6 +734,19 @@
 </tr>
 </tbody></table>
 <h1 id="一致性哈希"><a href="#一致性哈希" class="headerlink" title="一致性哈希"></a>一致性哈希</h1><h2 id="为什么需要一致性哈希"><a href="#为什么需要一致性哈希" class="headerlink" title="为什么需要一致性哈希"></a>为什么需要一致性哈希</h2><p>在分布式系统中，我们经常需要将数据分布到多个节点。传统的取模哈希（hash % n）有一个问题：当节点数量变化时，几乎所有数据都需要重新分布</p>
+<h3 id="传统哈希的问题"><a href="#传统哈希的问题" class="headerlink" title="传统哈希的问题"></a>传统哈希的问题</h3><p>假设有3个节点，使用 hash(key) % 3 分布数据：</p>
+<ul>
+<li>key1 -&gt; hash(key1) % 3 = 0 -&gt; 节点0</li>
+<li>key2 -&gt; hash(key2) % 3 = 1 -&gt; 节点1</li>
+<li>key3 -&gt; hash(key3) % 3 = 2 -&gt; 节点2</li>
+</ul>
+<p>如果增加一个节点，变成4个节点：</p>
+<ul>
+<li>key1 -&gt; hash(key1) % 4 = ? -&gt; 可能是节点0、1、2、3</li>
+<li>key2 -&gt; hash(key2) % 4 = ? -&gt; 可能是节点0、1、2、3</li>
+<li>key3 -&gt; hash(key3) % 4 = ? -&gt; 可能是节点0、1、2、3</li>
+</ul>
+<p>几乎所有数据都需要重新分布！</p>
 <h2 id="一致性哈希的原理"><a href="#一致性哈希的原理" class="headerlink" title="一致性哈希的原理"></a>一致性哈希的原理</h2><p>一致性哈希将整个哈希值空间组织成一个虚拟的环：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">    0</span><br><span class="line">   / \</span><br><span class="line">  /   \</span><br><span class="line">n1     n2</span><br><span class="line"> |     |</span><br><span class="line"> |     |</span><br><span class="line">n3     n4</span><br><span class="line">  \   /</span><br><span class="line">   \ /</span><br><span class="line">    n</span><br></pre></td></tr></table></figure>
 
@@ -557,9 +755,40 @@
 <li>将数据映射到环上</li>
 <li>数据由顺时针方向遇到的第一个节点负责</li>
 </ol>
+<h3 id="如何工作"><a href="#如何工作" class="headerlink" title="如何工作"></a>如何工作</h3><p>假设有3个节点（n1、n2、n3）和3个数据（d1、d2、d3）：</p>
+<ol>
+<li>节点映射到环上：n1在0度，n2在120度，n3在240度</li>
+<li>数据映射到环上：d1在30度，d2在150度，d3在270度</li>
+<li>数据分配：<ul>
+<li>d1（30度）-&gt; n1（0度，顺时针第一个节点）</li>
+<li>d2（150度）-&gt; n2（120度，顺时针第一个节点）</li>
+<li>d3（270度）-&gt; n3（240度，顺时针第一个节点）</li>
+</ul>
+</li>
+</ol>
+<h3 id="增加节点"><a href="#增加节点" class="headerlink" title="增加节点"></a>增加节点</h3><p>如果增加一个节点n4在60度：</p>
+<ul>
+<li>d1（30度）-&gt; n4（60度，顺时针第一个节点）</li>
+<li>d2（150度）-&gt; n2（不变）</li>
+<li>d3（270度）-&gt; n3（不变）</li>
+</ul>
+<p>只有d1需要重新分布！</p>
 <h2 id="数据倾斜问题"><a href="#数据倾斜问题" class="headerlink" title="数据倾斜问题"></a>数据倾斜问题</h2><p>当节点数量较少时，可能会出现数据分布不均匀的问题</p>
-<p>解决方案：<strong>虚拟节点</strong></p>
-<p>每个物理节点对应多个虚拟节点，虚拟节点均匀分布在环上</p>
+<h3 id="为什么会倾斜"><a href="#为什么会倾斜" class="headerlink" title="为什么会倾斜"></a>为什么会倾斜</h3><p>如果3个节点在环上的位置是0度、1度、2度：</p>
+<ul>
+<li>0度到1度之间的数据都由节点0负责</li>
+<li>1度到2度之间的数据都由节点1负责</li>
+<li>2度到360度之间的数据都由节点2负责</li>
+</ul>
+<p>节点2负责了绝大部分数据！</p>
+<h3 id="解决方案：虚拟节点"><a href="#解决方案：虚拟节点" class="headerlink" title="解决方案：虚拟节点"></a>解决方案：虚拟节点</h3><p>每个物理节点对应多个虚拟节点，虚拟节点均匀分布在环上</p>
+<p>比如：</p>
+<ul>
+<li>物理节点n1 -&gt; 虚拟节点vn1_1、vn1_2、vn1_3、…</li>
+<li>物理节点n2 -&gt; 虚拟节点vn2_1、vn2_2、vn2_3、…</li>
+<li>物理节点n3 -&gt; 虚拟节点vn3_1、vn3_2、vn3_3、…</li>
+</ul>
+<p>虚拟节点越多，数据分布越均匀</p>
 <h1 id="分布式ID生成"><a href="#分布式ID生成" class="headerlink" title="分布式ID生成"></a>分布式ID生成</h1><h2 id="为什么需要分布式ID"><a href="#为什么需要分布式ID" class="headerlink" title="为什么需要分布式ID"></a>为什么需要分布式ID</h2><p>在分布式系统中，我们需要生成全局唯一的ID，用于标识订单、用户、消息等</p>
 <h2 id="常见方案"><a href="#常见方案" class="headerlink" title="常见方案"></a>常见方案</h2><h3 id="UUID"><a href="#UUID" class="headerlink" title="UUID"></a>UUID</h3><ul>
 <li>优点：简单、无中心化</li>

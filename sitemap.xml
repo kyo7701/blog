@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://kyo7701.github.io/blog/2026/06/03/distributed-01-theory/</loc>
+    
+    <lastmod>2026-06-03</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://kyo7701.github.io/blog/2026/06/03/ai-agent-08-practice/</loc>
     
     <lastmod>2026-06-03</lastmod>
@@ -80,13 +87,6 @@
   
   <url>
     <loc>https://kyo7701.github.io/blog/2026/06/03/distributed-02-transaction/</loc>
-    
-    <lastmod>2026-06-03</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://kyo7701.github.io/blog/2026/06/03/distributed-01-theory/</loc>
     
     <lastmod>2026-06-03</lastmod>
     
