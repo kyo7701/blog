@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>聊聊负载均衡 | Hexo</title>
+  <meta name="description" content="前言在平时的开发中，我们经常会听到”负载均衡”这个词，尤其是在高并发的场景下，负载均衡更是不可或缺的一部分。但是你有没有想过，什么是负载均衡？为什么需要负载均衡？负载均衡又是怎么实现的呢？今天就来聊聊负载均衡相关的内容 什么是负载均衡在了解负载均衡之前，我们先来了解下什么是负载均衡 负载均衡（Load Balancing）是一种计算机技术，用来在多个计算机（计算机集群）、网络连接、CPU、磁盘驱动">
+<meta property="og:type" content="article">
+<meta property="og:title" content="聊聊负载均衡">
+<meta property="og:url" content="https://kyo7701.github.io/blog/2026/06/03/about-load-balancing/index.html">
+<meta property="og:site_name" content="cris&#39;s blog">
+<meta property="og:description" content="前言在平时的开发中，我们经常会听到”负载均衡”这个词，尤其是在高并发的场景下，负载均衡更是不可或缺的一部分。但是你有没有想过，什么是负载均衡？为什么需要负载均衡？负载均衡又是怎么实现的呢？今天就来聊聊负载均衡相关的内容 什么是负载均衡在了解负载均衡之前，我们先来了解下什么是负载均衡 负载均衡（Load Balancing）是一种计算机技术，用来在多个计算机（计算机集群）、网络连接、CPU、磁盘驱动">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-03T07:30:00.000Z">
+<meta property="article:modified_time" content="2026-06-03T07:20:17.125Z">
+<meta property="article:author" content="mr_cris">
+<meta property="article:tag" content="中间件">
+<meta property="article:tag" content="负载均衡">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="网络">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://kyo7701.github.io/blog/2026/06/03/about-load-balancing/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="cris&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/blog/css/style.css">
+
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/kyo7701" target="_blank">
+          <img class="img-circle img-rotate" src="/blog/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">mr_cris</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Backend Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="Search" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="Type something..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/blog/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">Home</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/blog/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">Archives</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/blog/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">Categories</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/blog/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">Tags</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a target="_blank" rel="noopener" href="https://github.com/kyo7701">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">Repository</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/blog/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">About</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">Board</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/blog/categories/mysql/">mysql</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/rabbitmq/">rabbitmq</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/blog/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/No-SQL/" rel="tag">No-SQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/java/" rel="tag">java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/rabbitmq/" rel="tag">rabbitmq</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redis/" rel="tag">redis</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%85%B6%E4%BB%96/" rel="tag">其他</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF/" rel="tag">后端</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" rel="tag">后端技术</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" rel="tag">工作感悟</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" rel="tag">持久化机制</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" rel="tag">未完成</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%9D%82%E8%B0%88/" rel="tag">杂谈</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%A1%86%E6%9E%B6/" rel="tag">框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag">消息队列</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E6%BA%90%E7%A0%81/" rel="tag">源码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%B4%A2%E5%BC%95/" rel="tag">索引</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag">负载均衡</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget-body tagcloud">
+      <a href="/blog/tags/No-SQL/" style="font-size: 13px;">No-SQL</a> <a href="/blog/tags/java/" style="font-size: 13px;">java</a> <a href="/blog/tags/mysql/" style="font-size: 13.75px;">mysql</a> <a href="/blog/tags/rabbitmq/" style="font-size: 13px;">rabbitmq</a> <a href="/blog/tags/redis/" style="font-size: 13.75px;">redis</a> <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 14px;">中间件</a> <a href="/blog/tags/%E5%85%B6%E4%BB%96/" style="font-size: 13.25px;">其他</a> <a href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF/" style="font-size: 13.25px;">后端</a> <a href="/blog/tags/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF/" style="font-size: 13.25px;">后端技术</a> <a href="/blog/tags/%E5%B7%A5%E4%BD%9C%E6%84%9F%E6%82%9F/" style="font-size: 13px;">工作感悟</a> <a href="/blog/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6/" style="font-size: 13px;">持久化机制</a> <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13.5px;">数据库</a> <a href="/blog/tags/%E6%9C%AA%E5%AE%8C%E6%88%90/" style="font-size: 13px;">未完成</a> <a href="/blog/tags/%E6%9D%82%E8%B0%88/" style="font-size: 13px;">杂谈</a> <a href="/blog/tags/%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">框架</a> <a href="/blog/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" style="font-size: 13.25px;">消息队列</a> <a href="/blog/tags/%E6%BA%90%E7%A0%81/" style="font-size: 13px;">源码</a> <a href="/blog/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 13px;">索引</a> <a href="/blog/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 13px;">线程池</a> <a href="/blog/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 13px;">网络</a> <a href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" style="font-size: 13px;">负载均衡</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Archive</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2026/06/">June 2026</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/06/">June 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2021/03/">March 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/07/">July 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/06/">June 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/05/">May 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2020/04/">April 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/12/">December 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2019/08/">August 2019</a><span class="archive-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+              </p>
+              <p class="item-title">
+                <a href="/blog/2026/06/03/about-load-balancing/" class="title">聊聊负载均衡</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2026-06-03T07:30:00.000Z" itemprop="datePublished">2026-06-03</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2021/06/14/about-mysql-implicitly-type-convertion/" class="title">浅淡MySQL中的隐式类型转换</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-06-13T16:22:10.000Z" itemprop="datePublished">2021-06-14</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2021/03/19/about-thread-pool/" class="title">聊聊线程池</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-03-19T06:49:26.000Z" itemprop="datePublished">2021-03-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/07/26/about-mybatis/" class="title">聊聊ORM框架之mybatis</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-25T16:19:58.000Z" itemprop="datePublished">2020-07-26</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/blog/2020/07/05/about-seeking-a-job/" class="title">谈谈找工作的那些事儿</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-07-05T05:28:00.000Z" itemprop="datePublished">2020-07-05</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-about-load-balancing" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      聊聊负载均衡
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/blog/2026/06/03/about-load-balancing/" class="article-date">
+	  <time datetime="2026-06-03T07:30:00.000Z" itemprop="datePublished">2026-06-03</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/blog/categories/%E5%88%86%E5%B8%83%E5%BC%8F/">分布式</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a>, <a class="article-tag-link-link" href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a>, <a class="article-tag-link-link" href="/blog/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a>, <a class="article-tag-link-link" href="/blog/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag">负载均衡</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2026/06/03/about-load-balancing/#comments" class="article-comment-link">Comments</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 2.2k(words)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 7(minutes)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在平时的开发中，我们经常会听到”负载均衡”这个词，尤其是在高并发的场景下，负载均衡更是不可或缺的一部分。但是你有没有想过，什么是负载均衡？为什么需要负载均衡？负载均衡又是怎么实现的呢？今天就来聊聊负载均衡相关的内容</p>
+<h1 id="什么是负载均衡"><a href="#什么是负载均衡" class="headerlink" title="什么是负载均衡"></a>什么是负载均衡</h1><p>在了解负载均衡之前，我们先来了解下什么是负载均衡</p>
+<p>负载均衡（Load Balancing）是一种计算机技术，用来在多个计算机（计算机集群）、网络连接、CPU、磁盘驱动器或其他资源中分配负载，以达到优化资源使用、最大化吞吐率、最小化响应时间、同时避免过载的目的</p>
+<p>简单来说，负载均衡就是将请求分发到多个服务器上，避免单个服务器压力过大</p>
+<h1 id="为什么需要负载均衡"><a href="#为什么需要负载均衡" class="headerlink" title="为什么需要负载均衡"></a>为什么需要负载均衡</h1><p>那么为什么需要负载均衡呢？我们来看看以下几个场景</p>
+<h2 id="单台服务器的瓶颈"><a href="#单台服务器的瓶颈" class="headerlink" title="单台服务器的瓶颈"></a>单台服务器的瓶颈</h2><p>假设我们的系统只有一个服务器，当并发量上来的时候，单台服务器的处理能力是有限的，可能会出现以下问题</p>
+<ul>
+<li>CPU 使用率过高</li>
+<li>内存不足</li>
+<li>响应时间变长</li>
+<li>甚至直接宕机</li>
+</ul>
+<h2 id="水平扩展的需求"><a href="#水平扩展的需求" class="headerlink" title="水平扩展的需求"></a>水平扩展的需求</h2><p>为了解决单台服务器的瓶颈问题，我们通常会采用水平扩展的方式，也就是增加更多的服务器。但是增加服务器之后，新的问题就来了</p>
+<ul>
+<li>用户的请求应该发给哪台服务器？</li>
+<li>如何保证每台服务器的负载是均衡的？</li>
+<li>如果某台服务器挂了怎么办？</li>
+</ul>
+<p>这时候就需要负载均衡来帮忙了</p>
+<h1 id="负载均衡的分类"><a href="#负载均衡的分类" class="headerlink" title="负载均衡的分类"></a>负载均衡的分类</h1><p>负载均衡可以分为多种类型，我们来看看常见的几种</p>
+<h2 id="按照网络层次分类"><a href="#按照网络层次分类" class="headerlink" title="按照网络层次分类"></a>按照网络层次分类</h2><h3 id="二层负载均衡"><a href="#二层负载均衡" class="headerlink" title="二层负载均衡"></a>二层负载均衡</h3><p>二层负载均衡是基于数据链路层的负载均衡，通过修改数据帧的MAC地址来实现负载均衡</p>
+<h3 id="三层负载均衡"><a href="#三层负载均衡" class="headerlink" title="三层负载均衡"></a>三层负载均衡</h3><p>三层负载均衡是基于网络层的负载均衡，通过修改IP地址来实现负载均衡</p>
+<h3 id="四层负载均衡"><a href="#四层负载均衡" class="headerlink" title="四层负载均衡"></a>四层负载均衡</h3><p>四层负载均衡是基于传输层的负载均衡，通过修改IP地址和端口号来实现负载均衡</p>
+<p>常见的四层负载均衡有：LVS、F5</p>
+<h3 id="七层负载均衡"><a href="#七层负载均衡" class="headerlink" title="七层负载均衡"></a>七层负载均衡</h3><p>七层负载均衡是基于应用层的负载均衡，可以根据HTTP请求的URL、Cookie等信息来进行负载均衡</p>
+<p>常见的七层负载均衡有：Nginx、HAProxy</p>
+<h2 id="按照实现方式分类"><a href="#按照实现方式分类" class="headerlink" title="按照实现方式分类"></a>按照实现方式分类</h2><h3 id="硬件负载均衡"><a href="#硬件负载均衡" class="headerlink" title="硬件负载均衡"></a>硬件负载均衡</h3><p>硬件负载均衡是通过专门的硬件设备来实现的，比如F5、A10等</p>
+<p>优点：</p>
+<ul>
+<li>性能好</li>
+<li>稳定性高</li>
+<li>功能强大</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>价格昂贵</li>
+<li>扩展性差</li>
+</ul>
+<h3 id="软件负载均衡"><a href="#软件负载均衡" class="headerlink" title="软件负载均衡"></a>软件负载均衡</h3><p>软件负载均衡是通过软件来实现的，比如Nginx、LVS、HAProxy等</p>
+<p>优点：</p>
+<ul>
+<li>价格便宜（开源免费）</li>
+<li>扩展性好</li>
+<li>配置灵活</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>性能相对硬件负载均衡稍差</li>
+<li>需要自己维护</li>
+</ul>
+<h1 id="负载均衡算法"><a href="#负载均衡算法" class="headerlink" title="负载均衡算法"></a>负载均衡算法</h1><p>负载均衡的核心就是如何将请求分发到不同的服务器上，这就涉及到负载均衡算法了。我们来看看常见的负载均衡算法</p>
+<h2 id="轮询（Round-Robin）"><a href="#轮询（Round-Robin）" class="headerlink" title="轮询（Round Robin）"></a>轮询（Round Robin）</h2><p>轮询是最简单的负载均衡算法，它将请求按顺序轮流分配到每台服务器上</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">请求1 -&gt; 服务器A</span><br><span class="line">请求2 -&gt; 服务器B</span><br><span class="line">请求3 -&gt; 服务器C</span><br><span class="line">请求4 -&gt; 服务器A</span><br><span class="line">请求5 -&gt; 服务器B</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ul>
+<li>实现简单</li>
+<li>请求均匀分配</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>不考虑服务器的实际负载情况</li>
+<li>如果某台服务器性能差，可能会成为瓶颈</li>
+</ul>
+<h2 id="加权轮询（Weighted-Round-Robin）"><a href="#加权轮询（Weighted-Round-Robin）" class="headerlink" title="加权轮询（Weighted Round Robin）"></a>加权轮询（Weighted Round Robin）</h2><p>加权轮询是在轮询的基础上，给每台服务器设置一个权重，权重高的服务器会收到更多的请求</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">服务器A 权重=5</span><br><span class="line">服务器B 权重=3</span><br><span class="line">服务器C 权重=2</span><br><span class="line"></span><br><span class="line">那么10次请求中：</span><br><span class="line">服务器A 收到5次请求</span><br><span class="line">服务器B 收到3次请求</span><br><span class="line">服务器C 收到2次请求</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ul>
+<li>可以根据服务器的性能来分配请求</li>
+<li>实现相对简单</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>权重需要手动设置</li>
+<li>不考虑服务器的实际负载情况</li>
+</ul>
+<h2 id="随机（Random）"><a href="#随机（Random）" class="headerlink" title="随机（Random）"></a>随机（Random）</h2><p>随机算法是将请求随机分配到某台服务器上</p>
+<p>优点：</p>
+<ul>
+<li>实现简单</li>
+<li>长期来看请求分配相对均匀</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>短期内可能分配不均匀</li>
+<li>不考虑服务器的实际负载情况</li>
+</ul>
+<h2 id="加权随机（Weighted-Random）"><a href="#加权随机（Weighted-Random）" class="headerlink" title="加权随机（Weighted Random）"></a>加权随机（Weighted Random）</h2><p>加权随机是在随机的基础上，给每台服务器设置一个权重，权重高的服务器被选中的概率更大</p>
+<h2 id="最少连接（Least-Connections）"><a href="#最少连接（Least-Connections）" class="headerlink" title="最少连接（Least Connections）"></a>最少连接（Least Connections）</h2><p>最少连接算法是将请求分配给当前连接数最少的服务器</p>
+<p>优点：</p>
+<ul>
+<li>考虑了服务器的实际负载情况</li>
+<li>可以动态调整请求分配</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>实现相对复杂</li>
+<li>需要实时统计每台服务器的连接数</li>
+</ul>
+<h2 id="加权最少连接（Weighted-Least-Connections）"><a href="#加权最少连接（Weighted-Least-Connections）" class="headerlink" title="加权最少连接（Weighted Least Connections）"></a>加权最少连接（Weighted Least Connections）</h2><p>加权最少连接是在最少连接的基础上，给每台服务器设置一个权重</p>
+<h2 id="IP-Hash"><a href="#IP-Hash" class="headerlink" title="IP Hash"></a>IP Hash</h2><p>IP Hash算法是根据客户端的IP地址，通过哈希函数计算出一个值，然后将请求分配给对应的服务器</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> hash = clientIP.hashCode();</span><br><span class="line"><span class="keyword">int</span> index = hash % serverCount;</span><br><span class="line">Server server = servers.get(index);</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ul>
+<li>同一个客户端的请求会分配给同一台服务器</li>
+<li>可以实现会话保持</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>如果某台服务器挂了，会影响所有分配到这台服务器的客户端</li>
+<li>扩展性差</li>
+</ul>
+<h2 id="一致性哈希（Consistent-Hashing）"><a href="#一致性哈希（Consistent-Hashing）" class="headerlink" title="一致性哈希（Consistent Hashing）"></a>一致性哈希（Consistent Hashing）</h2><p>一致性哈希是为了解决IP Hash的问题而提出的算法</p>
+<p>一致性哈希将整个哈希值空间组织成一个虚拟的圆环，服务器和请求都映射到这个环上</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 服务器节点哈希</span></span><br><span class="line"><span class="keyword">int</span> serverHash = serverIP.hashCode() % <span class="number">360</span>;</span><br><span class="line"><span class="comment">// 请求哈希</span></span><br><span class="line"><span class="keyword">int</span> requestHash = clientIP.hashCode() % <span class="number">360</span>;</span><br><span class="line"><span class="comment">// 顺时针找到第一个服务器节点</span></span><br><span class="line">Server server = findFirstServerClockwise(requestHash);</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ul>
+<li>当服务器增减时，只有少量的请求需要重新分配</li>
+<li>扩展性好</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>实现相对复杂</li>
+<li>可能存在数据倾斜问题</li>
+</ul>
+<h1 id="常见的负载均衡实现"><a href="#常见的负载均衡实现" class="headerlink" title="常见的负载均衡实现"></a>常见的负载均衡实现</h1><h2 id="Nginx"><a href="#Nginx" class="headerlink" title="Nginx"></a>Nginx</h2><p>Nginx是一个高性能的HTTP和反向代理服务器，也是一个常用的负载均衡器</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">upstream</span> backend &#123;</span><br><span class="line">    <span class="attribute">server</span> backend1.example.com weight=<span class="number">5</span>;</span><br><span class="line">    <span class="attribute">server</span> backend2.example.com weight=<span class="number">3</span>;</span><br><span class="line">    <span class="attribute">server</span> backend3.example.com weight=<span class="number">2</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">location</span> / &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://backend;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Nginx支持多种负载均衡算法：</p>
+<ul>
+<li>轮询（默认）</li>
+<li>加权轮询</li>
+<li>IP Hash</li>
+<li>最少连接</li>
+</ul>
+<h2 id="LVS"><a href="#LVS" class="headerlink" title="LVS"></a>LVS</h2><p>LVS（Linux Virtual Server）是Linux内核自带的四层负载均衡器，性能非常高</p>
+<p>LVS有三种工作模式：</p>
+<ul>
+<li>NAT模式</li>
+<li>DR模式</li>
+<li>TUN模式</li>
+</ul>
+<h2 id="HAProxy"><a href="#HAProxy" class="headerlink" title="HAProxy"></a>HAProxy</h2><p>HAProxy是一个开源的、高性能的负载均衡器和代理服务器，支持四层和七层负载均衡</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">frontend http-in</span><br><span class="line">    bind *:80</span><br><span class="line">    default_backend servers</span><br><span class="line"></span><br><span class="line">backend servers</span><br><span class="line">    balance roundrobin</span><br><span class="line">    server server1 192.168.1.1:80 check weight 5</span><br><span class="line">    server server2 192.168.1.2:80 check weight 3</span><br><span class="line">    server server3 192.168.1.3:80 check weight 2</span><br></pre></td></tr></table></figure>
+
+<h1 id="负载均衡的高可用"><a href="#负载均衡的高可用" class="headerlink" title="负载均衡的高可用"></a>负载均衡的高可用</h1><p>负载均衡器本身也可能成为单点故障，所以需要对负载均衡器进行高可用设计</p>
+<h2 id="主备模式"><a href="#主备模式" class="headerlink" title="主备模式"></a>主备模式</h2><p>主备模式是最简单的高可用方案，主负载均衡器负责处理请求，备负载均衡器实时同步主负载均衡器的状态</p>
+<p>当主负载均衡器挂了，备负载均衡器会接管服务</p>
+<h2 id="双主模式"><a href="#双主模式" class="headerlink" title="双主模式"></a>双主模式</h2><p>双主模式是两个负载均衡器都处于活跃状态，共同处理请求</p>
+<p>通过DNS解析或者虚拟IP的方式，将请求分发到两个负载均衡器上</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>负载均衡是分布式系统中非常重要的一环，它可以帮助我们解决单台服务器的瓶颈问题，提高系统的可用性和扩展性</p>
+<p>在选择负载均衡方案时，需要根据实际的业务场景来选择合适的负载均衡算法和实现方式</p>
+<ul>
+<li>如果是简单的场景，可以使用Nginx来做七层负载均衡</li>
+<li>如果是高性能的场景，可以使用LVS来做四层负载均衡</li>
+<li>如果需要更复杂的功能，可以使用HAProxy</li>
+</ul>
+<p>最后，负载均衡器本身也需要做高可用，避免成为单点故障</p>
+<hr>
+<p>参考资料：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1">负载均衡 - Wikipedia</a></li>
+<li><a target="_blank" rel="noopener" href="https://nginx.org/en/docs/">Nginx 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.linuxvirtualserver.org/">LVS 官方网站</a></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://kyo7701.github.io/blog/2026/06/03/about-load-balancing/" title="聊聊负载均衡" target="_blank" rel="external">https://kyo7701.github.io/blog/2026/06/03/about-load-balancing/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/kyo7701" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/blog/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/kyo7701" target="_blank"><span class="text-dark">mr_cris</span><small class="ml-1x">Backend Developer</small></a></h3>
+        <div>个人简介。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/blog/2021/06/14/about-mysql-implicitly-type-convertion/" title="浅淡MySQL中的隐式类型转换"><span>Older&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>$</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>Maybe you could buy me a cup of coffee.</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/alipayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open alipay app scan this qrcode, buy me a coffee!</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/blog/images/donate/wechatpayimg.png" alt="Scan Qrcode" title="Scan" />
+              </div>
+              <p class="text-muted mv">Scan this qrcode</p>
+              <p class="text-grey">Open wechat app scan this qrcode, buy me a coffee!</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> alipay</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> wechat payment</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/kyo7701" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/cofess" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/cofess" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/blog/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/blog/js/plugin.min.js"></script>
+
+
+<script src="/blog/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/blog/',
+        CONTENT_URL: '/blog/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/blog/js/insight.js"></script>
+
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'd7ac612bb7b78584fa57',
+    clientSecret: '4cb9483a9cf2d486d98687a54bf8c96796f9167d',
+    repo: 'blog-comment',
+    owner: 'kyo7701',
+    admin: ['kyo7701'],
+    proxy: 'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token',
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
