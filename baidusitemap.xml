@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://kyo7701.github.io/blog/blog/2020/06/04/about-redis-data-structure/</loc>
+    <lastmod>2026-06-03</lastmod>
+  </url>
+  <url>
     <loc>https://kyo7701.github.io/blog/blog/2021/03/19/about-thread-pool/</loc>
     <lastmod>2026-06-03</lastmod>
   </url>
@@ -23,10 +27,6 @@
   <url>
     <loc>https://kyo7701.github.io/blog/blog/2020/07/05/about-seeking-a-job/</loc>
     <lastmod>2020-07-05</lastmod>
-  </url>
-  <url>
-    <loc>https://kyo7701.github.io/blog/blog/2020/06/04/about-redis-data-structure/</loc>
-    <lastmod>2020-06-18</lastmod>
   </url>
   <url>
     <loc>https://kyo7701.github.io/blog/blog/2020/06/12/about-reference/</loc>
