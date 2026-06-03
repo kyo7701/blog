@@ -345,7 +345,7 @@ hr {
 .sr-only-focusable:active,
 .sr-only-focusable:focus {
   position: static;
-  width: 200px;
+  width: 33vw;
   height: auto;
   margin: 0;
   overflow: visible;
@@ -2834,7 +2834,7 @@ button.close {
 
 .modal-dialog {
   position: relative;
-  width: 200px;
+  width: 33vw;
   margin: 10px;
 }
 
@@ -2984,7 +2984,7 @@ button.close {
 }
 
 .tooltip-inner {
-  max-width: 200px;
+  max-width: 33vw;
   padding: 3px 8px;
   color: #fff;
   text-align: center;
@@ -5056,7 +5056,7 @@ table table {
 }
 
 .modal-small .modal-dialog {
-  width: 200px;
+  width: 33vw;
 }
 
 @font-face {
@@ -6805,7 +6805,7 @@ body.okayNav-loaded {
   z-index: 9;
   top: -209px;
   left: -90px;
-  width: 200px;
+  width: 33vw;
   height: 200px;
   color: #666;
   font-size: 12px;
@@ -6972,7 +6972,7 @@ body.okayNav-loaded {
 .donate-box .donate-payimg img {
   display: block;
   text-align: center;
-  width: 200px;
+  width: 33vw;
   height: auto;
 }
 
@@ -7638,7 +7638,7 @@ body.okayNav-loaded {
   }
 
   .navbar-collapse {
-    width: 200px;
+    width: 33vw;
     border-top: 0;
     -webkit-box-shadow: none;
     box-shadow: none;
@@ -7710,7 +7710,7 @@ body.okayNav-loaded {
 
   .navbar-form .form-control {
     display: inline-block;
-    width: 200px;
+    width: 33vw;
     vertical-align: middle;
   }
 
@@ -7726,7 +7726,7 @@ body.okayNav-loaded {
   .navbar-form .input-group .input-group-addon,
   .navbar-form .input-group .input-group-btn,
   .navbar-form .input-group .form-control {
-    width: 200px;
+    width: 33vw;
   }
 
   .navbar-form .input-group > .form-control {
@@ -7762,7 +7762,7 @@ body.okayNav-loaded {
   }
 
   .navbar-form {
-    width: 200px;
+    width: 33vw;
     border: 0;
     margin-left: 0;
     margin-right: 0;
@@ -8599,7 +8599,7 @@ body.okayNav-loaded {
   .navbar-nav .open .dropdown-menu {
     position: static;
     float: none;
-    width: 200px;
+    width: 33vw;
     margin-top: 0;
     background-color: transparent;
     border: 0;
