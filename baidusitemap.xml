@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-05-mq/</loc>
+    <lastmod>2026-06-04</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-04-cache/</loc>
+    <lastmod>2026-06-04</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-03-lock/</loc>
+    <lastmod>2026-06-04</lastmod>
+  </url>
+  <url>
+    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-02-transaction/</loc>
+    <lastmod>2026-06-04</lastmod>
+  </url>
+  <url>
     <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-01-theory/</loc>
     <lastmod>2026-06-03</lastmod>
   </url>
@@ -34,22 +50,6 @@
   </url>
   <url>
     <loc>https://kyo7701.github.io/blog/blog/2026/06/03/ai-agent-01-overview/</loc>
-    <lastmod>2026-06-03</lastmod>
-  </url>
-  <url>
-    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-05-mq/</loc>
-    <lastmod>2026-06-03</lastmod>
-  </url>
-  <url>
-    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-04-cache/</loc>
-    <lastmod>2026-06-03</lastmod>
-  </url>
-  <url>
-    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-03-lock/</loc>
-    <lastmod>2026-06-03</lastmod>
-  </url>
-  <url>
-    <loc>https://kyo7701.github.io/blog/blog/2026/06/03/distributed-02-transaction/</loc>
     <lastmod>2026-06-03</lastmod>
   </url>
   <url>

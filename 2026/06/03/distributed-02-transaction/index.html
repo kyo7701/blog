@@ -18,15 +18,15 @@
   
   
   <title>分布式事务：从理论到实践 | Hexo</title>
-  <meta name="description" content="前言在单体应用中，我们可以使用数据库事务来保证数据一致性。但是在分布式系统中，一个业务操作可能涉及多个服务、多个数据库，传统的事务机制就无法满足需求了。今天就来聊聊分布式事务的各种解决方案，以及它们各自的优缺点和适用场景 什么是分布式事务分布式事务是指事务的参与者、支持事务的服务器、资源服务器以及事务管理器分别位于分布式系统的不同节点之上 简单来说，分布式事务就是要保证多个服务之间的数据一致性 分">
+  <meta name="description" content="前言在单体应用中，我们可以使用数据库事务来保证数据一致性。但是在分布式系统中，一个业务操作可能涉及多个服务、多个数据库，传统的事务机制就无法满足需求了。今天就来聊聊分布式事务的各种解决方案，以及它们各自的优缺点和适用场景 什么是分布式事务分布式事务是指事务的参与者、支持事务的服务器、资源服务器以及事务管理器分别位于分布式系统的不同节点之上 简单来说，分布式事务就是要保证多个服务之间的数据一致性 为">
 <meta property="og:type" content="article">
 <meta property="og:title" content="分布式事务：从理论到实践">
 <meta property="og:url" content="https://kyo7701.github.io/blog/2026/06/03/distributed-02-transaction/index.html">
 <meta property="og:site_name" content="cris&#39;s blog">
-<meta property="og:description" content="前言在单体应用中，我们可以使用数据库事务来保证数据一致性。但是在分布式系统中，一个业务操作可能涉及多个服务、多个数据库，传统的事务机制就无法满足需求了。今天就来聊聊分布式事务的各种解决方案，以及它们各自的优缺点和适用场景 什么是分布式事务分布式事务是指事务的参与者、支持事务的服务器、资源服务器以及事务管理器分别位于分布式系统的不同节点之上 简单来说，分布式事务就是要保证多个服务之间的数据一致性 分">
+<meta property="og:description" content="前言在单体应用中，我们可以使用数据库事务来保证数据一致性。但是在分布式系统中，一个业务操作可能涉及多个服务、多个数据库，传统的事务机制就无法满足需求了。今天就来聊聊分布式事务的各种解决方案，以及它们各自的优缺点和适用场景 什么是分布式事务分布式事务是指事务的参与者、支持事务的服务器、资源服务器以及事务管理器分别位于分布式系统的不同节点之上 简单来说，分布式事务就是要保证多个服务之间的数据一致性 为">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-06-03T11:10:00.000Z">
-<meta property="article:modified_time" content="2026-06-03T08:41:31.550Z">
+<meta property="article:modified_time" content="2026-06-04T00:46:21.524Z">
 <meta property="article:author" content="mr_cris">
 <meta property="article:tag" content="分布式">
 <meta property="article:tag" content="事务">
@@ -378,10 +378,10 @@
         <span class="post-comment"><i class="icon icon-comment"></i> <a href="/blog/2026/06/03/distributed-02-transaction/#comments" class="article-comment-link">Comments</a></span>
         
 	
-		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 2.2k(words)</span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">Word Count: 3.8k(words)</span>
 	
 	
-		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 7(minutes)</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">Read Count: 13(minutes)</span>
 	
 
       </div>
@@ -391,6 +391,13 @@
         <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在单体应用中，我们可以使用数据库事务来保证数据一致性。但是在分布式系统中，一个业务操作可能涉及多个服务、多个数据库，传统的事务机制就无法满足需求了。今天就来聊聊分布式事务的各种解决方案，以及它们各自的优缺点和适用场景</p>
 <h1 id="什么是分布式事务"><a href="#什么是分布式事务" class="headerlink" title="什么是分布式事务"></a>什么是分布式事务</h1><p>分布式事务是指事务的参与者、支持事务的服务器、资源服务器以及事务管理器分别位于分布式系统的不同节点之上</p>
 <p>简单来说，分布式事务就是要保证多个服务之间的数据一致性</p>
+<h2 id="为什么需要分布式事务"><a href="#为什么需要分布式事务" class="headerlink" title="为什么需要分布式事务"></a>为什么需要分布式事务</h2><p>假设一个电商系统，下单操作需要：</p>
+<ol>
+<li>订单服务：创建订单</li>
+<li>库存服务：扣减库存</li>
+<li>账户服务：扣减余额</li>
+</ol>
+<p>如果订单创建成功，但库存扣减失败，就会出现数据不一致</p>
 <h2 id="分布式事务的挑战"><a href="#分布式事务的挑战" class="headerlink" title="分布式事务的挑战"></a>分布式事务的挑战</h2><ol>
 <li><strong>网络不可靠</strong>：网络可能延迟、丢包、分区</li>
 <li><strong>节点可能宕机</strong>：任何节点都可能在任何时候宕机</li>
@@ -418,9 +425,35 @@
 <li>如果有参与者返回No，协调者发送Rollback请求</li>
 <li>参与者执行提交或回滚</li>
 </ol>
+<h2 id="2PC的详细流程"><a href="#2PC的详细流程" class="headerlink" title="2PC的详细流程"></a>2PC的详细流程</h2><p>让我们详细看看2PC的工作流程：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">协调者                     参与者A         参与者B</span><br><span class="line">  |                          |               |</span><br><span class="line">  |------- Prepare ---------&gt;|               |</span><br><span class="line">  |------- Prepare -------------------------&gt;|</span><br><span class="line">  |                          |               |</span><br><span class="line">  |&lt;------ Yes --------------|               |</span><br><span class="line">  |&lt;------ Yes ------------------------------|</span><br><span class="line">  |                          |               |</span><br><span class="line">  |------- Commit ---------&gt;|               |</span><br><span class="line">  |------- Commit --------------------------&gt;|</span><br><span class="line">  |                          |               |</span><br><span class="line">  |&lt;------ ACK --------------|               |</span><br><span class="line">  |&lt;------ ACK ------------------------------|</span><br></pre></td></tr></table></figure>
+
 <h2 id="2PC的问题"><a href="#2PC的问题" class="headerlink" title="2PC的问题"></a>2PC的问题</h2><h3 id="同步阻塞"><a href="#同步阻塞" class="headerlink" title="同步阻塞"></a>同步阻塞</h3><p>所有参与者在准备阶段后必须等待协调者的最终决定，这期间资源被锁定</p>
+<p><strong>为什么会阻塞？</strong></p>
+<p>参与者在准备阶段已经执行了本地事务（但不提交），锁定了数据库资源。在等待协调者决定期间，这些资源一直被锁定，其他事务无法访问</p>
+<p><strong>阻塞的影响：</strong></p>
+<ul>
+<li>数据库连接被占用</li>
+<li>行锁或表锁被持有</li>
+<li>并发性能下降</li>
+</ul>
 <h3 id="单点故障"><a href="#单点故障" class="headerlink" title="单点故障"></a>单点故障</h3><p>协调者是单点，如果协调者宕机，参与者将一直处于锁定状态</p>
+<p><strong>为什么是单点？</strong></p>
+<p>2PC协议中只有一个协调者，所有参与者都依赖协调者来做出最终决定</p>
+<p><strong>单点故障的影响：</strong></p>
+<ul>
+<li>协调者宕机后，参与者无法知道应该提交还是回滚</li>
+<li>参与者的资源一直被锁定</li>
+<li>系统可能需要人工干预来恢复</li>
+</ul>
 <h3 id="数据不一致"><a href="#数据不一致" class="headerlink" title="数据不一致"></a>数据不一致</h3><p>如果在阶段二，协调者发送Commit后宕机，部分参与者收到Commit，部分没有收到，会导致数据不一致</p>
+<p><strong>为什么会不一致？</strong></p>
+<p>假设协调者向参与者A发送了Commit，但向参与者B发送Commit之前宕机了：</p>
+<ul>
+<li>参与者A收到Commit，提交了事务</li>
+<li>参与者B没有收到Commit，不知道应该提交还是回滚</li>
+<li>结果：A和B的数据不一致</li>
+</ul>
 <h2 id="2PC的适用场景"><a href="#2PC的适用场景" class="headerlink" title="2PC的适用场景"></a>2PC的适用场景</h2><ul>
 <li>对一致性要求极高的场景</li>
 <li>性能要求不高的场景</li>
@@ -432,6 +465,12 @@
 <li>参与者判断是否可以执行事务</li>
 <li>参与者返回Yes或No</li>
 </ol>
+<p><strong>CanCommit阶段的作用：</strong></p>
+<ul>
+<li>检查参与者是否可以执行事务</li>
+<li>避免不必要的资源锁定</li>
+<li>减少阻塞时间</li>
+</ul>
 <h3 id="阶段二：PreCommit阶段"><a href="#阶段二：PreCommit阶段" class="headerlink" title="阶段二：PreCommit阶段"></a>阶段二：PreCommit阶段</h3><ol>
 <li>如果所有参与者都返回Yes，协调者发送PreCommit请求</li>
 <li>参与者执行本地事务，但不提交</li>
@@ -441,13 +480,13 @@
 <li>协调者发送DoCommit请求</li>
 <li>参与者提交事务</li>
 </ol>
-<h2 id="3PC的改进"><a href="#3PC的改进" class="headerlink" title="3PC的改进"></a>3PC的改进</h2><ol>
-<li>减少了锁定时间</li>
-<li>参与者在超时后可以自主决定提交或回滚</li>
-</ol>
+<h2 id="3PC如何解决2PC的问题"><a href="#3PC如何解决2PC的问题" class="headerlink" title="3PC如何解决2PC的问题"></a>3PC如何解决2PC的问题</h2><h3 id="减少阻塞"><a href="#减少阻塞" class="headerlink" title="减少阻塞"></a>减少阻塞</h3><p>3PC在CanCommit阶段就检查参与者是否可以执行，避免了不必要的资源锁定</p>
+<h3 id="超时机制"><a href="#超时机制" class="headerlink" title="超时机制"></a>超时机制</h3><p>3PC引入了超时机制：如果参与者在规定时间内没有收到协调者的决定，它会默认提交事务</p>
+<p><strong>为什么可以默认提交？</strong></p>
+<p>在3PC中，如果参与者收到了PreCommit，说明所有参与者都同意了，所以可以安全地提交</p>
 <h2 id="3PC的问题"><a href="#3PC的问题" class="headerlink" title="3PC的问题"></a>3PC的问题</h2><ol>
-<li>网络分区时仍可能出现数据不一致</li>
-<li>实现复杂度增加</li>
+<li><strong>网络分区时仍可能出现数据不一致</strong>：超时机制不能完全解决问题</li>
+<li><strong>实现复杂度增加</strong>：多了一个阶段，实现更复杂</li>
 </ol>
 <h1 id="TCC（Try-Confirm-Cancel）"><a href="#TCC（Try-Confirm-Cancel）" class="headerlink" title="TCC（Try-Confirm-Cancel）"></a>TCC（Try-Confirm-Cancel）</h1><h2 id="什么是TCC"><a href="#什么是TCC" class="headerlink" title="什么是TCC"></a>什么是TCC</h2><p>TCC是一种补偿型事务，将业务分为三个阶段</p>
 <h2 id="TCC的三个阶段"><a href="#TCC的三个阶段" class="headerlink" title="TCC的三个阶段"></a>TCC的三个阶段</h2><h3 id="Try阶段"><a href="#Try阶段" class="headerlink" title="Try阶段"></a>Try阶段</h3><ul>
@@ -455,34 +494,65 @@
 <li>检查业务条件</li>
 <li>但不执行真正的业务操作</li>
 </ul>
+<p><strong>Try阶段做什么？</strong></p>
+<p>以转账为例：</p>
+<ul>
+<li>检查A账户余额是否充足</li>
+<li>冻结A账户的转账金额</li>
+<li>检查B账户是否正常</li>
+</ul>
+<p><strong>为什么要冻结而不是直接扣减？</strong></p>
+<p>因为Try阶段可能会失败，如果直接扣减，失败后需要回滚，回滚可能失败（比如网络问题）。冻结可以避免这个问题，Cancel时只需要解冻</p>
 <h3 id="Confirm阶段"><a href="#Confirm阶段" class="headerlink" title="Confirm阶段"></a>Confirm阶段</h3><ul>
 <li>执行真正的业务操作</li>
 <li>使用Try阶段预留的资源</li>
 <li>Confirm操作必须保证幂等</li>
 </ul>
+<p><strong>Confirm阶段做什么？</strong></p>
+<p>以转账为例：</p>
+<ul>
+<li>A账户扣除冻结金额</li>
+<li>B账户增加金额</li>
+</ul>
+<p><strong>为什么Confirm必须幂等？</strong></p>
+<p>因为Confirm可能会被重试，如果Confirm不是幂等的，可能会导致重复扣款或重复加款</p>
 <h3 id="Cancel阶段"><a href="#Cancel阶段" class="headerlink" title="Cancel阶段"></a>Cancel阶段</h3><ul>
 <li>释放Try阶段预留的资源</li>
 <li>Cancel操作必须保证幂等</li>
 </ul>
-<h2 id="TCC的例子"><a href="#TCC的例子" class="headerlink" title="TCC的例子"></a>TCC的例子</h2><p>以转账为例：</p>
-<h3 id="Try阶段-1"><a href="#Try阶段-1" class="headerlink" title="Try阶段"></a>Try阶段</h3><ul>
-<li>检查A账户余额是否充足</li>
-<li>冻结A账户的转账金额</li>
-<li>检查B账户是否正常</li>
-</ul>
-<h3 id="Confirm阶段-1"><a href="#Confirm阶段-1" class="headerlink" title="Confirm阶段"></a>Confirm阶段</h3><ul>
-<li>A账户扣除冻结金额</li>
-<li>B账户增加金额</li>
-</ul>
-<h3 id="Cancel阶段-1"><a href="#Cancel阶段-1" class="headerlink" title="Cancel阶段"></a>Cancel阶段</h3><ul>
+<p><strong>Cancel阶段做什么？</strong></p>
+<p>以转账为例：</p>
+<ul>
 <li>解冻A账户的冻结金额</li>
 </ul>
+<p><strong>为什么Cancel必须幂等？</strong></p>
+<p>因为Cancel可能会被重试，如果Cancel不是幂等的，可能会导致重复解冻</p>
 <h2 id="TCC的问题"><a href="#TCC的问题" class="headerlink" title="TCC的问题"></a>TCC的问题</h2><ol>
 <li><strong>业务侵入性强</strong>：每个业务都需要实现Try、Confirm、Cancel三个接口</li>
 <li><strong>空回滚</strong>：Try没有执行，但Cancel被调用</li>
 <li><strong>悬挂</strong>：Cancel先于Try执行</li>
 <li><strong>幂等性</strong>：Confirm和Cancel必须保证幂等</li>
 </ol>
+<h3 id="空回滚问题"><a href="#空回滚问题" class="headerlink" title="空回滚问题"></a>空回滚问题</h3><p><strong>什么是空回滚？</strong></p>
+<p>当Try没有执行（比如超时），但Cancel被调用了，这就是空回滚</p>
+<p><strong>为什么会发生？</strong></p>
+<ul>
+<li>Try请求超时</li>
+<li>协调者认为Try失败，发送Cancel</li>
+<li>实际上Try可能还在执行</li>
+</ul>
+<p><strong>如何处理？</strong></p>
+<p>Cancel需要检查Try是否执行过，如果没有执行过，直接返回成功</p>
+<h3 id="悬挂问题"><a href="#悬挂问题" class="headerlink" title="悬挂问题"></a>悬挂问题</h3><p><strong>什么是悬挂？</strong></p>
+<p>Cancel先于Try执行，导致Try执行后资源被冻结，但无法Confirm或Cancel</p>
+<p><strong>为什么会发生？</strong></p>
+<ul>
+<li>Cancel先到达并执行</li>
+<li>Try后到达并执行</li>
+<li>资源被冻结，但无法释放</li>
+</ul>
+<p><strong>如何处理？</strong></p>
+<p>Try需要检查Cancel是否执行过，如果执行过，直接返回失败</p>
 <h2 id="TCC的适用场景"><a href="#TCC的适用场景" class="headerlink" title="TCC的适用场景"></a>TCC的适用场景</h2><ul>
 <li>对一致性要求较高的场景</li>
 <li>业务可以拆分为Try、Confirm、Cancel</li>
@@ -494,19 +564,73 @@
 <li>服务之间通过事件通信</li>
 <li>没有中心化的协调者</li>
 </ul>
+<p><strong>协同式的工作流程：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">订单服务创建订单 -&gt; 发布事件&quot;订单创建&quot;</span><br><span class="line">       ↓</span><br><span class="line">库存服务监听事件 -&gt; 扣减库存 -&gt; 发布事件&quot;库存扣减&quot;</span><br><span class="line">       ↓</span><br><span class="line">账户服务监听事件 -&gt; 扣减余额 -&gt; 发布事件&quot;余额扣减&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>协同式的优点：</strong></p>
+<ul>
+<li>松耦合：服务之间只通过事件通信</li>
+<li>简单：不需要中心化协调者</li>
+<li>可扩展：容易添加新服务</li>
+</ul>
+<p><strong>协同式的缺点：</strong></p>
+<ul>
+<li>难以理解：事件流分散在各个服务中</li>
+<li>难以调试：问题定位困难</li>
+<li>循环依赖：服务之间可能有循环依赖</li>
+</ul>
 <h3 id="编排式（Orchestration）"><a href="#编排式（Orchestration）" class="headerlink" title="编排式（Orchestration）"></a>编排式（Orchestration）</h3><ul>
 <li>有一个中心化的协调者</li>
 <li>协调者负责调用各个服务</li>
 <li>协调者处理失败和补偿</li>
 </ul>
+<p><strong>编排式的工作流程：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">协调者 -&gt; 调用订单服务创建订单</span><br><span class="line">       ↓</span><br><span class="line">协调者 -&gt; 调用库存服务扣减库存</span><br><span class="line">       ↓</span><br><span class="line">协调者 -&gt; 调用账户服务扣减余额</span><br></pre></td></tr></table></figure>
+
+<p><strong>编排式的优点：</strong></p>
+<ul>
+<li>易于理解：流程集中在一个地方</li>
+<li>易于调试：问题定位容易</li>
+<li>易于控制：协调者控制整个流程</li>
+</ul>
+<p><strong>编排式的缺点：</strong></p>
+<ul>
+<li>耦合性强：协调者依赖所有服务</li>
+<li>单点故障：协调者是单点</li>
+<li>复杂度高：协调者逻辑复杂</li>
+</ul>
 <h2 id="Saga的补偿机制"><a href="#Saga的补偿机制" class="headerlink" title="Saga的补偿机制"></a>Saga的补偿机制</h2><p>每个本地事务都有一个对应的补偿事务</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">T1 -&gt; T2 -&gt; T3 -&gt; T4</span><br><span class="line">              ↓</span><br><span class="line">           失败</span><br><span class="line">              ↓</span><br><span class="line">C3 &lt;- C2 &lt;- C1</span><br></pre></td></tr></table></figure>
 
+<p><strong>补偿事务的作用：</strong></p>
+<ul>
+<li>撤销已经执行的操作</li>
+<li>保证数据最终一致</li>
+<li>处理失败情况</li>
+</ul>
+<p><strong>补偿事务的特点：</strong></p>
+<ul>
+<li>必须幂等：可能会被重试</li>
+<li>必须可串行化：补偿顺序很重要</li>
+<li>必须可交换：补偿可以和正向操作交换</li>
+</ul>
 <h2 id="Saga的问题"><a href="#Saga的问题" class="headerlink" title="Saga的问题"></a>Saga的问题</h2><ol>
 <li><strong>没有隔离性</strong>：中间状态对外可见</li>
 <li><strong>补偿复杂</strong>：补偿逻辑可能很复杂</li>
 <li><strong>最终一致性</strong>：只能保证最终一致性</li>
 </ol>
+<h3 id="隔离性问题"><a href="#隔离性问题" class="headerlink" title="隔离性问题"></a>隔离性问题</h3><p><strong>为什么没有隔离性？</strong></p>
+<p>Saga中，每个本地事务都会立即提交，中间状态对外可见</p>
+<p><strong>举例：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">T1: 创建订单（状态：待支付）</span><br><span class="line">T2: 扣减库存</span><br><span class="line">T3: 扣减余额</span><br></pre></td></tr></table></figure>
+
+<p>在T1和T2之间，订单状态是”待支付”，但库存还没有扣减，其他用户可能看到这个订单</p>
+<p><strong>如何解决？</strong></p>
+<ul>
+<li>语义锁：在业务层面加锁</li>
+<li>读取未提交数据：允许读取中间状态</li>
+<li>重新排序：调整事务顺序</li>
+</ul>
 <h2 id="Saga的适用场景"><a href="#Saga的适用场景" class="headerlink" title="Saga的适用场景"></a>Saga的适用场景</h2><ul>
 <li>长流程业务</li>
 <li>跨多个服务的业务</li>
@@ -520,6 +644,9 @@
 <li>消费者处理消息并确认</li>
 <li>更新消息状态</li>
 </ol>
+<p><strong>详细流程：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">1. 开启本地事务</span><br><span class="line">2. 执行业务操作</span><br><span class="line">3. 插入消息到本地消息表</span><br><span class="line">4. 提交本地事务</span><br><span class="line">5. 定时任务扫描未发送的消息</span><br><span class="line">6. 发送消息到消息队列</span><br><span class="line">7. 消费者处理消息</span><br><span class="line">8. 更新消息状态为已发送</span><br></pre></td></tr></table></figure>
+
 <h2 id="本地消息表的优点"><a href="#本地消息表的优点" class="headerlink" title="本地消息表的优点"></a>本地消息表的优点</h2><ol>
 <li>实现简单</li>
 <li>保证最终一致性</li>
@@ -530,6 +657,22 @@
 <li>定时任务的延迟</li>
 <li>消费者需要保证幂等</li>
 </ol>
+<h3 id="定时任务延迟"><a href="#定时任务延迟" class="headerlink" title="定时任务延迟"></a>定时任务延迟</h3><p><strong>为什么会延迟？</strong></p>
+<p>定时任务每隔一段时间扫描一次，扫描间隔就是延迟</p>
+<p><strong>如何减少延迟？</strong></p>
+<ul>
+<li>减少扫描间隔</li>
+<li>使用消息队列的延迟消息</li>
+<li>使用数据库的触发器</li>
+</ul>
+<h3 id="幂等性问题"><a href="#幂等性问题" class="headerlink" title="幂等性问题"></a>幂等性问题</h3><p><strong>为什么需要幂等？</strong></p>
+<p>消息可能会重复发送，消费者需要保证重复处理不会产生副作用</p>
+<p><strong>如何保证幂等？</strong></p>
+<ul>
+<li>使用唯一标识</li>
+<li>使用状态机</li>
+<li>使用数据库唯一约束</li>
+</ul>
 <h1 id="事务消息"><a href="#事务消息" class="headerlink" title="事务消息"></a>事务消息</h1><h2 id="什么是事务消息"><a href="#什么是事务消息" class="headerlink" title="什么是事务消息"></a>什么是事务消息</h2><p>事务消息是消息队列提供的分布式事务解决方案</p>
 <h2 id="事务消息的流程"><a href="#事务消息的流程" class="headerlink" title="事务消息的流程"></a>事务消息的流程</h2><ol>
 <li>发送半消息（Half Message）</li>
@@ -537,6 +680,9 @@
 <li>根据本地事务结果提交或回滚半消息</li>
 <li>如果没有收到确认，消息队列会回查</li>
 </ol>
+<p><strong>详细流程：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">1. 发送半消息到消息队列</span><br><span class="line">2. 消息队列存储半消息，但不投递</span><br><span class="line">3. 执行本地事务</span><br><span class="line">4. 如果本地事务成功，发送Commit</span><br><span class="line">5. 如果本地事务失败，发送Rollback</span><br><span class="line">6. 消息队列收到Commit，投递消息</span><br><span class="line">7. 消息队列收到Rollback，删除消息</span><br><span class="line">8. 如果超时未收到确认，消息队列回查</span><br></pre></td></tr></table></figure>
+
 <h2 id="事务消息的例子"><a href="#事务消息的例子" class="headerlink" title="事务消息的例子"></a>事务消息的例子</h2><p>以RocketMQ为例：</p>
 <ol>
 <li>发送Half Message</li>
@@ -544,6 +690,12 @@
 <li>根据结果Commit或Rollback</li>
 <li>如果超时未确认，RocketMQ会回查</li>
 </ol>
+<p><strong>回查机制：</strong></p>
+<ul>
+<li>RocketMQ定期检查未确认的半消息</li>
+<li>调用生产者的回查接口</li>
+<li>根据回查结果决定提交或回滚</li>
+</ul>
 <h2 id="事务消息的优点"><a href="#事务消息的优点" class="headerlink" title="事务消息的优点"></a>事务消息的优点</h2><ol>
 <li>性能好</li>
 <li>实现相对简单</li>
